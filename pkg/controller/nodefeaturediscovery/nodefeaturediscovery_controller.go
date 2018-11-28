@@ -6,13 +6,15 @@ import (
 
 	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
 
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	"k8s.io/api/extensions/v1beta1"
+	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -127,25 +129,44 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	return reconcile.Result{}, nil
 }
 
+var deployment = `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cuda-vector-add
+  namespace: nvidia
+spec:
+  restartPolicy: OnFailure
+  containers:
+    - name: cuda-vector-add
+      image: "docker.io/mirrorgooglecontainers/cuda-vector-add:v0.1"
+      env:
+        - name: NVIDIA_VISIBLE_DEVICES
+          value: all
+        - name: NVIDIA_DRIVER_CAPABILITIES
+          value: "compute,utility"
+        - name: NVIDIA_REQUIRE_CUDA
+          value: "cuda>=5.0"
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        seLinuxOptions:
+          type: nvidia_container_t
+
+      resources:
+        limits:
+          nvidia.com/gpu: 1 # requesting 1 GPU
+`
+
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
 func newPodForCR(cr *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.Pod {
-	labels := map[string]string{
-		"app": cr.Name,
+	decode := api.Codecs.UniversalDeserializer().Decode
+
+	obj, _, err := decode([]byte(deployment), nil, nil)
+	if err != nil {
+		log.Printf("Error decoding pod manifest")
 	}
-	return &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      cr.Name + "-pod",
-			Namespace: cr.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:    "busybox",
-					Image:   "busybox",
-					Command: []string{"sleep", "3600"},
-				},
-			},
-		},
-	}
+
+	return obj
 }

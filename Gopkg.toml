@@ -10,6 +10,7 @@ required = [
   "k8s.io/gengo/args",
 ]
 
+
 [[override]]
   name = "k8s.io/code-generator"
   # revision for tag "kubernetes-1.11.2"
@@ -44,6 +45,10 @@ required = [
   # The version rule is used for a specific release and the master branch for in between releases.
   branch = "master" #osdk_branch_annotation
   # version = "=v0.1.1" #osdk_version_annotation
+
+[[constraint]]
+  name = "k8s.io/client-go"
+  version = "8.0.0"
 
 [prune]
   go-tests = true
