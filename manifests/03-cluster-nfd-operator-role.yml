@@ -3,6 +3,7 @@ kind: Role
 metadata:
   creationTimestamp: null
   name: cluster-nfd-operator
+  namespace: openshift-cluster-nfd-operator
 rules:
 - apiGroups:
   - ""
