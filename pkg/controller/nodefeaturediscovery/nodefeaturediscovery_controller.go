@@ -9,11 +9,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
-	"k8s.io/api/extensions/v1beta1"
+	//	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -161,12 +161,14 @@ spec:
 
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
 func newPodForCR(cr *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.Pod {
-	decode := api.Codecs.UniversalDeserializer().Decode
+	decode := scheme.Codecs.UniversalDeserializer().Decode
 
 	obj, _, err := decode([]byte(deployment), nil, nil)
 	if err != nil {
 		log.Printf("Error decoding pod manifest")
 	}
 
-	return obj
+	//pod := obj.(*corev1.Pod)
+
+	return obj.(*corev1.Pod)
 }
