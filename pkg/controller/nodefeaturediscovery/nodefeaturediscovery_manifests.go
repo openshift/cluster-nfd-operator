@@ -91,8 +91,41 @@ volumes:
 - projected
 - secret
 `
-
 var nfddaemonset = `
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app: node-feature-discovery
+  name: node-feature-discovery
+spec:
+  selector:
+    matchLabels:
+      app: node-feature-discovery
+  template:
+    metadata:
+      labels:
+        app: node-feature-discovery
+    spec:
+      hostNetwork: true
+      serviceAccount: node-feature-discovery
+      containers:
+        - image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
+          name: node-feature-discovery
+          command: ["/usr/bin/node-feature-discovery", "--source=pci"]
+          args:
+            - "--sleep-interval=60s"
+          volumeMounts:
+            - name: host-sys
+              mountPath: "/host-sys"
+      volumes:
+        - name: host-sys
+          hostPath:
+            path: "/sys"
+`
+
+
+var nfddaemonset2 = `
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
