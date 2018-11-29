@@ -31,5 +31,5 @@ func init() {
 	nfdServiceAccount = decodeManifest(nfdserviceaccount).(*corev1.ServiceAccount)
 	nfdRole = decodeManifest(nfdrole).(*rbacv1.ClusterRole)
 	nfdRoleBinding = decodeManifest(nfdrolebinding).(*rbacv1.ClusterRoleBinding)
-	nfdDaemonSet = decodeManifest(nfddaemonset).(*appsv1.DaemonSet)
+//	nfdDaemonSet = decodeManifest(nfddaemonset).(*appsv1.DaemonSet)
 }
