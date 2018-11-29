@@ -31,14 +31,6 @@ func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNodeFeatureDiscovery{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-	}
-}
-
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
@@ -65,6 +57,14 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
+// newReconciler returns a new reconcile.Reconciler
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileNodeFeatureDiscovery{
+		client: mgr.GetClient(),
+		scheme: mgr.GetScheme(),
+	}
+}
+
 var _ reconcile.Reconciler = &ReconcileNodeFeatureDiscovery{}
 
 // ReconcileNodeFeatureDiscovery reconciles a NodeFeatureDiscovery object
@@ -75,19 +75,40 @@ type ReconcileNodeFeatureDiscovery struct {
 	scheme *runtime.Scheme
 }
 
+var nfdsa = `
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: node-feature-discovery
+  namespace: openshift-cluster-node-tuning-operator
+`
+
+func nfdServiceAccount(r *ReconcileNodeFeatureDiscovery, nfd *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.ServiceAccount {
+	decode := scheme.Codecs.UniversalDeserializer().Decode
+	obj, _, err := decode([]byte(nfdsa), nil, nil)
+	if err != nil {
+		log.Printf("Error decoding ServiceAccount manifest")
+		return nil
+	}
+
+	err = controllerutil.SetControllerReference(nfd, obj.(*corev1.ServiceAccount), r.scheme)
+	if err != nil {
+		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
+		return nil
+	}
+	return obj.(*corev1.ServiceAccount)
+}
+
 // Reconcile reads that state of the cluster for a NodeFeatureDiscovery object and makes changes based on the state read
 // and what is in the NodeFeatureDiscovery.Spec
-// TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
-// a Pod as an example
-// Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
 
 	// Fetch the NodeFeatureDiscovery instance
-	instance := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	nfdInstance := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, nfdInstance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -99,33 +120,50 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	// Define a new Pod object
-	pod := newPodForCR(instance)
+	sa := nfdServiceAccount(r, nfdInstance)
 
-	// Set NodeFeatureDiscovery instance as the owner and controller
-	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	// Check if this Pod already exists
-	found := &corev1.Pod{}
-
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	found := &corev1.ServiceAccount{}
+	log.Printf("Lookgin for ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: sa.Namespace, Name: sa.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating a new Pod %s/%s\n", pod.Namespace, pod.Name)
-		err = r.client.Create(context.TODO(), pod)
+		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
+		err = r.client.Create(context.TODO(), sa)
 		if err != nil {
+			log.Printf("Couldn't create  ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
 			return reconcile.Result{}, err
 		}
-
-		// Pod created successfully - don't requeue
 		return reconcile.Result{}, nil
 	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// Pod already exists - don't requeue
-	log.Printf("Skip reconcile: Pod %s/%s already exists", found.Namespace, found.Name)
+	// // Define a new Pod object
+	// pod := newPodForCR(nfdInstance)
+
+	// // Set NodeFeatureDiscovery instance as the owner and controller
+	// if err := controllerutil.SetControllerReference(nfdInstance, pod, r.scheme); err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// // Check if this Pod already exists
+	// found := &corev1.Pod{}
+
+	// err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
+	// if err != nil && errors.IsNotFound(err) {
+	// 	log.Printf("Creating a new Pod %s/%s\n", pod.Namespace, pod.Name)
+	// 	err = r.client.Create(context.TODO(), pod)
+	// 	if err != nil {
+	// 		return reconcile.Result{}, err
+	// 	}
+
+	// 	// Pod created successfully - don't requeue
+	// 	return reconcile.Result{}, nil
+	// } else if err != nil {
+	// 	return reconcile.Result{}, err
+	// }
+
+	// // Pod already exists - don't requeue
+	// log.Printf("Skip reconcile: Pod %s/%s already exists", found.Namespace, found.Name)
 	return reconcile.Result{}, nil
 }
 
@@ -167,8 +205,5 @@ func newPodForCR(cr *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.
 	if err != nil {
 		log.Printf("Error decoding pod manifest")
 	}
-
-	//pod := obj.(*corev1.Pod)
-
 	return obj.(*corev1.Pod)
 }
