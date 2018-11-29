@@ -41,7 +41,7 @@ subjects:
   namespace: node-feature-discovery
 `
 
-var nfdscc = `
+var nfdsecuritycontextconstraint = `
 allowHostDirVolumePlugin: true
 allowHostIPC: false
 allowHostNetwork: true

@@ -8,6 +8,8 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	securityv1 "github.com/openshift/api/security/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"k8s.io/apimachinery/pkg/types"
@@ -134,6 +136,34 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 	}
 
 	log.Printf("Found DaemonSet:%s\n", obj.Name, obj.Namespace )
+	
+	return nil
+}
+
+
+
+
+func securityContextConstraintControl(r *ReconcileNodeFeatureDiscovery,
+	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
+
+	obj := nfdSecurityContextConstraint
+	found := &securityv1.SecurityContextConstraints{}
+	
+	log.Printf("Looking for SecurityContextConstraint:%s\n", obj.Name)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		log.Printf("Creating SecurityContextConstraint:%s\n", obj.Name)
+		err = r.client.Create(context.TODO(), obj)
+		if err != nil {
+			log.Printf("Couldn't create SecurityContextConstraint:%s\n", obj.Name)
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	log.Printf("Found SecurityContextConstraint:%s\n", obj.Name )
 	
 	return nil
 }

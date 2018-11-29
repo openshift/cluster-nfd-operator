@@ -252,6 +252,14 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:8bc8f43d2332d035857c92581df240f247c287629d5f60c751df609f9b6215c5"
+  name = "github.com/openshift/api"
+  packages = ["security/v1"]
+  pruneopts = "NT"
+  revision = "0d921e363e951d89f583292c60d013c318df64dc"
+  version = "v3.9.0"
+
+[[projects]]
   branch = "master"
   digest = "1:c333425370b8703e18890a3e343e83c400ee7764d0df584278f2fdd95cac6304"
   name = "github.com/operator-framework/operator-sdk"
@@ -725,6 +733,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/openshift/api/security/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/version",
     "k8s.io/api/apps/v1",
