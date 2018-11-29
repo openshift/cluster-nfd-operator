@@ -96,20 +96,22 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	err = controllerutil.SetControllerReference(nfdInstance, nfdNameSpace, r.scheme)
+	
+
+	err = controllerutil.SetControllerReference(nfdInstance, nfdServiceAccount, r.scheme)
 	if err != nil {
 		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
 		return reconcile.Result{}, err
 	}
 
-	found := &corev1.Namespace{}
-	log.Printf("Looking for Namespace:%s\n", nfdNameSpace.Namespace)
-	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: nfdNameSpace.Name}, found)
+	found := &corev1.ServiceAccount{}
+	log.Printf("Looking for Namespace:%s\n", nfdServiceAccount.Name)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: nfdServiceAccount.Namespace, Name: nfdServiceAccount.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating Namespace:%s\n", nfdNameSpace.Namespace)
-		err = r.client.Create(context.TODO(), nfdNameSpace)
+		log.Printf("Creating Namespace:%s\n", nfdServiceAccount.Name)
+		err = r.client.Create(context.TODO(), nfdServiceAccount)
 		if err != nil {
-			log.Printf("Couldn't create Namespace:%s\n", nfdNameSpace.Namespace)
+			log.Printf("Couldn't create Namespace:%s\n", nfdServiceAccount.Name)
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{}, nil

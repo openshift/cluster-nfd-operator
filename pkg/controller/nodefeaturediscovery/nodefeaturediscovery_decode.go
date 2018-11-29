@@ -8,10 +8,10 @@ import (
 	"log"
 )
 
-var nfdNameSpace *corev1.Namespace
+//var nfdNameSpace *corev1.Namespace
 var nfdServiceAccount *corev1.ServiceAccount
-var nfdRole *rbacv1.ClusterRole
-var nfdRoleBinding *rbacv1.ClusterRoleBinding
+var nfdClusterRole *rbacv1.ClusterRole
+var nfdClusterRoleBinding *rbacv1.ClusterRoleBinding
 
 //var nfdSCC *
 var nfdDaemonSet *appsv1.DaemonSet
@@ -20,16 +20,16 @@ func decodeManifest(yaml string) interface{} {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode([]byte(yaml), nil, nil)
 	if err != nil {
-		log.Printf("Error decoding ServiceAccount manifest")
+		log.Printf("Error decoding manifest")
 		return nil
 	}
 	return obj
 }
 
 func init() {
-	nfdNameSpace = decodeManifest(nfdnamespace).(*corev1.Namespace)
+	//nfdNameSpace = decodeManifest(nfdnamespace).(*corev1.Namespace)
 	nfdServiceAccount = decodeManifest(nfdserviceaccount).(*corev1.ServiceAccount)
-	nfdRole = decodeManifest(nfdrole).(*rbacv1.ClusterRole)
-	nfdRoleBinding = decodeManifest(nfdrolebinding).(*rbacv1.ClusterRoleBinding)
+	nfdClusterRole = decodeManifest(nfdclusterrole).(*rbacv1.ClusterRole)
+	nfdClusterRoleBinding = decodeManifest(nfdclusterrolebinding).(*rbacv1.ClusterRoleBinding)
 //	nfdDaemonSet = decodeManifest(nfddaemonset).(*appsv1.DaemonSet)
 }

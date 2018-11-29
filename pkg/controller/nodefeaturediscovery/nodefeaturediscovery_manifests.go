@@ -1,21 +1,15 @@
 package nodefeaturediscovery
 
-var nfdnamespace = `
-apiVersion: v1
-kind: Namespace
-metadata:
-    name: node-feature-discovery
-`
 
 var nfdserviceaccount = `
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: node-feature-discovery
-  namespace: node-feature-discovery
+  namespace: openshift-cluster-nfd-operator
 `
 
-var nfdrole = `
+var nfdclusterrole = `
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -32,7 +26,7 @@ rules:
   - update
 `
 
-var nfdrolebinding = `
+var nfdclusterrolebinding = `
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
