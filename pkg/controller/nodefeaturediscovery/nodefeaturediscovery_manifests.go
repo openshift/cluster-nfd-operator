@@ -96,6 +96,7 @@ metadata:
   labels:
     app: node-feature-discovery
   name: node-feature-discovery
+  namespace: openshift-cluster-nfd-operator
 spec:
   selector:
     matchLabels:
