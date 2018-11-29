@@ -6,7 +6,7 @@ metadata:
   namespace: openshift-cluster-nfd-operator
 rules:
 - apiGroups:
-  - ""
+  - "" 
   resources:
   - pods
   - services
@@ -15,6 +15,7 @@ rules:
   - events
   - configmaps
   - secrets
+  - serviceaccounts
   verbs:
   - '*'
 - apiGroups:
