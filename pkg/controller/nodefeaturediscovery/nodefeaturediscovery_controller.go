@@ -14,7 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	//	"k8s.io/api/extensions/v1beta1"
-	"k8s.io/client-go/kubernetes/scheme"
+	//	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -75,30 +75,6 @@ type ReconcileNodeFeatureDiscovery struct {
 	scheme *runtime.Scheme
 }
 
-var nfdsa = `
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: node-feature-discovery
-  namespace: openshift-cluster-nfd-operator
-`
-
-func nfdServiceAccount(r *ReconcileNodeFeatureDiscovery, nfd *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.ServiceAccount {
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-	obj, _, err := decode([]byte(nfdsa), nil, nil)
-	if err != nil {
-		log.Printf("Error decoding ServiceAccount manifest")
-		return nil
-	}
-
-	err = controllerutil.SetControllerReference(nfd, obj.(*corev1.ServiceAccount), r.scheme)
-	if err != nil {
-		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
-		return nil
-	}
-	return obj.(*corev1.ServiceAccount)
-}
-
 // Reconcile reads that state of the cluster for a NodeFeatureDiscovery object and makes changes based on the state read
 // and what is in the NodeFeatureDiscovery.Spec
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -120,16 +96,20 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	sa := nfdServiceAccount(r, nfdInstance)
+	err = controllerutil.SetControllerReference(nfdInstance, nfdNameSpace, r.scheme)
+	if err != nil {
+		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
+		return reconcile.Result{}, err
+	}
 
-	found := &corev1.ServiceAccount{}
-	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
-	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: sa.Namespace, Name: sa.Name}, found)
+	found := &corev1.Namespace{}
+	log.Printf("Looking for Namespace:%s\n", nfdNameSpace.Namespace)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: nfdNameSpace.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
-		err = r.client.Create(context.TODO(), sa)
+		log.Printf("Creating Namespace:%s\n", nfdNameSpace.Namespace)
+		err = r.client.Create(context.TODO(), nfdNameSpace)
 		if err != nil {
-			log.Printf("Couldn't create  ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
+			log.Printf("Couldn't create Namespace:%s\n", nfdNameSpace.Namespace)
 			return reconcile.Result{}, err
 		}
 		return reconcile.Result{}, nil
@@ -137,73 +117,5 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	// // Define a new Pod object
-	// pod := newPodForCR(nfdInstance)
-
-	// // Set NodeFeatureDiscovery instance as the owner and controller
-	// if err := controllerutil.SetControllerReference(nfdInstance, pod, r.scheme); err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// // Check if this Pod already exists
-	// found := &corev1.Pod{}
-
-	// err = r.client.Get(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace}, found)
-	// if err != nil && errors.IsNotFound(err) {
-	// 	log.Printf("Creating a new Pod %s/%s\n", pod.Namespace, pod.Name)
-	// 	err = r.client.Create(context.TODO(), pod)
-	// 	if err != nil {
-	// 		return reconcile.Result{}, err
-	// 	}
-
-	// 	// Pod created successfully - don't requeue
-	// 	return reconcile.Result{}, nil
-	// } else if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// // Pod already exists - don't requeue
-	// log.Printf("Skip reconcile: Pod %s/%s already exists", found.Namespace, found.Name)
 	return reconcile.Result{}, nil
-}
-
-var deployment = `
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cuda-vector-add
-  namespace: nvidia
-spec:
-  restartPolicy: OnFailure
-  containers:
-    - name: cuda-vector-add
-      image: "docker.io/mirrorgooglecontainers/cuda-vector-add:v0.1"
-      env:
-        - name: NVIDIA_VISIBLE_DEVICES
-          value: all
-        - name: NVIDIA_DRIVER_CAPABILITIES
-          value: "compute,utility"
-        - name: NVIDIA_REQUIRE_CUDA
-          value: "cuda>=5.0"
-      securityContext:
-        allowPrivilegeEscalation: false
-        capabilities:
-          drop: ["ALL"]
-        seLinuxOptions:
-          type: nvidia_container_t
-
-      resources:
-        limits:
-          nvidia.com/gpu: 1 # requesting 1 GPU
-`
-
-// newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.Pod {
-	decode := scheme.Codecs.UniversalDeserializer().Decode
-
-	obj, _, err := decode([]byte(deployment), nil, nil)
-	if err != nil {
-		log.Printf("Error decoding pod manifest")
-	}
-	return obj.(*corev1.Pod)
 }
