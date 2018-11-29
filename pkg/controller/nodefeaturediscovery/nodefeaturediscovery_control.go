@@ -34,11 +34,11 @@ func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 	 	log.Printf("Couldn't set owner references for ClusterRoleBinding: %v", err)
 	 	return err
 	}
-	err = controllerutil.SetControllerReference(ins, &nfdSecurityContextConstraint, r.scheme)
-	if err != nil {
-	 	log.Printf("Couldn't set owner references for SecurityContextConstraint: %v", err)
-	 	return err
-	}
+	// err = controllerutil.SetControllerReference(ins, &nfdSecurityContextConstraint, r.scheme)
+	// if err != nil {
+	//  	log.Printf("Couldn't set owner references for SecurityContextConstraint: %v", err)
+	//  	return err
+	// }
 	err = controllerutil.SetControllerReference(ins, &nfdDaemonSet, r.scheme)
 	if err != nil {
 	 	log.Printf("Couldn't set owner references for DaemonSet: %v", err)
