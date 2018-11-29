@@ -80,7 +80,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: node-feature-discovery
-  namespace: openshift-cluster-node-tuning-operator
+  namespace: openshift-cluster-nfd-operator
 `
 
 func nfdServiceAccount(r *ReconcileNodeFeatureDiscovery, nfd *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) *corev1.ServiceAccount {
@@ -123,7 +123,7 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	sa := nfdServiceAccount(r, nfdInstance)
 
 	found := &corev1.ServiceAccount{}
-	log.Printf("Lookgin for ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
+	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
 	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: sa.Namespace, Name: sa.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", sa.Name, sa.Namespace)
