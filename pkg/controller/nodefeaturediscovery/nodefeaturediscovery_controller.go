@@ -11,14 +11,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
+	//"k8s.io/apimachinery/pkg/types"
 
 	//	"k8s.io/api/extensions/v1beta1"
 	//	"k8s.io/client-go/kubernetes/scheme"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	//"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -75,31 +75,6 @@ type ReconcileNodeFeatureDiscovery struct {
 	scheme *runtime.Scheme
 }
 
-func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
-	nfdInstance *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
-
-	err := controllerutil.SetControllerReference(nfdInstance, nfdServiceAccount, r.scheme)
-	if err != nil {
-		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
-		return err
-	}
-
-	found := &corev1.ServiceAccount{}
-	log.Printf("Looking for Namespace:%s\n", nfdServiceAccount.Name)
-	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: nfdServiceAccount.Namespace, Name: nfdServiceAccount.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating Namespace:%s\n", nfdServiceAccount.Name)
-		err = r.client.Create(context.TODO(), nfdServiceAccount)
-		if err != nil {
-			log.Printf("Couldn't create Namespace:%s\n", nfdServiceAccount.Name)
-			return err
-		}
-		return nil
-	} else if err != nil {
-		return err
-	}
-	return nil
-}
 
 // Reconcile reads that state of the cluster for a NodeFeatureDiscovery object and makes changes based on the state read
 // and what is in the NodeFeatureDiscovery.Spec
@@ -109,8 +84,8 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
 
 	// Fetch the NodeFeatureDiscovery instance
-	nfdInstance := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, nfdInstance)
+	ins := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, ins)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -122,10 +97,27 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	err = serviceAccountControl(r, nfdInstance)
+	err = setOwnerReferenceForAll(r, ins)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
+	err = serviceAccountControl(r, ins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = clusterRoleControl(r, ins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = clusterRoleBindingControl(r, ins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	
+	
 	return reconcile.Result{}, nil
 }

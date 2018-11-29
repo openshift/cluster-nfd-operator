@@ -27,7 +27,6 @@ func decodeManifest(yaml string) interface{} {
 }
 
 func init() {
-	//nfdNameSpace = decodeManifest(nfdnamespace).(*corev1.Namespace)
 	nfdServiceAccount = decodeManifest(nfdserviceaccount).(*corev1.ServiceAccount)
 	nfdClusterRole = decodeManifest(nfdclusterrole).(*rbacv1.ClusterRole)
 	nfdClusterRoleBinding = decodeManifest(nfdclusterrolebinding).(*rbacv1.ClusterRoleBinding)
