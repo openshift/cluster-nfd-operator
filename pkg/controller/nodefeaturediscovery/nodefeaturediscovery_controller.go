@@ -75,6 +75,32 @@ type ReconcileNodeFeatureDiscovery struct {
 	scheme *runtime.Scheme
 }
 
+func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
+	nfdInstance *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
+
+	err := controllerutil.SetControllerReference(nfdInstance, nfdServiceAccount, r.scheme)
+	if err != nil {
+		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
+		return err
+	}
+
+	found := &corev1.ServiceAccount{}
+	log.Printf("Looking for Namespace:%s\n", nfdServiceAccount.Name)
+	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: nfdServiceAccount.Namespace, Name: nfdServiceAccount.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		log.Printf("Creating Namespace:%s\n", nfdServiceAccount.Name)
+		err = r.client.Create(context.TODO(), nfdServiceAccount)
+		if err != nil {
+			log.Printf("Couldn't create Namespace:%s\n", nfdServiceAccount.Name)
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
+	}
+	return nil
+}
+
 // Reconcile reads that state of the cluster for a NodeFeatureDiscovery object and makes changes based on the state read
 // and what is in the NodeFeatureDiscovery.Spec
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -96,26 +122,8 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	
-
-	err = controllerutil.SetControllerReference(nfdInstance, nfdServiceAccount, r.scheme)
+	err = serviceAccountControl(r, nfdInstance)
 	if err != nil {
-		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
-		return reconcile.Result{}, err
-	}
-
-	found := &corev1.ServiceAccount{}
-	log.Printf("Looking for Namespace:%s\n", nfdServiceAccount.Name)
-	err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: nfdServiceAccount.Namespace, Name: nfdServiceAccount.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Creating Namespace:%s\n", nfdServiceAccount.Name)
-		err = r.client.Create(context.TODO(), nfdServiceAccount)
-		if err != nil {
-			log.Printf("Couldn't create Namespace:%s\n", nfdServiceAccount.Name)
-			return reconcile.Result{}, err
-		}
-		return reconcile.Result{}, nil
-	} else if err != nil {
 		return reconcile.Result{}, err
 	}
 
