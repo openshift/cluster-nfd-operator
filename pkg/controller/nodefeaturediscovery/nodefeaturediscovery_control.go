@@ -24,16 +24,26 @@ func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
 		return err
 	}
-	// err = controllerutil.SetControllerReference(ins, nfdClusterRole, r.scheme)
-	// if err != nil {
-	// 	log.Printf("Couldn't set owner references for ClusterRole: %v", err)
-	// 	return err
-	// }
-	// err = controllerutil.SetControllerReference(ins, nfdClusterRoleBinding, r.scheme)
-	// if err != nil {
-	// 	log.Printf("Couldn't set owner references for ClusterRoleBinding: %v", err)
-	// 	return err
-	// }
+	err = controllerutil.SetControllerReference(ins, &nfdClusterRole, r.scheme)
+	if err != nil {
+	 	log.Printf("Couldn't set owner references for ClusterRole: %v", err)
+	 	return err
+	}
+	err = controllerutil.SetControllerReference(ins, &nfdClusterRoleBinding, r.scheme)
+	if err != nil {
+	 	log.Printf("Couldn't set owner references for ClusterRoleBinding: %v", err)
+	 	return err
+	}
+	err = controllerutil.SetControllerReference(ins, &nfdSecurityContextConstraint, r.scheme)
+	if err != nil {
+	 	log.Printf("Couldn't set owner references for SecurityContextConstraint: %v", err)
+	 	return err
+	}
+	err = controllerutil.SetControllerReference(ins, &nfdDaemonSet, r.scheme)
+	if err != nil {
+	 	log.Printf("Couldn't set owner references for DaemonSet: %v", err)
+	 	return err
+	}
 	
 	return nil
 }
@@ -44,10 +54,8 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	obj := &nfdServiceAccount 
 	found := &corev1.ServiceAccount{}
 	
-	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n",
-		obj.Name, obj.Namespace)
-	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace,
-		Name: obj.Name}, found)
+	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 		err = r.client.Create(context.TODO(), obj)
@@ -68,7 +76,7 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := nfdClusterRole
+	obj := &nfdClusterRole
 	found := &rbacv1.ClusterRole{}
 	
 	log.Printf("Looking for ClusterRole:%s\n", obj.Name)
@@ -93,7 +101,7 @@ func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := nfdClusterRoleBinding
+	obj := &nfdClusterRoleBinding
 	found := &rbacv1.ClusterRoleBinding{}
 	
 	log.Printf("Looking for ClusterRoleBinding:%s\n", obj.Name)
@@ -118,7 +126,7 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := nfdDaemonSet
+	obj := &nfdDaemonSet
 	found := &appsv1.DaemonSet{}
 	
 	log.Printf("Looking for DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
@@ -141,12 +149,10 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 }
 
 
-
-
 func securityContextConstraintControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := nfdSecurityContextConstraint
+	obj := &nfdSecurityContextConstraint
 	found := &securityv1.SecurityContextConstraints{}
 	
 	log.Printf("Looking for SecurityContextConstraint:%s\n", obj.Name)
