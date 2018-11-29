@@ -19,7 +19,7 @@ func decodeManifest(yaml string) interface{} {
 	decode := scheme.Codecs.UniversalDeserializer().Decode
 	obj, _, err := decode([]byte(yaml), nil, nil)
 	if err != nil {
-		log.Printf("Error decoding manifest")
+		log.Printf("Error decoding manifest %v\n", err)
 		return nil
 	}
 	return obj
