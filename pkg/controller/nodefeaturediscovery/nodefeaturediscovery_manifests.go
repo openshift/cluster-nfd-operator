@@ -108,12 +108,7 @@ spec:
       hostNetwork: true
       serviceAccount: node-feature-discovery
       containers:
-        - env:
-          - name: NODE_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: spec.nodeName
-          image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
+        - image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
           name: node-feature-discovery
           command: ["/usr/bin/node-feature-discovery", "--source=pci"]
           args:
