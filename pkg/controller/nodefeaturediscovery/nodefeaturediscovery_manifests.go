@@ -1,15 +1,14 @@
 package nodefeaturediscovery
 
-
-var nfdserviceaccount = `
+var nfdserviceaccount = []byte(`
 apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: node-feature-discovery
   namespace: openshift-cluster-nfd-operator
-`
+`)
 
-var nfdclusterrole = `
+var nfdclusterrole = []byte(`
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -24,9 +23,9 @@ rules:
   - get
   - patch
   - update
-`
+`)
 
-var nfdclusterrolebinding = `
+var nfdclusterrolebinding = []byte(`
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -39,9 +38,9 @@ subjects:
 - kind: ServiceAccount
   name: node-feature-discovery
   namespace: node-feature-discovery
-`
+`)
 
-var nfdsecuritycontextconstraint = `
+var nfdsecuritycontextconstraint = []byte(`
 allowHostDirVolumePlugin: true
 allowHostIPC: false
 allowHostNetwork: true
@@ -78,9 +77,7 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-- system:serviceaccount:openshift-infra:pv-recycler-controller
-- system:serviceaccount:kube-service-catalog:service-catalog-apiserver
-- system:serviceaccount:node-feature-discovery:node-feature-discovery
+- system:serviceaccount:openshift-cluster-nfd-operator:node-feature-discovery
 volumes:
 - configMap
 - downwardAPI
@@ -90,43 +87,9 @@ volumes:
 - persistentVolumeClaim
 - projected
 - secret
-`
-var nfddaemonset = `
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  labels:
-    app: node-feature-discovery
-  name: node-feature-discovery
-  namespace: openshift-cluster-nfd-operator
-spec:
-  selector:
-    matchLabels:
-      app: node-feature-discovery
-  template:
-    metadata:
-      labels:
-        app: node-feature-discovery
-    spec:
-      hostNetwork: true
-      serviceAccount: node-feature-discovery
-      containers:
-        - image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
-          name: node-feature-discovery
-          command: ["/usr/bin/node-feature-discovery", "--source=pci"]
-          args:
-            - "--sleep-interval=60s"
-          volumeMounts:
-            - name: host-sys
-              mountPath: "/host-sys"
-      volumes:
-        - name: host-sys
-          hostPath:
-            path: "/sys"
-`
+`)
 
-
-var nfddaemonset2 = `
+var nfddaemonset = []byte(`
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -145,7 +108,7 @@ spec:
       hostNetwork: true
       serviceAccount: node-feature-discovery
       containers:
-        - env:3
+        - env:
           - name: NODE_NAME
             valueFrom:
               fieldRef:
@@ -162,4 +125,4 @@ spec:
         - name: host-sys
           hostPath:
             path: "/sys"
-`
+`)

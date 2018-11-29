@@ -19,21 +19,21 @@ import (
 func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	err := controllerutil.SetControllerReference(ins, nfdServiceAccount, r.scheme)
+	err := controllerutil.SetControllerReference(ins, &nfdServiceAccount, r.scheme)
 	if err != nil {
 		log.Printf("Couldn't set owner references for ServiceAccount: %v", err)
 		return err
 	}
-	err = controllerutil.SetControllerReference(ins, nfdClusterRole, r.scheme)
-	if err != nil {
-		log.Printf("Couldn't set owner references for ClusterRole: %v", err)
-		return err
-	}
-	err = controllerutil.SetControllerReference(ins, nfdClusterRoleBinding, r.scheme)
-	if err != nil {
-		log.Printf("Couldn't set owner references for ClusterRoleBinding: %v", err)
-		return err
-	}
+	// err = controllerutil.SetControllerReference(ins, nfdClusterRole, r.scheme)
+	// if err != nil {
+	// 	log.Printf("Couldn't set owner references for ClusterRole: %v", err)
+	// 	return err
+	// }
+	// err = controllerutil.SetControllerReference(ins, nfdClusterRoleBinding, r.scheme)
+	// if err != nil {
+	// 	log.Printf("Couldn't set owner references for ClusterRoleBinding: %v", err)
+	// 	return err
+	// }
 	
 	return nil
 }
@@ -41,7 +41,7 @@ func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := nfdServiceAccount 
+	obj := &nfdServiceAccount 
 	found := &corev1.ServiceAccount{}
 	
 	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n",
