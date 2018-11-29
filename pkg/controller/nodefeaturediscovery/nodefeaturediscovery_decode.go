@@ -12,7 +12,6 @@ import (
 var nfdServiceAccount *corev1.ServiceAccount
 var nfdClusterRole *rbacv1.ClusterRole
 var nfdClusterRoleBinding *rbacv1.ClusterRoleBinding
-
 //var nfdSCC *
 var nfdDaemonSet *appsv1.DaemonSet
 
@@ -30,5 +29,5 @@ func init() {
 	nfdServiceAccount = decodeManifest(nfdserviceaccount).(*corev1.ServiceAccount)
 	nfdClusterRole = decodeManifest(nfdclusterrole).(*rbacv1.ClusterRole)
 	nfdClusterRoleBinding = decodeManifest(nfdclusterrolebinding).(*rbacv1.ClusterRoleBinding)
-//	nfdDaemonSet = decodeManifest(nfddaemonset).(*appsv1.DaemonSet)
+	nfdDaemonSet = decodeManifest(nfddaemonset).(*appsv1.DaemonSet)
 }

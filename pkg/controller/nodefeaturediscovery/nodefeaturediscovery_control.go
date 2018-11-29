@@ -5,7 +5,7 @@ import (
 	"log"
 
 	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
-
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -109,6 +109,31 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 	}
 
 	log.Printf("Found ClusterRoleBinding:%s\n", obj.Name )
+	
+	return nil
+}
+
+func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
+	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
+
+	obj := nfdDaemonSet
+	found := &appsv1.DaemonSet{}
+	
+	log.Printf("Looking for DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		log.Printf("Creating DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+		err = r.client.Create(context.TODO(), obj)
+		if err != nil {
+			log.Printf("Couldn't create DaemonSet:%s in Namespace:%S\n", obj.Name, obj.Namespace)
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	log.Printf("Found DaemonSet:%s\n", obj.Name, obj.Namespace )
 	
 	return nil
 }
