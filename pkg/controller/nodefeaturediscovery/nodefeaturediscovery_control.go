@@ -129,7 +129,7 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 	obj := &nfdDaemonSet
 	found := &appsv1.DaemonSet{}
 	
-	log.Printf("Looking for DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+	log.Printf("Looking for DaemonSet:%s in Namespace:%s\n", obj, obj.Namespace)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		log.Printf("Creating DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
