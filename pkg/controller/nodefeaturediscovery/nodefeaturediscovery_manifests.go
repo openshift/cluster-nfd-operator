@@ -46,6 +46,8 @@ subjects:
 - kind: ServiceAccount
   name: node-feature-discovery
   namespace: node-feature-discovery
+userNames:
+- system:serviceaccount:openshift-cluster-nfd-operator:node-feature-discovery
 `)
 
 var nfdsecuritycontextconstraint = []byte(`
