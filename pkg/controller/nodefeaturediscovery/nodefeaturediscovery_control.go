@@ -71,9 +71,11 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Found/Updating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 	err = r.client.Update(context.TODO(), obj)
 	if err != nil {
+		log.Printf("Couldn't update tuned ConfigMap: %v", err)
 		return err
 	}
-
+	
+	
 	return nil
 }
 
@@ -97,11 +99,7 @@ func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found/Updating ClusterRole:%s\n", obj.Name )
-	err = r.client.Update(context.TODO(), obj)
-	if err != nil {
-		return err
-	}
+	log.Printf("Found ClusterRole:%s\n", obj.Name )
 	
 	return nil
 }
@@ -126,12 +124,8 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found/Updating ClusterRoleBinding:%s\n", obj.Name )
-	err = r.client.Update(context.TODO(), obj)
-	if err != nil {
-		return err
-	}
-
+	log.Printf("Found ClusterRoleBinding:%s\n", obj.Name )
+	
 	return nil
 }
 
@@ -155,11 +149,7 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found/Updating DaemonSet:%s\n", obj.Name, obj.Namespace )
-	err = r.client.Update(context.TODO(), obj)
-	if err != nil {
-		return err
-	}
+	log.Printf("Found DaemonSet:%s\n", obj.Name, obj.Namespace )
 	
 	return nil
 }
@@ -185,11 +175,7 @@ func securityContextConstraintControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found/Updating SecurityContextConstraint:%s\n", obj.Name )
-	err = r.client.Update(context.TODO(), obj)
-	if err != nil {
-		return err
-	}
-
+	log.Printf("Found SecurityContextConstraint:%s\n", obj.Name )
+	
 	return nil
 }
