@@ -117,10 +117,10 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	// err = securityContextConstraintControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	err = securityContextConstraintControl(r, ins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 
 	err = daemonSetControl(r, ins)
 	if err != nil {
