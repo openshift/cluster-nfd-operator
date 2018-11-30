@@ -45,7 +45,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: node-feature-discovery
-  namespace: node-feature-discovery
+  namespace: openshift-cluster-nfd-operator
 userNames:
 - system:serviceaccount:openshift-cluster-nfd-operator:node-feature-discovery
 `)
