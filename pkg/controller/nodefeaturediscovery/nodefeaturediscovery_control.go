@@ -143,7 +143,7 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found DaemonSet:%s\n", obj.Namex)
+	log.Printf("Found DaemonSet:%s\n", obj.Name)
 
 	return nil
 }
