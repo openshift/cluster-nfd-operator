@@ -60,7 +60,7 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
-			log.Printf("Couldn't create Namespace:%s\n", obj.Name)
+			log.Printf("Couldn't create Namespace:%s\n%v\n", obj.Name, err)
 			return err
 		}
 		return nil
@@ -85,7 +85,7 @@ func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 		log.Printf("Creating ClusterRole:%s\n", obj.Name)
 		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
-			log.Printf("Couldn't create ClusterRole:%s\n", obj.Name)
+			log.Printf("Couldn't create ClusterRole:%s\n%v\n", obj.Name, err)
 			return err
 		}
 		return nil
@@ -110,7 +110,7 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 		log.Printf("Creating ClusterRoleBinding:%s\n", obj.Name)
 		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
-			log.Printf("Couldn't create ClusterRoleBinding:%s\n", obj.Name)
+			log.Printf("Couldn't create ClusterRoleBinding:%s\n%v\n", obj.Name, err)
 			return err
 		}
 		return nil
@@ -135,7 +135,7 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 		log.Printf("Creating DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
-			log.Printf("Couldn't create DaemonSet:%s in Namespace:%s %v\n", obj.Name, obj.Namespace, err)
+			log.Printf("Couldn't create DaemonSet:%s in Namespace:%s\n%v\n", obj.Name, obj.Namespace, err)
 			return err
 		}
 		return nil
