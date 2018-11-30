@@ -23,6 +23,12 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs: ["use"]
+  resourceNames: ["hostNetwork"]
 `)
 
 var nfdclusterrolebinding = []byte(`
