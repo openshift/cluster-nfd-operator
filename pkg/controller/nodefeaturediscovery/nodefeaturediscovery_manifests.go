@@ -27,8 +27,10 @@ rules:
   - security.openshift.io
   resources:
   - securitycontextconstraints
-  verbs: ["use"]
-  resourceNames: ["hostNetwork"]
+  verbs:
+  - use
+  resourceNames:
+  - hostnetwork
 `)
 
 var nfdclusterrolebinding = []byte(`
