@@ -57,8 +57,8 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Updating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
-		err = r.client.Update(context.TODO(), obj)
+		log.Printf("Creating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			log.Printf("Couldn't create Namespace:%s\n", obj.Name)
 			return err
@@ -68,8 +68,12 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
-	
+	log.Printf("Found/Updating ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+	err = r.client.Update(context.TODO(), obj)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -82,8 +86,8 @@ func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Looking for ClusterRole:%s\n", obj.Name)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Updating ClusterRole:%s\n", obj.Name)
-		err = r.client.Update(context.TODO(), obj)
+		log.Printf("Creating ClusterRole:%s\n", obj.Name)
+		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			log.Printf("Couldn't create ClusterRole:%s\n", obj.Name)
 			return err
@@ -93,7 +97,11 @@ func clusterRoleControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found ClusterRole:%s\n", obj.Name )
+	log.Printf("Found/Updating ClusterRole:%s\n", obj.Name )
+	err = r.client.Update(context.TODO(), obj)
+	if err != nil {
+		return err
+	}
 	
 	return nil
 }
@@ -107,8 +115,8 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Looking for ClusterRoleBinding:%s\n", obj.Name)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Updating ClusterRoleBinding:%s\n", obj.Name)
-		err = r.client.Update(context.TODO(), obj)
+		log.Printf("Creating ClusterRoleBinding:%s\n", obj.Name)
+		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			log.Printf("Couldn't create ClusterRoleBinding:%s\n", obj.Name)
 			return err
@@ -118,8 +126,12 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found ClusterRoleBinding:%s\n", obj.Name )
-	
+	log.Printf("Found/Updating ClusterRoleBinding:%s\n", obj.Name )
+	err = r.client.Update(context.TODO(), obj)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -132,8 +144,8 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Looking for DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Updating DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
-		err = r.client.Update(context.TODO(), obj)
+		log.Printf("Creating DaemonSet:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			log.Printf("Couldn't create DaemonSet:%s in Namespace:%s %v\n", obj.Name, obj.Namespace, err)
 			return err
@@ -143,7 +155,11 @@ func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found DaemonSet:%s\n", obj.Name, obj.Namespace )
+	log.Printf("Found/Updating DaemonSet:%s\n", obj.Name, obj.Namespace )
+	err = r.client.Update(context.TODO(), obj)
+	if err != nil {
+		return err
+	}
 	
 	return nil
 }
@@ -158,8 +174,8 @@ func securityContextConstraintControl(r *ReconcileNodeFeatureDiscovery,
 	log.Printf("Looking for SecurityContextConstraint:%s\n", obj.Name)
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		log.Printf("Updating SecurityContextConstraint:%s\n", obj.Name)
-		err = r.client.Update(context.TODO(), obj)
+		log.Printf("Creating SecurityContextConstraint:%s\n", obj.Name)
+		err = r.client.Create(context.TODO(), obj)
 		if err != nil {
 			log.Printf("Couldn't create SecurityContextConstraint:%s\n", obj.Name)
 			return err
@@ -169,7 +185,11 @@ func securityContextConstraintControl(r *ReconcileNodeFeatureDiscovery,
 		return err
 	}
 
-	log.Printf("Found SecurityContextConstraint:%s\n", obj.Name )
-	
+	log.Printf("Found/Updating SecurityContextConstraint:%s\n", obj.Name )
+	err = r.client.Update(context.TODO(), obj)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
