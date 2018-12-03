@@ -28,6 +28,7 @@ var nfdClusterRole               rbacv1.ClusterRole
 var nfdClusterRoleBinding        rbacv1.ClusterRoleBinding
 var nfdSecurityContextConstraint securityv1.SecurityContextConstraints
 var nfdDaemonSet                 kappsv1.DaemonSet
+var nfdConfigMap                 corev1.ConfigMap
 
 func init() {
 	// The Kubernetes Go client (nested within the OpenShift Go client)
@@ -62,6 +63,9 @@ func init() {
 	_, _, err = s.Decode(nfdsecuritycontextconstraint, nil, &nfdSecurityContextConstraint)
 	if err != nil { panic(err) }
 
+	_, _, err = s.Decode(nfdconfigmap, nil, &nfdConfigMap)
+	if err != nil { panic(err) }
+	
 	_, _, err = s.Decode(nfddaemonset, nil, &nfdDaemonSet)
 	if err != nil { panic(err) }
 

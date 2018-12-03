@@ -5,7 +5,8 @@ import (
 	"log"
 
 	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -37,7 +38,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to secondary resource Pods and requeue the owner NodeFeatureDiscovery
-	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{},
 	})
@@ -74,6 +75,8 @@ type ReconcileNodeFeatureDiscovery struct {
 func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
 
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling NodeFeatureDiscovery.")
 	// Fetch the NodeFeatureDiscovery instance
 	ins := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, ins)
@@ -108,11 +111,16 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	// err = securityContextConstraintControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
+	 // err = securityContextConstraintControl(r, ins)
+	 // if err != nil {
+	 // 	 return reconcile.Result{}, err
+	 // }
 
+	err = configMapControl(r, ins)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	
 	err = daemonSetControl(r, ins)
 	if err != nil {
 		return reconcile.Result{}, err

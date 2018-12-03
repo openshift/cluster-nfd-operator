@@ -123,6 +123,31 @@ func clusterRoleBindingControl(r *ReconcileNodeFeatureDiscovery,
 	return nil
 }
 
+func configMapControl(r *ReconcileNodeFeatureDiscovery,
+	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
+
+	obj := &nfdConfigMap
+	found := &corev1.ConfigMap{}
+
+	log.Printf("Looking for ConfigMap:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		log.Printf("Not found creating ConfigMap:%s in Namespace:%s\n", obj.Name, obj.Namespace)
+		err = r.client.Create(context.TODO(), obj)
+		if err != nil {
+			log.Printf("Couldn't create ConfigMap:%s in Namespace:%s\n%v\n", obj.Name, obj.Namespace, err)
+			return err
+		}
+		return nil
+	} else if err != nil {
+		return err
+	}
+
+	log.Printf("Found ConfigMap:%s\n", obj.Name)
+	
+	return nil
+}
+
 func daemonSetControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 

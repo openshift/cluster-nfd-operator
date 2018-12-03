@@ -99,6 +99,33 @@ volumes:
 - secret
 `)
 
+
+var nfdconfigmap = []byte(`
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: node-feature-discovery
+  namespace: openshift-cluster-nfd-operator
+data:
+  node-feature-discovery-conf: |
+    #sources:
+    #  pci:
+    #    deviceClassWhitelist:
+    #      - "0200"
+    #      - "03"
+    #      - "12"
+    #    deviceLabelFields:
+    #      - "class"
+    #      - "vendor"
+    #      - "device"
+    #      - "subsystem_vendor"
+    #      - "subsystem_device"
+`)
+
+
+
+
+
 var nfddaemonset = []byte(`
 apiVersion: apps/v1
 kind: DaemonSet
