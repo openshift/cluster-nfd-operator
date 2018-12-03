@@ -123,9 +123,6 @@ data:
 `)
 
 
-
-
-
 var nfddaemonset = []byte(`
 apiVersion: apps/v1
 kind: DaemonSet
