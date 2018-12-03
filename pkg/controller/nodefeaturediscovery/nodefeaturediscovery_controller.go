@@ -5,20 +5,11 @@ import (
 	"log"
 
 	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
-
 	corev1 "k8s.io/api/core/v1"
-
 	"k8s.io/apimachinery/pkg/api/errors"
-	//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	//"k8s.io/apimachinery/pkg/types"
-
-	//	"k8s.io/api/extensions/v1beta1"
-	//	"k8s.io/client-go/kubernetes/scheme"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
-	//"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"

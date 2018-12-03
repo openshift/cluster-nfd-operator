@@ -116,7 +116,7 @@ spec:
       labels:
         app: node-feature-discovery
     spec:
-      hostNetwork: true
+#      hostNetwork: true
       serviceAccount: node-feature-discovery
       containers:
         - env:
@@ -132,6 +132,8 @@ spec:
           volumeMounts:
             - name: host-sys
               mountPath: "/host-sys"
+          securityContext:
+            privileged: true
       volumes:
         - name: host-sys
           hostPath:
