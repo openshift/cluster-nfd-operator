@@ -15,6 +15,19 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type controlFunc func(*ReconcileNodeFeatureDiscovery,*nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error
+
+var nfdControl []controlFunc
+
+func init() {
+	nfdControl = append(nfdControl, setOwnerReferenceForAll)
+	nfdControl = append(nfdControl, serviceAccountControl)
+	nfdControl = append(nfdControl, clusterRoleControl)
+	nfdControl = append(nfdControl, clusterRoleBindingControl)
+	nfdControl = append(nfdControl, configMapControl)
+//	nfdControl = append(nfdControl, securityContextConstraintControl)
+	nfdControl = append(nfdControl, daemonSetControl)
+}
 
 func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {

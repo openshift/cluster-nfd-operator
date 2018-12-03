@@ -254,7 +254,23 @@
 [[projects]]
   digest = "1:8bc8f43d2332d035857c92581df240f247c287629d5f60c751df609f9b6215c5"
   name = "github.com/openshift/api"
-  packages = ["security/v1"]
+  packages = [
+    "apps/v1",
+    "authorization/v1",
+    "build/v1",
+    "image/docker10",
+    "image/dockerpre012",
+    "image/v1",
+    "network/v1",
+    "oauth/v1",
+    "pkg/serialization",
+    "project/v1",
+    "quota/v1",
+    "route/v1",
+    "security/v1",
+    "template/v1",
+    "user/v1",
+  ]
   pruneopts = "NT"
   revision = "0d921e363e951d89f583292c60d013c318df64dc"
   version = "v3.9.0"
@@ -733,7 +749,18 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/openshift/api/apps/v1",
+    "github.com/openshift/api/authorization/v1",
+    "github.com/openshift/api/build/v1",
+    "github.com/openshift/api/image/v1",
+    "github.com/openshift/api/network/v1",
+    "github.com/openshift/api/oauth/v1",
+    "github.com/openshift/api/project/v1",
+    "github.com/openshift/api/quota/v1",
+    "github.com/openshift/api/route/v1",
     "github.com/openshift/api/security/v1",
+    "github.com/openshift/api/template/v1",
+    "github.com/openshift/api/user/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/version",
     "k8s.io/api/apps/v1",
@@ -743,6 +770,7 @@
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/schema",
+    "k8s.io/apimachinery/pkg/runtime/serializer/json",
     "k8s.io/apimachinery/pkg/types",
     "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
@@ -761,6 +789,7 @@
     "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
     "sigs.k8s.io/controller-runtime/pkg/reconcile",
+    "sigs.k8s.io/controller-runtime/pkg/runtime/log",
     "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
     "sigs.k8s.io/controller-runtime/pkg/source",
