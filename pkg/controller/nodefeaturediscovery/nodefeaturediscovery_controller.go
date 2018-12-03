@@ -2,7 +2,6 @@ package nodefeaturediscovery
 
 import (
 	"context"
-	"log"
 
 	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,7 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
+
+var logc = logf.Log.WithName("controller_nfd")
 
 // Add creates a new NodeFeatureDiscovery Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
@@ -73,9 +75,9 @@ type ReconcileNodeFeatureDiscovery struct {
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
+	//log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
 
-	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger := logc.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling NodeFeatureDiscovery.")
 	// Fetch the NodeFeatureDiscovery instance
 	ins := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
