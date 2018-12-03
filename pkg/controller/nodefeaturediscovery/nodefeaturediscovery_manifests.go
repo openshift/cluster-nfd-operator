@@ -108,6 +108,7 @@ metadata:
   namespace: openshift-cluster-nfd-operator
 data:
   node-feature-discovery-conf: |
+    #uncomment to configure
     #sources:
     #  pci:
     #    deviceClassWhitelist:
@@ -156,10 +157,18 @@ spec:
           volumeMounts:
             - name: host-sys
               mountPath: "/host-sys"
+            - name: config
+              mountPath: "/etc/kubernetes/node-feature-discovery"
           securityContext:
             privileged: true
       volumes:
         - name: host-sys
           hostPath:
             path: "/sys"
+        - name: config
+          configMap:
+            name: node-feature-discovery
+            items:
+              - key: node-feature-discovery-conf
+                path: node-feature-discovery.conf
 `)
