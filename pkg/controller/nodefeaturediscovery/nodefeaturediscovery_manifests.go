@@ -1,12 +1,5 @@
 package nodefeaturediscovery
 
-var nfd []byte {
-
-}
-
-func init() {
-
-}
 
 var nfdserviceaccount = []byte(`
 apiVersion: v1
