@@ -1,5 +1,13 @@
 package nodefeaturediscovery
 
+var nfd []byte {
+
+}
+
+func init() {
+
+}
+
 var nfdserviceaccount = []byte(`
 apiVersion: v1
 kind: ServiceAccount
@@ -30,7 +38,7 @@ rules:
   verbs:
   - use
   resourceNames:
-  - hostnetwork
+  - privileged
 `)
 
 var nfdclusterrolebinding = []byte(`
@@ -141,7 +149,7 @@ spec:
       labels:
         app: node-feature-discovery
     spec:
-#      hostNetwork: true
+      hostNetwork: true
       serviceAccount: node-feature-discovery
       containers:
         - env:

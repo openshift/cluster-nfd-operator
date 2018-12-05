@@ -94,43 +94,11 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	}
 
 	for _, nfd := range nfdControl {
-		nfd(r, ins)
+		err = nfd(r, ins)
+		if err != nil {
+		 	return reconcile.Result{}, err
+		 }
 	}
-	
-	// err = setOwnerReferenceForAll(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = serviceAccountControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = clusterRoleControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	// err = clusterRoleBindingControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-
-	//  // err = securityContextConstraintControl(r, ins)
-	//  // if err != nil {
-	//  // 	 return reconcile.Result{}, err
-	//  // }
-
-	// err = configMapControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
-	
-	// err = daemonSetControl(r, ins)
-	// if err != nil {
-	// 	return reconcile.Result{}, err
-	// }
 	
 	return reconcile.Result{}, nil
 }
