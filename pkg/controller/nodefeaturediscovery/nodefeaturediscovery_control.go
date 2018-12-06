@@ -25,7 +25,7 @@ func init() {
 	nfdControl = append(nfdControl, clusterRoleControl)
 	nfdControl = append(nfdControl, clusterRoleBindingControl)
 	nfdControl = append(nfdControl, configMapControl)
-	nfdControl = append(nfdControl, securityContextConstraintControl)
+//	nfdControl = append(nfdControl, securityContextConstraintControl)
 	nfdControl = append(nfdControl, daemonSetControl)
 }
 
