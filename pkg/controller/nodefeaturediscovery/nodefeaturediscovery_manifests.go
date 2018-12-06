@@ -1,5 +1,12 @@
 package nodefeaturediscovery
 
+type assetsFromFile []byte
+
+var manifests []assetsFromFile
+
+func init() {
+	
+}
 
 var nfdserviceaccount = []byte(`
 apiVersion: v1
