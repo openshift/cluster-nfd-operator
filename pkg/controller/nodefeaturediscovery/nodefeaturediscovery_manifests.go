@@ -3,7 +3,6 @@ package nodefeaturediscovery
 import (
 	"os"
 	"path/filepath"
-	"log"
 	"io/ioutil"
 )
 
