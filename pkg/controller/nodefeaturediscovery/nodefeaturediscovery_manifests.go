@@ -21,7 +21,9 @@ func FilePathWalkDir(root string) ([]string, error) {
     return files, err
 }
 
-func init() {
+var nfdserviceaccount []byte
+
+func GenerateManifests() {
 	// Were putting all assets to /opt because this is one
 	// of the directories that is writable in RHCOS.
 	assets := "/opt/lib/cluster-nfd-operator/assets/node-feature-discovery"
@@ -36,8 +38,13 @@ func init() {
 			panic(err)
 		}
 		manifests = append(manifests, buffer)
-		log.Printf("MANIFEST: %s", manifests[i])
+		log.Printf("MANIFEST: %s %d", manifests[i])
 	}
+
+	nfdserviceaccount = manifests[0]
+	log.Printf("MANIFEST: %s ", manifests[0])
+	log.Printf("SERVICE: %s ", nfdserviceaccount)
+
 }
 
 // var nfdserviceaccount = []byte(`
@@ -48,7 +55,7 @@ func init() {
 //   namespace: openshift-cluster-nfd-operator
 // `)
 
-var nfdserviceaccount = manifests[0]
+//var nfdserviceaccount = manifests[0]
 
 var nfdclusterrole = []byte(`
 apiVersion: rbac.authorization.k8s.io/v1

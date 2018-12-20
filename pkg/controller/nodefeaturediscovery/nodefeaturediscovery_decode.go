@@ -1,6 +1,7 @@
 package nodefeaturediscovery
 
 import (
+	"log"
 	kappsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -48,11 +49,16 @@ func init() {
         templatev1.AddToScheme(scheme.Scheme)
         userv1.AddToScheme(scheme.Scheme)
 
+	GenerateManifests()
+
 	s := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme,
                 scheme.Scheme)
 
+	log.Printf("SERVICE: %s ", nfdserviceaccount)
 	_, _, err := s.Decode(nfdserviceaccount, nil, &nfdServiceAccount)
 	if err != nil { panic(err) }
+
+	
 
 	_, _, err = s.Decode(nfdclusterrole, nil, &nfdClusterRole)
 	if err != nil { panic(err) }
