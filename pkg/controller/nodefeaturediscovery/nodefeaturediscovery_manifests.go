@@ -34,7 +34,7 @@ func GenerateManifests() {
 		panic(err)
 	}
 
-	for i, file := range files {
+	for _, file := range files {
 		buffer, err := ioutil.ReadFile(file)
 		if err != nil {
 			panic(err)
