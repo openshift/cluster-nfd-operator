@@ -26,7 +26,7 @@ func init() {
 	nfdControl = append(nfdControl, clusterRoleBindingControl)
 	nfdControl = append(nfdControl, configMapControl)
 //	nfdControl = append(nfdControl, securityContextConstraintControl)
-	nfdControl = append(nfdControl, daemonSetControl)
+	nfdControl = append(nfdControl, daemonSetControl) 
 }
 
 func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
@@ -64,7 +64,7 @@ func setOwnerReferenceForAll(r *ReconcileNodeFeatureDiscovery,
 func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	ins *nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery) error {
 
-	obj := &nfdServiceAccount 
+	obj := &nfdServiceAccount
 	found := &corev1.ServiceAccount{}
 	
 	log.Printf("Looking for ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
@@ -80,7 +80,7 @@ func serviceAccountControl(r *ReconcileNodeFeatureDiscovery,
 	} else if err != nil {
 		return err
 	}
-
+  
 	log.Printf("Found ServiceAccount:%s in Namespace:%s\n", obj.Name, obj.Namespace)
 		
 	return nil

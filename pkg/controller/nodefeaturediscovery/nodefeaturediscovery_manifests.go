@@ -1,11 +1,36 @@
 package nodefeaturediscovery
 
-type assetsFromFile []byte
+import (
+	"os"
+	"path/filepath"
+	"io/ioutil"
+)
 
+type assetsFromFile []byte
 var manifests []assetsFromFile
 
 func init() {
-	
+	// Were putting all assets to /opt because this is one
+	// of the directories that is writable in RHCOS.
+	var files []string
+	assets := "/opt/lib/cluster-nfd-operator/assets/node-feature-discovery"
+	err := filepath.Walk(assets, func(path string, info os.FileInfo, err error)
+		error {
+			files = append(files, path)
+			return nil
+		})
+	if err != nil {
+		panic(err)
+	}
+
+	for i, file := range files {
+		buffer, err := ioutil.ReadFile(file)
+		if err != nil {
+			panic(err)
+		}
+		manifests = append(manifests, buffer)
+		log.Printf("MANIFEST: %s", manifests[i])
+	}
 }
 
 var nfdserviceaccount = []byte(`

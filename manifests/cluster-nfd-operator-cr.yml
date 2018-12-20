@@ -1,7 +1,8 @@
 apiVersion: nodefeaturediscovery.openshift.io/v1alpha1
 kind: NodeFeatureDiscovery
 metadata:
-  name: example-nodefeaturediscovery
+  name: default 
+  namespace: openshift-cluster-nfd-operator
 spec:
   # Add fields here
   size: 3
