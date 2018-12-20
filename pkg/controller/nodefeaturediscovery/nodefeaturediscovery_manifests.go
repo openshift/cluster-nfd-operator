@@ -40,13 +40,15 @@ func init() {
 	}
 }
 
-var nfdserviceaccount = []byte(`
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: node-feature-discovery
-  namespace: openshift-cluster-nfd-operator
-`)
+// var nfdserviceaccount = []byte(`
+// apiVersion: v1
+// kind: ServiceAccount
+// metadata:
+//   name: node-feature-discovery
+//   namespace: openshift-cluster-nfd-operator
+// `)
+
+var nfdserviceaccount = manifests[0]
 
 var nfdclusterrole = []byte(`
 apiVersion: rbac.authorization.k8s.io/v1
