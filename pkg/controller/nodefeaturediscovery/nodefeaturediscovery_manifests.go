@@ -8,17 +8,28 @@ import (
 type assetsFromFile []byte
 var manifests []assetsFromFile
 
+func FilePathWalkDir(root string) ([]string, error) {
+    var files []string
+    err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+        if !info.IsDir() {
+            files = append(files, path)
+        }
+        return nil
+    })
+    return files, err
+}
+
 func init() {
 	// Were putting all assets to /opt because this is one
 	// of the directories that is writable in RHCOS.
 	assets := "/opt/lib/cluster-nfd-operator/assets/node-feature-discovery"
-	files, err := ioutil.ReadDir(assets)
+	files, err := FilePathWalkDir(assets)
 	if err != nil {
 		panic(err)
 	}
 
 	for i, file := range files {
-		buffer, err := ioutil.ReadFile(file.Name())
+		buffer, err := ioutil.ReadFile(file)
 		if err != nil {
 			panic(err)
 		}
