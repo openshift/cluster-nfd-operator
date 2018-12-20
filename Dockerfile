@@ -6,8 +6,8 @@ RUN make build
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/cluster-nfd-operator /usr/bin/
 
-RUN mkdir -p /opt/lib/cluster-nfd-operator
-COPY assets /opt/lib/cluster-nfd-operator
+RUN mkdir -p /opt/lib/cluster-nfd-operator/assets
+COPY assets /opt/lib/cluster-nfd-operator/assets
 
 RUN useradd cluster-nfd-operator
 USER cluster-nfd-operator
