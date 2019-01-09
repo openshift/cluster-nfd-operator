@@ -22,7 +22,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
+          image: quay.io/zvonkok/node-feature-discovery:v4.0
           name: node-feature-discovery
           command: ["/usr/bin/node-feature-discovery"]
           args:
@@ -30,6 +30,8 @@ spec:
           volumeMounts:
             - name: host-sys
               mountPath: "/host-sys"
+            - name: host-etc
+              mountPath: "/host-etc"
             - name: config
               mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
@@ -43,6 +45,9 @@ spec:
         - name: host-sys
           hostPath:
             path: "/sys"
+        - name: host-etc
+          hostPath:
+            path: "/etc"
         - name: config
           configMap:
             name: node-feature-discovery
