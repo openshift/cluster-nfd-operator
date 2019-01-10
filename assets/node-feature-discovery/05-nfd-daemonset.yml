@@ -28,10 +28,12 @@ spec:
           args:
             - "--sleep-interval=60s"
           volumeMounts:
+            - name: host-boot
+              mountPath: "/host-boot"
             - name: host-sys
               mountPath: "/host-sys"
-            - name: host-etc
-              mountPath: "/host-etc"
+            - name: host-os-release
+              mountPath: "/host-etc/os-release"
             - name: config
               mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
@@ -45,9 +47,12 @@ spec:
         - name: host-sys
           hostPath:
             path: "/sys"
-        - name: host-etc
+        - name: host-os-release
           hostPath:
-            path: "/etc"
+            path: "/etc/os-release"
+        - name: host-boot
+          hostPath:
+            path: "/boot"
         - name: config
           configMap:
             name: node-feature-discovery
