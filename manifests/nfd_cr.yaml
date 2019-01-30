@@ -2,6 +2,7 @@ apiVersion: nfd.openshift.io/v1alpha1
 kind: NodeFeatureDiscovery
 metadata:
   name: nfd-master-server 
+  namespace: openshift-cluster-nfd-operator
 spec:
   # Add fields here
   size: 1
