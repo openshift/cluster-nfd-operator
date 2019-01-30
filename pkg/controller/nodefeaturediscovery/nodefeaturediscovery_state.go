@@ -188,7 +188,7 @@ func (n NFD) validate() {
 }
 
 func (n NFD) last() bool {
-	if n.idx == (len(n.controls) - 1) {
+	if n.idx == len(n.controls) {
 		return true
 	}
 	return false
