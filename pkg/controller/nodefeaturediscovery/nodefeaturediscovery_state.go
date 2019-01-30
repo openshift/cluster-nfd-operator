@@ -159,6 +159,7 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 	i *nfdv1alpha1.NodeFeatureDiscovery) error {
 	n.rec = r
 	n.ins = i
+	n.idx = 0
 
 	err := addStateMaster(n)
 	if err != nil {
