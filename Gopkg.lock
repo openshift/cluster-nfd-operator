@@ -129,11 +129,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aaedc94233e56ed57cdb04e3abfacc85c90c14082b62e3cdbe8ea72fc06ee035"
+  digest = "1:20b774dcfdf0fff3148432beb828c52404f3eb3d70b7ce71ae0356ed6cbc2bae"
   name = "github.com/golang/groupcache"
   packages = ["lru"]
   pruneopts = "NT"
-  revision = "c65c006176ff7ff98bb916961c7abbc6b0afc0aa"
+  revision = "5b532d6fd5efaf7fa130d4e859a2fde0fc3a9e1b"
 
 [[projects]]
   digest = "1:d7cb4458ea8782e6efacd8f4940796ec559c90833509c436f40c4085b98156dd"
@@ -268,32 +268,8 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:8bc8f43d2332d035857c92581df240f247c287629d5f60c751df609f9b6215c5"
-  name = "github.com/openshift/api"
-  packages = [
-    "apps/v1",
-    "authorization/v1",
-    "build/v1",
-    "image/docker10",
-    "image/dockerpre012",
-    "image/v1",
-    "network/v1",
-    "oauth/v1",
-    "pkg/serialization",
-    "project/v1",
-    "quota/v1",
-    "route/v1",
-    "security/v1",
-    "template/v1",
-    "user/v1",
-  ]
-  pruneopts = "NT"
-  revision = "0d921e363e951d89f583292c60d013c318df64dc"
-  version = "v3.9.0"
-
-[[projects]]
   branch = "master"
-  digest = "1:86268c315b26974aeeeaed2216c81cb65305aa5c6c33b4d643ab289931b57d33"
+  digest = "1:8522742c2b8b64217ab43cdd3ae0615f9a89ddb2f02729c613bb2e1347ba2a2c"
   name = "github.com/operator-framework/operator-sdk"
   packages = [
     "pkg/k8sutil",
@@ -302,7 +278,7 @@
     "version",
   ]
   pruneopts = "NT"
-  revision = "6b070cdb3378d3253751e8c46163e0e79fcf9577"
+  revision = "43d37ce8582699ca9b60d2ee94bff42387df1c69"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -346,10 +322,10 @@
   name = "github.com/prometheus/client_model"
   packages = ["go"]
   pruneopts = "NT"
-  revision = "56726106282f1985ea77d5305743db7231b0c0a8"
+  revision = "fd36f4220a901265f90734c3183c5f0c91daa0b8"
 
 [[projects]]
-  digest = "1:8e4954d40c6b7c6e3dd8277127cb6b66f9f20c0a3b18ee6f40d763c0e64ec48e"
+  digest = "1:30261b5e263b5c4fb40571b53a41a99c96016c6b1b2c45c1cefd226fc3f6304b"
   name = "github.com/prometheus/common"
   packages = [
     "expfmt",
@@ -357,12 +333,12 @@
     "model",
   ]
   pruneopts = "NT"
-  revision = "2998b132700a7d019ff618c06a234b47c1f3f681"
-  version = "v0.1.0"
+  revision = "cfeb6f9992ffa54aaa4f2170ade4067ee478b250"
+  version = "v0.2.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:42e89ce7daa7d2e08a4dc30943c359ba47c7ba93de7f6a41b974522fe02cf172"
+  digest = "1:753d988fc383cc61173d5afdf94a149b853c75d399dafacfd93ba5b734e06044"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -371,7 +347,7 @@
     "xfs",
   ]
   pruneopts = "NT"
-  revision = "bf6a532e95b1f7a62adf0ab5050a5bb2237ad2f4"
+  revision = "316cf8ccfec56d206735d46333ca162eb374da8b"
 
 [[projects]]
   digest = "1:9d8420bbf131d1618bde6530af37c3799340d3762cc47210c1d9532a4c3a2779"
@@ -414,11 +390,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:aa67eeb004ecca3853c940202a25687f00d8109576edd137fdf8b4f9d2cb8fd2"
+  digest = "1:c813f4a3da1be9e23203a204d15c9fca254986181f0401f9877ad6f2d2a66431"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NT"
-  revision = "057139ce5d2bdbe6fe73c53679e24e9cf007f637"
+  revision = "b01c7a72566457eb1420261cdafef86638fc3861"
 
 [[projects]]
   branch = "master"
@@ -437,7 +413,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:9a9a8b8635685e9e4ff68c80bebf00726f5019fb41da508a56df54e6e7277eeb"
+  digest = "1:928cde45ef910b09f3ab0cb53e6cff58a59669af166d7fe9198067ca9deec87f"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -447,18 +423,18 @@
     "jwt",
   ]
   pruneopts = "NT"
-  revision = "5dab4167f31cbd76b407f1486c86b40748bc5073"
+  revision = "99b60b757ec124ebb7d6b7e97f153b19c10ce163"
 
 [[projects]]
   branch = "master"
-  digest = "1:64e1913e5c2127689d73a8e67779478bbaff04e601fb38d910668972c597353a"
+  digest = "1:680783030e10a31a8c2deb6f0860f13878295b5458908f4395868e1dbbfe6a87"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NT"
-  revision = "b90733256f2e882e81d52f9126de08df5615afd9"
+  revision = "302c3dd5f1cc82baae8e44d9c3178e89b6e2b345"
 
 [[projects]]
   digest = "1:8c74f97396ed63cc2ef04ebb5fc37bb032871b8fd890a25991ed40974b00cd2a"
@@ -494,7 +470,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a5b86da25655e81b1f89c4bc557c4ff8e0ba6d7f2c216eac6b47186eb4ac56f4"
+  digest = "1:387937d01b585264ddcb3cc6b2dbb22191a6ffec8ed96093972e9d5f1edd9860"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
@@ -511,7 +487,7 @@
     "internal/semver",
   ]
   pruneopts = "NT"
-  revision = "cc6a436ffe6b424fffa1d91862c9b664d8407828"
+  revision = "a06a922acc1b97001c51689385e2144227c9e820"
 
 [[projects]]
   digest = "1:902ffa11f1d8c19c12b05cabffe69e1a16608ad03a8899ebcb9c6bde295660ae"
@@ -709,7 +685,6 @@
     "util/integer",
     "util/jsonpath",
     "util/retry",
-    "util/workqueue",
   ]
   pruneopts = "NT"
   revision = "d082d5923d3cc0bfbb066ee5fbdea3d0ca79acf8"
@@ -748,7 +723,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:4d52082d1d9ea18e04c8b859f6696f1ca42849d68257e5b84812f8067694a2e6"
+  digest = "1:4e07c417d966628ee9e471354ad5e311c9c25ff357d42fd0dd2f81a40caf6aad"
   name = "k8s.io/gengo"
   packages = [
     "args",
@@ -761,7 +736,7 @@
     "types",
   ]
   pruneopts = "NT"
-  revision = "f8a0810f38afb8478882b3835a615aebfda39afa"
+  revision = "0689ccc1d7d65d9dd1bedcc3b0b1ed7df91ba266"
 
 [[projects]]
   digest = "1:f3b42f307c7f49a1a7276c48d4b910db76e003220e88797f7acd41e3a9277ddf"
@@ -795,26 +770,15 @@
     "pkg/client",
     "pkg/client/apiutil",
     "pkg/client/config",
-    "pkg/controller",
-    "pkg/controller/controllerutil",
-    "pkg/event",
-    "pkg/handler",
-    "pkg/internal/controller",
-    "pkg/internal/controller/metrics",
     "pkg/internal/recorder",
     "pkg/leaderelection",
     "pkg/manager",
     "pkg/metrics",
     "pkg/patch",
-    "pkg/predicate",
-    "pkg/reconcile",
     "pkg/recorder",
     "pkg/runtime/inject",
     "pkg/runtime/log",
-    "pkg/runtime/scheme",
     "pkg/runtime/signals",
-    "pkg/source",
-    "pkg/source/internal",
     "pkg/webhook/admission",
     "pkg/webhook/admission/types",
     "pkg/webhook/types",
@@ -827,31 +791,11 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/openshift/api/apps/v1",
-    "github.com/openshift/api/authorization/v1",
-    "github.com/openshift/api/build/v1",
-    "github.com/openshift/api/image/v1",
-    "github.com/openshift/api/network/v1",
-    "github.com/openshift/api/oauth/v1",
-    "github.com/openshift/api/project/v1",
-    "github.com/openshift/api/quota/v1",
-    "github.com/openshift/api/route/v1",
-    "github.com/openshift/api/security/v1",
-    "github.com/openshift/api/template/v1",
-    "github.com/openshift/api/user/v1",
     "github.com/operator-framework/operator-sdk/pkg/k8sutil",
     "github.com/operator-framework/operator-sdk/pkg/leader",
     "github.com/operator-framework/operator-sdk/pkg/ready",
     "github.com/operator-framework/operator-sdk/version",
-    "k8s.io/api/apps/v1",
-    "k8s.io/api/core/v1",
-    "k8s.io/api/rbac/v1",
-    "k8s.io/apimachinery/pkg/api/errors",
-    "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
-    "k8s.io/apimachinery/pkg/runtime/schema",
-    "k8s.io/apimachinery/pkg/types",
-    "k8s.io/client-go/kubernetes/scheme",
     "k8s.io/client-go/plugin/pkg/client/auth/gcp",
     "k8s.io/code-generator/cmd/client-gen",
     "k8s.io/code-generator/cmd/conversion-gen",
@@ -861,17 +805,10 @@
     "k8s.io/code-generator/cmd/lister-gen",
     "k8s.io/code-generator/cmd/openapi-gen",
     "k8s.io/gengo/args",
-    "sigs.k8s.io/controller-runtime/pkg/client",
     "sigs.k8s.io/controller-runtime/pkg/client/config",
-    "sigs.k8s.io/controller-runtime/pkg/controller",
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil",
-    "sigs.k8s.io/controller-runtime/pkg/handler",
     "sigs.k8s.io/controller-runtime/pkg/manager",
-    "sigs.k8s.io/controller-runtime/pkg/reconcile",
     "sigs.k8s.io/controller-runtime/pkg/runtime/log",
-    "sigs.k8s.io/controller-runtime/pkg/runtime/scheme",
     "sigs.k8s.io/controller-runtime/pkg/runtime/signals",
-    "sigs.k8s.io/controller-runtime/pkg/source",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

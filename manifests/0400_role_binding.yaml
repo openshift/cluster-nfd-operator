@@ -5,7 +5,8 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: cluster-nfd-operator
-  namespace: openshift-cluster-nfd-operator 
+  # Replace this with the namespace the operator is deployed in.
+  namespace: REPLACE_NAMESPACE
 roleRef:
   kind: ClusterRole
   name: cluster-nfd-operator
