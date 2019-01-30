@@ -20,15 +20,22 @@ import (
 	"strings"
 	"time"
 
+	"github.com/operator-framework/operator-sdk/internal/util/fileutil"
 	k8sInternal "github.com/operator-framework/operator-sdk/internal/util/k8sutil"
+	"github.com/operator-framework/operator-sdk/internal/util/projutil"
+	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
+	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/scaffold"
+	"github.com/operator-framework/operator-sdk/pkg/scaffold/ansible"
 	"github.com/operator-framework/operator-sdk/pkg/test"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 type testClusterConfig struct {
@@ -57,11 +64,12 @@ func NewTestClusterCmd() *cobra.Command {
 }
 
 func testClusterFunc(cmd *cobra.Command, args []string) error {
-	// in main.go, we catch and print errors, so we don't want cobra to print the error itself
-	cmd.SilenceErrors = true
 	if len(args) != 1 {
-		return fmt.Errorf("operator-sdk test cluster requires exactly 1 argument")
+		return fmt.Errorf("command %s requires exactly one argument", cmd.CommandPath())
 	}
+
+	log.Info("Testing operator in cluster.")
+
 	var pullPolicy v1.PullPolicy
 	if strings.ToLower(tcConfig.imagePullPolicy) == "always" {
 		pullPolicy = v1.PullAlways
@@ -70,6 +78,19 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 	} else {
 		return fmt.Errorf("invalid imagePullPolicy '%v'", tcConfig.imagePullPolicy)
 	}
+
+	var testCmd []string
+	switch projutil.GetOperatorType() {
+	case projutil.OperatorTypeGo:
+		testCmd = []string{"/" + scaffold.GoTestScriptFile}
+	case projutil.OperatorTypeAnsible:
+		testCmd = []string{"/" + ansible.BuildTestFrameworkAnsibleTestScriptFile}
+	case projutil.OperatorTypeHelm:
+		log.Fatal("`test cluster` for Helm operators is not implemented")
+	default:
+		log.Fatal("Failed to determine operator type")
+	}
+
 	// cobra prints its help message on error; we silence that here because any errors below
 	// are due to the test failing, not incorrect user input
 	cmd.SilenceUsage = true
@@ -84,10 +105,16 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 				Name:            "operator-test",
 				Image:           args[0],
 				ImagePullPolicy: pullPolicy,
-				Command:         []string{"/" + scaffold.GoTestScriptFile},
+				Command:         testCmd,
 				Env: []v1.EnvVar{{
 					Name:      test.TestNamespaceEnv,
 					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.namespace"}},
+				}, {
+					Name:  k8sutil.OperatorNameEnvVar,
+					Value: "test-operator",
+				}, {
+					Name:      leader.PodNameEnv,
+					ValueFrom: &v1.EnvVarSource{FieldRef: &v1.ObjectFieldSelector{FieldPath: "metadata.name"}},
 				}},
 			}},
 		},
@@ -108,9 +135,9 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create test pod: %v", err)
 	}
 	defer func() {
-		err = kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
-		if err != nil {
-			fmt.Printf("Warning: failed to delete test pod")
+		rerr := kubeclient.CoreV1().Pods(tcConfig.namespace).Delete(testPod.Name, &metav1.DeleteOptions{})
+		if rerr != nil {
+			log.Warnf("Failed to delete test pod: %v", rerr)
 		}
 	}()
 	err = wait.Poll(time.Second*5, time.Second*time.Duration(tcConfig.pendingTimeout), func() (bool, error) {
@@ -140,15 +167,19 @@ func testClusterFunc(cmd *cobra.Command, args []string) error {
 			time.Sleep(time.Second * 5)
 			continue
 		} else if testPod.Status.Phase == v1.PodSucceeded {
-			fmt.Printf("Test Successfully Completed\n")
+			log.Info("Cluster test successfully completed.")
 			return nil
 		} else if testPod.Status.Phase == v1.PodFailed {
 			req := kubeclient.CoreV1().Pods(tcConfig.namespace).GetLogs(testPod.Name, &v1.PodLogOptions{})
 			readCloser, err := req.Stream()
 			if err != nil {
-				return fmt.Errorf("test failed and failed to get error logs")
+				return fmt.Errorf("test failed and failed to get error logs: %v", err)
 			}
-			defer readCloser.Close()
+			defer func() {
+				if err := readCloser.Close(); err != nil && !fileutil.IsClosedError(err) {
+					log.Errorf("Failed to close pod log reader: (%v)", err)
+				}
+			}()
 			buf := new(bytes.Buffer)
 			_, err = buf.ReadFrom(readCloser)
 			if err != nil {

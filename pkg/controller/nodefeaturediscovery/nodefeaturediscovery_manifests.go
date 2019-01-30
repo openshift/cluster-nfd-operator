@@ -1,39 +1,34 @@
 package nodefeaturediscovery
 
 import (
+	"io/ioutil"
 	"os"
 	"path/filepath"
-	"io/ioutil"
 )
 
-type assetsFromFile []byte
-var manifests []assetsFromFile
+type AssetsFromFile []byte
 
-func FilePathWalkDir(root string) ([]string, error) {
-    var files []string
-    err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-        if !info.IsDir() {
-            files = append(files, path)
-        }
-        return nil
-    })
-    return files, err
+var manifests []AssetsFromFile
+
+func filePathWalkDir(root string) ([]string, error) {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	return files, err
 }
 
-var nfdserviceaccount            []byte
-var nfdclusterrole               []byte
-var nfdclusterrolebinding        []byte
-var nfdsecuritycontextconstraint []byte
-var nfdconfigmap                 []byte
-var nfddaemonset                 []byte
+func GetAssetsFromPath(path string) []AssetsFromFile {
 
-func GenerateManifests() {
-	assets := "/opt/lib/cluster-nfd-operator/assets/node-feature-discovery"
-	files, err := FilePathWalkDir(assets)
+	manifests := []AssetsFromFile{}
+	assets := path
+	files, err := filePathWalkDir(assets)
 	if err != nil {
 		panic(err)
 	}
-
 	for _, file := range files {
 		buffer, err := ioutil.ReadFile(file)
 		if err != nil {
@@ -41,12 +36,5 @@ func GenerateManifests() {
 		}
 		manifests = append(manifests, buffer)
 	}
-	
-	nfdserviceaccount            = manifests[0]
-	nfdclusterrole               = manifests[1]
-	nfdclusterrolebinding        = manifests[2]
-	nfdsecuritycontextconstraint = manifests[3]
-	nfdconfigmap                 = manifests[4]
-	nfddaemonset                 = manifests[5]
+	return manifests
 }
-

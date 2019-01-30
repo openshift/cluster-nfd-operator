@@ -19,11 +19,11 @@ package fileutil
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/afero"
 )
 
@@ -33,7 +33,7 @@ const (
 	DefaultFileMode     = 0644
 	DefaultExecFileMode = 0755
 
-	DefaultFileFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	DefaultFileFlags = os.O_WRONLY | os.O_CREATE
 )
 
 // FileWriter is a io wrapper to write files
@@ -88,4 +88,15 @@ func (fw *FileWriter) WriteFile(filePath string, content []byte) error {
 	}
 
 	return nil
+}
+
+func IsClosedError(e error) bool {
+	pathErr, ok := e.(*os.PathError)
+	if !ok {
+		return false
+	}
+	if pathErr.Err == os.ErrClosed {
+		return true
+	}
+	return false
 }

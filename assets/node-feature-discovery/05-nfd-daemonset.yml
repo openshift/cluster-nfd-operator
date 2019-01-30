@@ -24,7 +24,7 @@ spec:
                 fieldPath: spec.nodeName
           image: quay.io/zvonkok/node-feature-discovery:v0.3.0-10-g86947fc-dirty
           name: node-feature-discovery
-          command: ["/usr/bin/node-feature-discovery", "--source=pci"]
+          command: ["/usr/bin/node-feature-discovery"]
           args:
             - "--sleep-interval=60s"
           volumeMounts:
@@ -32,9 +32,14 @@ spec:
               mountPath: "/host-sys"
             - name: config
               mountPath: "/etc/kubernetes/node-feature-discovery"
+            - name: nfd-hooks
+              mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
           securityContext:
             privileged: true
       volumes:
+        - name: nfd-hooks
+          hostPath:
+            path: "/opt/lib/node-feature-discovery/source.d"
         - name: host-sys
           hostPath:
             path: "/sys"
