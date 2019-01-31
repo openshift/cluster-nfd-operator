@@ -47,6 +47,11 @@ type NFD struct {
 func addControls() controlFunc {
 	ctrl := controlFunc{}
 	ctrl = append(ctrl, ServiceAccount)
+	ctrl = append(ctrl, ClusterRole)
+	ctrl = append(ctrl, ClusterRoleBinding)
+	ctrl = append(ctrl, ConfigMap)
+	ctrl = append(ctrl, DaemonSet)
+	ctrl = append(ctrl, Service)
 	return ctrl
 }
 
@@ -120,8 +125,11 @@ func addResources(path string) Resources {
 		case "DaemonSet":
 			_, _, err := s.Decode(m, nil, &res.DaemonSet)
 			panicIfError(err)
+		case "Service":
+			_, _, err := s.Decode(m, nil, &res.Service)
+			panicIfError(err)
 		default:
-			log.Info("Resource unknown will not decode: ", m)
+			log.Info("Unknown Resource: ", kind)
 		}
 
 	}
