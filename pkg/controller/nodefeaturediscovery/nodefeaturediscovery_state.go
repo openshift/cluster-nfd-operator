@@ -1,7 +1,6 @@
 package nodefeaturediscovery
 
 import (
-	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,9 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
@@ -45,33 +42,6 @@ type NFD struct {
 	rec       *ReconcileNodeFeatureDiscovery
 	ins       *nfdv1alpha1.NodeFeatureDiscovery
 	idx       int
-}
-
-func ServiceAccount(n NFD) error {
-
-	state := n.idx
-	obj := &n.resources[state].ServiceAccount
-
-	found := &corev1.ServiceAccount{}
-	logger := log.WithValues("Request.Namespace", obj.Namespace, "Request.Name", obj.Name)
-
-	logger.Info("Looking for ServiceAccount")
-	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Not found, creating ServiceAccount")
-		err = n.rec.client.Create(context.TODO(), obj)
-		if err != nil {
-			logger.Info("Couldn't create ServiceAccount")
-			return err
-		}
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	logger.Info("Found ServiceAccount")
-
-	return nil
 }
 
 func addControls() controlFunc {
@@ -138,6 +108,20 @@ func addResources(path string) Resources {
 		case "ServiceAccount":
 			_, _, err := s.Decode(m, nil, &res.ServiceAccount)
 			panicIfError(err)
+		case "ClusterRole":
+			_, _, err := s.Decode(m, nil, &res.ClusterRole)
+			panicIfError(err)
+		case "ClusterRoleBinding":
+			_, _, err := s.Decode(m, nil, &res.ClusterRoleBinding)
+			panicIfError(err)
+		case "ConfigMap":
+			_, _, err := s.Decode(m, nil, &res.ConfigMap)
+			panicIfError(err)
+		case "DaemonSet":
+			_, _, err := s.Decode(m, nil, &res.DaemonSet)
+			panicIfError(err)
+		default:
+			log.Info("Resource unknown will not decode: ", m)
 		}
 
 	}
@@ -147,10 +131,10 @@ func addResources(path string) Resources {
 
 //------------------------------------------------------------------------------
 
-func addStateMaster(n *NFD) error {
+func addState(n *NFD, path string) error {
 
 	n.controls = append(n.controls, addControls())
-	n.resources = append(n.resources, addResources("/opt/nfd/master"))
+	n.resources = append(n.resources, addResources(path))
 
 	return nil
 }
@@ -161,7 +145,7 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 	n.ins = i
 	n.idx = 0
 
-	err := addStateMaster(n)
+	err := addState(n, "/opt/nfd/master")
 	if err != nil {
 		return err
 	}

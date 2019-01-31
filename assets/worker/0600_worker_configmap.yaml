@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: node-feature-discovery
+  name: nfd-worker
   namespace: openshift-cluster-nfd-operator
 data:
   node-feature-discovery-conf: |

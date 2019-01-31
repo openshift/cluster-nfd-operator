@@ -14,7 +14,7 @@ spec:
       labels:
         app: nfd-worker
     spec:
-#      hostNetwork: true
+      hostNetwork: true
       serviceAccount: nfd-master
       containers:
         - env:
@@ -57,7 +57,7 @@ spec:
             path: "/etc/kubernetes/node-feature-discovery/source.d/"
         - name: config 
           configMap:
-            name: node-feature-discovery
+            name: nfd-worker
             items:
               - key: node-feature-discovery-conf
                 path: node-feature-discovery.conf
