@@ -3,8 +3,7 @@ package nodefeaturediscovery
 import (
 	"context"
 
-	nodefeaturediscoveryv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nodefeaturediscovery/v1alpha1"
-	//appsv1 "k8s.io/api/apps/v1"
+	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,16 +12,26 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var logc = logf.Log.WithName("controller_nfd")
+var log = logf.Log.WithName("controller_nodefeaturediscovery")
+
+/**
+* USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
+* business logic.  Delete these comments after modifying this file.*
+ */
 
 // Add creates a new NodeFeatureDiscovery Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
+}
+
+// newReconciler returns a new reconcile.Reconciler
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &ReconcileNodeFeatureDiscovery{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
@@ -34,15 +43,16 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource NodeFeatureDiscovery
-	err = c.Watch(&source.Kind{Type: &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}}, &handler.EnqueueRequestForObject{})
+	err = c.Watch(&source.Kind{Type: &nfdv1alpha1.NodeFeatureDiscovery{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
+	// TODO(user): Modify this to be the types you create that are owned by the primary resource
 	// Watch for changes to secondary resource Pods and requeue the owner NodeFeatureDiscovery
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{},
+		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
 	})
 	if err != nil {
 		return err
@@ -51,15 +61,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-// newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileNodeFeatureDiscovery{
-		client: mgr.GetClient(),
-		scheme: mgr.GetScheme(),
-	}
-}
-
 var _ reconcile.Reconciler = &ReconcileNodeFeatureDiscovery{}
+var nfd NFD
 
 // ReconcileNodeFeatureDiscovery reconciles a NodeFeatureDiscovery object
 type ReconcileNodeFeatureDiscovery struct {
@@ -69,19 +72,18 @@ type ReconcileNodeFeatureDiscovery struct {
 	scheme *runtime.Scheme
 }
 
-
 // Reconcile reads that state of the cluster for a NodeFeatureDiscovery object and makes changes based on the state read
 // and what is in the NodeFeatureDiscovery.Spec
+// Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (reconcile.Result, error) {
-	//log.Printf("Reconciling NodeFeatureDiscovery %s/%s\n", request.Namespace, request.Name)
+	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
+	reqLogger.Info("Reconciling NodeFeatureDiscovery")
 
-	reqLogger := logc.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling NodeFeatureDiscovery.")
 	// Fetch the NodeFeatureDiscovery instance
-	ins := &nodefeaturediscoveryv1alpha1.NodeFeatureDiscovery{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, ins)
+	instance := &nfdv1alpha1.NodeFeatureDiscovery{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
@@ -93,12 +95,16 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	for _, nfd := range nfdControl {
-		err = nfd(r, ins)
+	nfd.init(r, instance)
+
+	for {
+		err = nfd.step()
 		if err != nil {
-		 	return reconcile.Result{}, err
-		 }
+			return reconcile.Result{}, err
+		}
+		if nfd.last() {
+			break
+		}
 	}
-	
 	return reconcile.Result{}, nil
 }

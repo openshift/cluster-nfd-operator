@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nfd-master
+  namespace: openshift-cluster-nfd-operator
+spec:
+  type: ClusterIP
+  selector:
+    app: nfd-master
+  ports:
+  - protocol: TCP
+    port: 12000
+    targetPort: 12000
+    name: nfd
+

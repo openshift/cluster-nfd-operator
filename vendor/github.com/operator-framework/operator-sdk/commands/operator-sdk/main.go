@@ -15,7 +15,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/operator-framework/operator-sdk/commands/operator-sdk/cmd"
@@ -23,7 +22,6 @@ import (
 
 func main() {
 	if err := cmd.NewRootCmd().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 }

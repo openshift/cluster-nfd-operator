@@ -1,0 +1,68 @@
+package nodefeaturediscovery
+
+import (
+	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+)
+
+type state interface {
+	init(*ReconcileNodeFeatureDiscovery, *nfdv1alpha1.NodeFeatureDiscovery)
+	step()
+	validate()
+	last()
+}
+
+type NFD struct {
+	resources []Resources
+	controls  []controlFunc
+	rec       *ReconcileNodeFeatureDiscovery
+	ins       *nfdv1alpha1.NodeFeatureDiscovery
+	idx       int
+}
+
+func addState(n *NFD, path string) error {
+
+	res, ctrl := addResourcesControls(path)
+
+	n.controls = append(n.controls, ctrl)
+	n.resources = append(n.resources, res)
+
+	return nil
+}
+
+func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
+	i *nfdv1alpha1.NodeFeatureDiscovery) error {
+	n.rec = r
+	n.ins = i
+	n.idx = 0
+
+	addState(n, "/opt/nfd/master")
+	addState(n, "/opt/nfd/worker")
+
+	return nil
+}
+
+func (n *NFD) step() error {
+
+	for _, fs := range n.controls[n.idx] {
+
+		err := fs(*n)
+		if err != nil {
+			return err
+		}
+	}
+
+	n.idx = n.idx + 1
+
+	return nil
+}
+
+func (n NFD) validate() {
+	// TODO
+}
+
+func (n NFD) last() bool {
+	if n.idx == len(n.controls) {
+		return true
+	}
+	return false
+}

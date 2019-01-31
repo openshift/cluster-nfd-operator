@@ -24,6 +24,8 @@ const OperatorYamlFile = "operator.yaml"
 
 type Operator struct {
 	input.Input
+
+	IsClusterScoped bool
 }
 
 func (s *Operator) GetInput() (input.Input, error) {
@@ -53,17 +55,18 @@ spec:
         - name: {{.ProjectName}}
           # Replace this with the built image name
           image: REPLACE_IMAGE
-          ports:
-          - containerPort: 60000
-            name: metrics
           command:
           - {{.ProjectName}}
           imagePullPolicy: Always
           env:
             - name: WATCH_NAMESPACE
+              {{- if .IsClusterScoped }}
+              value: ""
+              {{- else }}
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
+              {{- end}}
             - name: POD_NAME
               valueFrom:
                 fieldRef:
