@@ -1,39 +1,14 @@
 package nodefeaturediscovery
 
 import (
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"regexp"
-	"strings"
-
 	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-	"k8s.io/client-go/kubernetes/scheme"
 )
-
-type controlFunc []func(n NFD) error
 
 type state interface {
 	init(*ReconcileNodeFeatureDiscovery, *nfdv1alpha1.NodeFeatureDiscovery)
 	step()
 	validate()
 	last()
-}
-
-type Resources struct {
-	ServiceAccount     corev1.ServiceAccount
-	Role               rbacv1.Role
-	RoleBinding        rbacv1.RoleBinding
-	ClusterRole        rbacv1.ClusterRole
-	ClusterRoleBinding rbacv1.ClusterRoleBinding
-	ConfigMap          corev1.ConfigMap
-	DaemonSet          appsv1.DaemonSet
-	Pod                corev1.Pod
-	Service            corev1.Service
 }
 
 type NFD struct {
@@ -43,102 +18,6 @@ type NFD struct {
 	ins       *nfdv1alpha1.NodeFeatureDiscovery
 	idx       int
 }
-
-func addControls() controlFunc {
-	ctrl := controlFunc{}
-	return ctrl
-}
-
-//------------------------------------------------------------------------------
-type assetsFromFile []byte
-
-var manifests []assetsFromFile
-
-func filePathWalkDir(root string) ([]string, error) {
-	var files []string
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() {
-			files = append(files, path)
-		}
-		return nil
-	})
-	return files, err
-}
-
-func getAssetsFrom(path string) []assetsFromFile {
-
-	manifests := []assetsFromFile{}
-	assets := path
-	files, err := filePathWalkDir(assets)
-	if err != nil {
-		panic(err)
-	}
-	for _, file := range files {
-		buffer, err := ioutil.ReadFile(file)
-		if err != nil {
-			panic(err)
-		}
-		manifests = append(manifests, buffer)
-	}
-	return manifests
-}
-
-func panicIfError(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func addResourcesControls(path string) (Resources, controlFunc) {
-	res := Resources{}
-	ctrl := controlFunc{}
-
-	manifests := getAssetsFrom(path)
-
-	s := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme,
-		scheme.Scheme)
-	reg, _ := regexp.Compile(`\b(\w*kind:\w*)\B.*\b`)
-
-	for _, m := range manifests {
-		kind := reg.FindString(string(m))
-		slce := strings.Split(kind, ":")
-		kind = strings.TrimSpace(slce[1])
-
-		switch kind {
-		case "ServiceAccount":
-			_, _, err := s.Decode(m, nil, &res.ServiceAccount)
-			panicIfError(err)
-			ctrl = append(ctrl, ServiceAccount)
-		case "ClusterRole":
-			_, _, err := s.Decode(m, nil, &res.ClusterRole)
-			panicIfError(err)
-			ctrl = append(ctrl, ClusterRole)
-		case "ClusterRoleBinding":
-			_, _, err := s.Decode(m, nil, &res.ClusterRoleBinding)
-			panicIfError(err)
-			ctrl = append(ctrl, ClusterRoleBinding)
-		case "ConfigMap":
-			_, _, err := s.Decode(m, nil, &res.ConfigMap)
-			panicIfError(err)
-			ctrl = append(ctrl, ConfigMap)
-		case "DaemonSet":
-			_, _, err := s.Decode(m, nil, &res.DaemonSet)
-			panicIfError(err)
-			ctrl = append(ctrl, DaemonSet)
-		case "Service":
-			_, _, err := s.Decode(m, nil, &res.Service)
-			panicIfError(err)
-			ctrl = append(ctrl, Service)
-		default:
-			log.Info("Unknown Resource: ", kind)
-		}
-
-	}
-
-	return res, ctrl
-}
-
-//------------------------------------------------------------------------------
 
 func addState(n *NFD, path string) error {
 
@@ -178,7 +57,7 @@ func (n *NFD) step() error {
 }
 
 func (n NFD) validate() {
-
+	// TODO
 }
 
 func (n NFD) last() bool {

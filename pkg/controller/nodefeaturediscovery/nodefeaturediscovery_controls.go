@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type controlFunc []func(n NFD) error
+
 func ServiceAccount(n NFD) error {
 
 	state := n.idx
