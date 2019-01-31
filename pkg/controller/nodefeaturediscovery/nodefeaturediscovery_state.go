@@ -57,7 +57,7 @@ func (n *NFD) step() error {
 }
 
 func (n NFD) validate() {
-	// TODO
+	// TODO add custom validation functions
 }
 
 func (n NFD) last() bool {
