@@ -149,7 +149,7 @@ func Service(n NFD) error {
 	state := n.idx
 	obj := &n.resources[state].Service
 
-	found := &appsv1.DaemonSet{}
+	found := &corev1.Service{}
 	logger := log.WithValues("Service", obj.Namespace, "Namespace", obj.Name)
 
 	logger.Info("Looking for")

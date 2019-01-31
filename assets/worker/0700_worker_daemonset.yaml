@@ -24,11 +24,11 @@ spec:
                 fieldPath: spec.nodeName
           image: quay.io/zvonkok/node-feature-discovery:v4.1
           name: nfd-worker
-          command: 
-            - "nfd-worker"
-          args:
-            - "--sleep-interval=60s"
-            - "--server=${NFD_MASTER_SERVICE_HOST}:${NFD_MASTER_SERVICE_PORT}"
+          command: ["sleep","infinity"]
+#            - "nfd-worker"
+#          args:
+#            - "--sleep-interval=60s"
+#            - "--server=${NFD_MASTER_SERVICE_HOST}:${NFD_MASTER_SERVICE_PORT}"
           volumeMounts:
             - name: host-boot
               mountPath: "/host-boot"
