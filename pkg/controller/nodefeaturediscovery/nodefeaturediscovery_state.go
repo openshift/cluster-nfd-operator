@@ -156,10 +156,8 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 	n.ins = i
 	n.idx = 0
 
-	err := addState(n, "/opt/nfd/master")
-	if err != nil {
-		return err
-	}
+	addState(n, "/opt/nfd/master")
+	addState(n, "/opt/nfd/worker")
 
 	return nil
 }
