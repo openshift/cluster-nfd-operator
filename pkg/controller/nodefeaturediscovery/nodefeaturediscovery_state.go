@@ -46,12 +46,6 @@ type NFD struct {
 
 func addControls() controlFunc {
 	ctrl := controlFunc{}
-	ctrl = append(ctrl, ServiceAccount)
-	ctrl = append(ctrl, ClusterRole)
-	ctrl = append(ctrl, ClusterRoleBinding)
-	ctrl = append(ctrl, ConfigMap)
-	ctrl = append(ctrl, DaemonSet)
-	ctrl = append(ctrl, Service)
 	return ctrl
 }
 
@@ -95,8 +89,9 @@ func panicIfError(err error) {
 	}
 }
 
-func addResources(path string) Resources {
+func addResourcesControls(path string) (Resources, controlFunc) {
 	res := Resources{}
+	ctrl := controlFunc{}
 
 	manifests := getAssetsFrom(path)
 
@@ -113,36 +108,44 @@ func addResources(path string) Resources {
 		case "ServiceAccount":
 			_, _, err := s.Decode(m, nil, &res.ServiceAccount)
 			panicIfError(err)
+			ctrl = append(ctrl, ServiceAccount)
 		case "ClusterRole":
 			_, _, err := s.Decode(m, nil, &res.ClusterRole)
 			panicIfError(err)
+			ctrl = append(ctrl, ClusterRole)
 		case "ClusterRoleBinding":
 			_, _, err := s.Decode(m, nil, &res.ClusterRoleBinding)
 			panicIfError(err)
+			ctrl = append(ctrl, ClusterRoleBinding)
 		case "ConfigMap":
 			_, _, err := s.Decode(m, nil, &res.ConfigMap)
 			panicIfError(err)
+			ctrl = append(ctrl, ConfigMap)
 		case "DaemonSet":
 			_, _, err := s.Decode(m, nil, &res.DaemonSet)
 			panicIfError(err)
+			ctrl = append(ctrl, DaemonSet)
 		case "Service":
 			_, _, err := s.Decode(m, nil, &res.Service)
 			panicIfError(err)
+			ctrl = append(ctrl, Service)
 		default:
 			log.Info("Unknown Resource: ", kind)
 		}
 
 	}
 
-	return res
+	return res, ctrl
 }
 
 //------------------------------------------------------------------------------
 
 func addState(n *NFD, path string) error {
 
-	n.controls = append(n.controls, addControls())
-	n.resources = append(n.resources, addResources(path))
+	res, ctrl := addResourcesControls(path)
+
+	n.controls = append(n.controls, ctrl)
+	n.resources = append(n.resources, res)
 
 	return nil
 }
@@ -164,6 +167,7 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 func (n *NFD) step() error {
 
 	for _, fs := range n.controls[n.idx] {
+
 		err := fs(*n)
 		if err != nil {
 			return err
