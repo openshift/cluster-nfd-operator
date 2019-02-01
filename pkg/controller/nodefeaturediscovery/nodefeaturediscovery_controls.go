@@ -18,7 +18,7 @@ func ServiceAccount(n NFD) error {
 	obj := &n.resources[state].ServiceAccount
 
 	found := &corev1.ServiceAccount{}
-	logger := log.WithValues("ServiceAccount", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
@@ -44,7 +44,7 @@ func ClusterRole(n NFD) error {
 	obj := &n.resources[state].ClusterRole
 
 	found := &rbacv1.ClusterRole{}
-	logger := log.WithValues("ClusterRole", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("ClusterRole", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
@@ -71,7 +71,7 @@ func ClusterRoleBinding(n NFD) error {
 	obj := &n.resources[state].ClusterRoleBinding
 
 	found := &rbacv1.ClusterRoleBinding{}
-	logger := log.WithValues("ClusterRoleBinding", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("ClusterRoleBinding", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
@@ -98,7 +98,7 @@ func ConfigMap(n NFD) error {
 	obj := &n.resources[state].ConfigMap
 
 	found := &corev1.ConfigMap{}
-	logger := log.WithValues("ConfigMap", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("ConfigMap", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
@@ -125,7 +125,7 @@ func DaemonSet(n NFD) error {
 	obj := &n.resources[state].DaemonSet
 
 	found := &appsv1.DaemonSet{}
-	logger := log.WithValues("DaemonSet", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("DaemonSet", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
@@ -152,7 +152,7 @@ func Service(n NFD) error {
 	obj := &n.resources[state].Service
 
 	found := &corev1.Service{}
-	logger := log.WithValues("Service", obj.Namespace, "Namespace", obj.Name)
+	logger := log.WithValues("Service", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
