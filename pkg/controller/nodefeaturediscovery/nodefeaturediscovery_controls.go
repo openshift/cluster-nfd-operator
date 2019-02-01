@@ -192,14 +192,14 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return isDaemonSetReady(), nil
+		return isDaemonSetReady(obj, n), nil
 	} else if err != nil {
 		return NotReady, err
 	}
 
 	logger.Info("Found")
 
-	return isDaemonSetReady(), nil
+	return isDaemonSetReady(obj, n), nil
 }
 
 func Service(n NFD) (ResourceStatus, error) {
