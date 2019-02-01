@@ -27,6 +27,7 @@ var log = logf.Log.WithName("controller_nodefeaturediscovery")
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
+
 }
 
 // newReconciler returns a new reconcile.Reconciler
