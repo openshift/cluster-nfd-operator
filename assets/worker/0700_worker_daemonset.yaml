@@ -15,7 +15,8 @@ spec:
         app: nfd-worker
     spec:
       hostNetwork: true
-      serviceAccount: nfd-master
+      serviceAccount: nfd-worker
+      readOnlyRootFilesystem: true
       containers:
         - env:
           - name: NODE_NAME
@@ -24,7 +25,6 @@ spec:
                 fieldPath: spec.nodeName
           image: quay.io/zvonkok/node-feature-discovery:v4.1
           name: nfd-worker
-#          command: ["sleep","infinity"]
           command:
             - "nfd-worker"
           args:
