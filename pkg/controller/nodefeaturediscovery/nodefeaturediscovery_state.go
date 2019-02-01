@@ -45,7 +45,7 @@ func (n *NFD) step() error {
 
 	for _, fs := range n.controls[n.idx] {
 
-		err := fs(*n)
+		ready, err := fs(*n)
 		if err != nil {
 			return err
 		}

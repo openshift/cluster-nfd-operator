@@ -1,0 +1,18 @@
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: nfd-worker
+  namespace: openshift-cluster-nfd-operator
+spec:
+  privileged: false
+  hostNetwork: true
+  runAsUser:
+    rule: RunAsAny
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    rule: RunAsAny
+  fsGroup: 
+    rule: RunAsAny
+  volumes:
+  - '*'
