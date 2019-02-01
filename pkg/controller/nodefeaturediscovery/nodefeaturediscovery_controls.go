@@ -30,7 +30,7 @@ func (s ResourceStatus) String() string {
 	if s < Ready || s > NotReady {
 		return "Unkown Resources Status"
 	}
-	return names[n]
+	return names[s]
 }
 
 func ServiceAccount(n NFD) (ResourceStatus, error) {
