@@ -1,6 +1,8 @@
 package nodefeaturediscovery
 
 import (
+	"errors"
+
 	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
 )
 
@@ -45,9 +47,12 @@ func (n *NFD) step() error {
 
 	for _, fs := range n.controls[n.idx] {
 
-		ready, err := fs(*n)
+		stat, err := fs(*n)
 		if err != nil {
 			return err
+		}
+		if stat != Ready {
+			return errors.New("ResourceNotReady")
 		}
 	}
 

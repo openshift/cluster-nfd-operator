@@ -99,7 +99,7 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	nfd.init(r, instance)
 
 	for {
-		err = nfd.step()
+		err := nfd.step()
 		if err != nil {
 			return reconcile.Result{}, err
 		}
