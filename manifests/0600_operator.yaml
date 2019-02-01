@@ -41,3 +41,11 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Equal"
+          value: ""
+          effect: "NoSchedule"
+
