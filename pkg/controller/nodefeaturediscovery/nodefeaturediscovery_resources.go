@@ -109,7 +109,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			panicIfError(err)
 			ctrl = append(ctrl, Service)
 		default:
-			log.Info("Unknown Resource: ", kind)
+			log.Info("Unknown Resource: ", "Kind", kind)
 		}
 
 	}
