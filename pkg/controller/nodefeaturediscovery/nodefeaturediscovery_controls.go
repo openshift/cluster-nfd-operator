@@ -124,6 +124,67 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 
 	return Ready, nil
 }
+func Role(n NFD) (ResourceStatus, error) {
+
+	state := n.idx
+	obj := &n.resources[state].Role
+
+	found := &rbacv1.Role{}
+	logger := log.WithValues("Role", obj.Name, "Namespace", obj.Namespace)
+
+	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Looking for")
+	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Not found, creating")
+		err = n.rec.client.Create(context.TODO(), obj)
+		if err != nil {
+			logger.Info("Couldn't create")
+			return NotReady, err
+		}
+		return NotReady, nil
+	} else if err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Found")
+
+	return Ready, nil
+}
+
+func RoleBinding(n NFD) (ResourceStatus, error) {
+
+	state := n.idx
+	obj := &n.resources[state].RoleBinding
+
+	found := &rbacv1.RoleBinding{}
+	logger := log.WithValues("RoleBinding", obj.Name, "Namespace", obj.Namespace)
+
+	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Looking for")
+	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Not found, creating")
+		err = n.rec.client.Create(context.TODO(), obj)
+		if err != nil {
+			logger.Info("Couldn't create")
+			return NotReady, err
+		}
+		return NotReady, nil
+	} else if err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Found")
+
+	return Ready, nil
+}
 
 func ConfigMap(n NFD) (ResourceStatus, error) {
 
