@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cluster-nfd-operator
-  namespace: openshift-cluster-nfd-operator
+  name: nfd-operator
+  namespace: openshift-nfd-operator
 spec:
   replicas: 1
   selector:
     matchLabels:
-      name: cluster-nfd-operator
+      name: nfd-operator
   template:
     metadata:
       labels:
-        name: cluster-nfd-operator
+        name: nfd-operator
     spec:
-      serviceAccountName: cluster-nfd-operator
+      serviceAccountName: nfd-operator
       containers:
-        - name: cluster-nfd-operator
+        - name: nfd-operator
           # Replace this with the built image name
           image: quay.io/zvonkok/cluster-nfd-operator
           ports:
@@ -34,7 +34,7 @@ spec:
             failureThreshold: 1
           env:
             - name: WATCH_NAMESPACE
-              value: ""
+              value: "openshift-nfd"
             - name: POD_NAME
               valueFrom:
                 fieldRef:

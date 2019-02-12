@@ -4,7 +4,7 @@ metadata:
   labels:
     app: nfd-worker
   name: nfd-worker
-  namespace: openshift-cluster-nfd-operator
+  namespace: openshift-nfd
 spec:
   selector:
     matchLabels:
@@ -14,6 +14,10 @@ spec:
       labels:
         app: nfd-worker
     spec:
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
       hostNetwork: true
       serviceAccount: nfd-worker
       readOnlyRootFilesystem: true

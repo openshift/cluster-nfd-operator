@@ -9,6 +9,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nfd-master
-  namespace: openshift-cluster-nfd-operator
+  namespace: openshift-nfd
 userNames:
-- system:serviceaccount:openshift-cluster-nfd-operator:nfd-master
+- system:serviceaccount:openshift-nfd:nfd-master

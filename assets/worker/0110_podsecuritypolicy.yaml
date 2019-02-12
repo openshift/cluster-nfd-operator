@@ -2,7 +2,7 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: nfd-worker
-  namespace: openshift-cluster-nfd-operator
+  namespace: openshift-nfd
 spec:
   privileged: false
   hostNetwork: true
