@@ -226,9 +226,9 @@ func isDaemonSetReady(d *appsv1.DaemonSet, n NFD) ResourceStatus {
 	if err != nil {
 		log.Info("Could not get DaemonSetList", err)
 	}
-	log.Info("#### DaemonSet", "NumberOfDaemonSets", len(list.Items))
+	log.Info("DEBUG: DaemonSet", "NumberOfDaemonSets", len(list.Items))
 	ds := list.Items[0]
-	log.Info("#### DaemonSet", "NumberUnavailable", ds.Status.NumberUnavailable)
+	log.Info("DEBUG: DaemonSet", "NumberUnavailable", ds.Status.NumberUnavailable)
 	return Ready
 }
 
