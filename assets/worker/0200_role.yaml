@@ -19,5 +19,5 @@ rules:
   verbs:
   - use
   resourceNames:
-  - privileged
+  - nfd-worker
 

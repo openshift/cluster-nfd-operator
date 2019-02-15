@@ -47,6 +47,11 @@ spec:
               mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
               mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
       volumes:
         - name: host-boot
           hostPath:
