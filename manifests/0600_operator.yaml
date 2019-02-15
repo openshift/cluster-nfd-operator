@@ -41,6 +41,12 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:

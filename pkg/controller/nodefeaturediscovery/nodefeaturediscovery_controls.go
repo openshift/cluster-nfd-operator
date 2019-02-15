@@ -295,7 +295,7 @@ func Service(n NFD) (ResourceStatus, error) {
 	return Ready, nil
 }
 
-func SecurityContextConstraints(n SRO) (ResourceStatus, error) {
+func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
 	obj := &n.resources[state].SecurityContextConstraints
