@@ -46,7 +46,12 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:

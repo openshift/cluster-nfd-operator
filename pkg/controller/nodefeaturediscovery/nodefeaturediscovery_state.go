@@ -3,6 +3,7 @@ package nodefeaturediscovery
 import (
 	"errors"
 
+	secv1 "github.com/openshift/api/security/v1"
 	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
 )
 
@@ -36,6 +37,8 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 	n.rec = r
 	n.ins = i
 	n.idx = 0
+
+	secv1.AddToScheme(r.scheme)
 
 	addState(n, "/opt/nfd/master")
 	addState(n, "/opt/nfd/worker")
