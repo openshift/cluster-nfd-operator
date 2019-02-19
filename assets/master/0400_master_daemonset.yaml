@@ -16,7 +16,7 @@ spec:
     spec:
       serviceAccount: nfd-master
       nodeSelector: 
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/master: "true"
       tolerations:
         - key: "node-role.kubernetes.io/master"
           operator: "Equal"
