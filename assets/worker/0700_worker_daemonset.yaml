@@ -69,7 +69,7 @@ spec:
           configMap:
             name: nfd-worker
             items:
-              - key: node-feature-discovery-conf
-                path: node-feature-discovery.conf
+              - key: nfd-worker-conf
+                path: nfd-worker.conf
 
 

@@ -4,17 +4,18 @@ metadata:
   name: nfd-worker
   namespace: openshift-nfd
 data:
-  node-feature-discovery-conf: |
-    #uncomment to configure
-    #sources:
-    #  pci:
+  nfd-worker-conf: |
+    sources:
+      pci:
+        deviceLabelFields:
+          - "vendor"
     #    deviceClassWhitelist:
     #      - "0200"
     #      - "03"
     #      - "12"
-    #    deviceLabelFields:
+    
     #      - "class"
-    #      - "vendor"
+          
     #      - "device"
     #      - "subsystem_vendor"
     #      - "subsystem_device"
