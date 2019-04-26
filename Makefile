@@ -31,7 +31,7 @@ $(GOBINDATA_BIN):
 	go get -u github.com/jteeuwen/go-bindata/...
 
 test-e2e: generate
-        go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e -globalMan manifests/0500_crd.yaml
+	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e -globalMan manifests/0500_crd.yaml
 
 verify:	verify-gofmt
 
