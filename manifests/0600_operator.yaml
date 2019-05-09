@@ -17,7 +17,7 @@ spec:
       containers:
         - name: nfd-operator
           # Replace this with the built image name
-          image: quay.io/zvonkok/cluster-nfd-operator
+          image: quay.io/zvonkok/cluster-nfd-operator:p3
           ports:
           - containerPort: 60000
             name: metrics
