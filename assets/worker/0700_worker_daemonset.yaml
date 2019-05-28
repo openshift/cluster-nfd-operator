@@ -27,7 +27,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: quay.io/zvonkok/node-feature-discovery:v4.1
+          image: quay.io/zvonkok/node-feature-discovery:v4.2
           name: nfd-worker
           command:
             - "nfd-worker"
@@ -46,7 +46,9 @@ spec:
             - name: config
               mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
-              mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
+              mountPath: "/etc/kubernetes/node-feature-discovery/source.d"
+            - name: nfd-features
+              mountPath: "/etc/kubernetes/node-feature-discovery/features.d"
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
@@ -64,7 +66,10 @@ spec:
             path: "/sys"
         - name: nfd-hooks
           hostPath:
-            path: "/etc/kubernetes/node-feature-discovery/source.d/"
+            path: "/etc/kubernetes/node-feature-discovery/source.d"
+        - name: nfd-features
+          hostPath:
+            path: "/etc/kubernetes/node-feature-discovery/features.d"
         - name: config 
           configMap:
             name: nfd-worker
