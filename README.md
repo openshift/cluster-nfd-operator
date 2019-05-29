@@ -20,6 +20,7 @@ Update `cluster-nfd-operator/manifests/0600_operator.yaml` with the a custom ima
 ```
 $ cd cluster-nfd-operator/manifests
 $ kubectl create -f .
+$ kubectl create -f cr/nfd_cr.yaml
 ```
 The operator will use the NFD image built from: https://github.com/openshift/node-feature-discovery
 
