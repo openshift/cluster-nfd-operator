@@ -28,7 +28,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: quay.io/zvonkok/node-feature-discovery:v4.2
+          image: quay.io/zvonkok/node-feature-discovery:v0.4.0
           name: nfd-master
           command: ["nfd-master", "--port=12000"]
           securityContext:
