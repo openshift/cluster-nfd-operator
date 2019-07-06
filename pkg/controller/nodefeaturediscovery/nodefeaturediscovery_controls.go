@@ -41,6 +41,8 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	found := &corev1.ServiceAccount{}
 
+	obj.ObjectMeta.ResourceVersion = ""
+
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace, "Res", obj.GetObjectMeta().GetResourceVersion())
 
 	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
