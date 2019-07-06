@@ -1,121 +1,187 @@
-// +build e2e
+// Copyright 2018 The Operator-SDK Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package e2e
 
 import (
-	"context"
+	goctx "context"
+	"fmt"
+	"io/ioutil"
 	"testing"
 	"time"
 
-	configv1 "github.com/openshift/api/config/v1"
-	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
-	"github.com/openshift/cluster-nfd-operator/pkg/apis"
-	tunedv1 "github.com/openshift/cluster-nfd-operator/pkg/apis/tuned/v1"
-	ntoclient "github.com/openshift/cluster-node-tuning-operator/pkg/client"
-	ntoconfig "github.com/openshift/cluster-node-tuning-operator/pkg/config"
+	apis "github.com/openshift/cluster-nfd-operator/pkg/apis"
+	operator "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+
+	"github.com/operator-framework/operator-sdk/pkg/test"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
+	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/scheme"
 )
 
-const (
-	deploymentTimeout = 5 * time.Minute
-	apiTimeout        = 10 * time.Second
+var (
+	retryInterval        = time.Second * 5
+	timeout              = time.Second * 60
+	cleanupRetryInterval = time.Second * 1
+	cleanupTimeout       = time.Second * 30
 )
 
-func TestOperatorAvailable(t *testing.T) {
-	cfgv1client, err := ntoclient.GetCfgV1Client()
-	if cfgv1client == nil {
-		t.Errorf("failed to get a client: %v", err)
-	}
-
-	t.Log("=== Wait for tuned Cluster Operator to be available")
-	if err := waitForTunedOperatorAvailable(t, cfgv1client, deploymentTimeout); err != nil {
-		t.Errorf("failed to wait for tuned Cluster Operator to be available: %s", err)
-	}
-	t.Logf("tuned Cluster Operator is available")
-}
-
-func TestDefaultTunedExists(t *testing.T) {
-	ctx, client, ns := prepareTest(t)
-	defer ctx.Cleanup()
-
-	t.Log("=== Wait for default Tuned CR to exist")
-	if err := waitForTunedCR(t, client, deploymentTimeout); err != nil {
-		t.Errorf("failed to wait for default Tuned CR to exist: %s", err)
-	}
-	t.Logf("tuned CR in %s/default exists", ns)
-}
-
-func prepareTest(t *testing.T) (ctx *framework.TestCtx, client framework.FrameworkClient, namespace string) {
-	tunedList := &tunedv1.TunedList{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Tuned",
-			APIVersion: tunedv1.SchemeGroupVersion.String(),
-		},
-	}
-	err := framework.AddToFrameworkScheme(apis.AddToScheme, tunedList)
+func TestMemcached(t *testing.T) {
+	nfdList := &operator.NodeFeatureDiscoveryList{}
+	err := framework.AddToFrameworkScheme(apis.AddToScheme, nfdList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
-
-	ctx = framework.NewTestCtx(t)
-	ns, err := ctx.GetNamespace()
-	if err != nil {
-		t.Fatalf("failed to initialize namespace: %v", err)
-	}
-	return ctx, framework.Global.Client, ns
+	// run subtests
+	t.Run("memcached-group", func(t *testing.T) {
+		t.Run("Cluster", MemcachedCluster)
+		//t.Run("Cluster2", MemcachedCluster)
+	})
 }
 
-func waitForTunedCR(t *testing.T, client framework.FrameworkClient, timeout time.Duration) error {
-	cr := &tunedv1.Tuned{}
-	err := wait.PollImmediate(time.Second, timeout, func() (done bool, err error) {
-		ctx, cancel := testContext()
-		defer cancel()
-		err = client.Get(ctx, types.NamespacedName{Name: "default", Namespace: ntoconfig.OperatorNamespace()}, cr)
+func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		return fmt.Errorf("could not get namespace: %v", err)
+	}
+	// create memcached custom resource
+	nfd := &operator.NodeFeatureDiscovery{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "nfd-master-client",
+			Namespace: namespace,
+		},
+		Spec: operator.NodeFeatureDiscoverySpec{},
+	}
+	// use TestCtx's create helper to create the object and add a cleanup function for the new object
+	err = f.Client.Create(goctx.TODO(), nfd, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	if err != nil {
+		return err
+	}
+
+	// wait for example-memcached to reach 3 replicas
+	//return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
+
+	return WaitForDaemonSet(t, f.KubeClient, namespace, "nfd-master", 0, retryInterval, timeout)
+	//	if err != nil {
+	//		return err
+	//	}
+
+	//	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "nfd-master-client", Namespace: namespace}, nfdMasterClient)
+	//	if err != nil {
+	//		return err
+	//	}
+
+	//	nfdMasterClient.Spec.Size = 4
+	//	err = f.Client.Update(goctx.TODO(), nfdMasterClient)
+	//	if err != nil {
+	//		return err
+	//	}
+
+	// wait for example-memcached to reach 4 replicas
+	//	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+}
+
+func MemcachedCluster(t *testing.T) {
+	t.Parallel()
+	ctx := framework.NewTestCtx(t)
+
+	defer ctx.Cleanup()
+
+	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	if err != nil {
+		t.Fatalf("failed to initialize cluster resources: %v", err)
+	}
+	t.Log("Initialized cluster resources")
+	namespace, err := ctx.GetNamespace()
+	if err != nil {
+		t.Fatal(err)
+	}
+	////
+	///
+	obj := &rbacv1.ClusterRoleBinding{}
+
+	namespacedYAML, err := ioutil.ReadFile("manifests/0400_cluster_role_binding.yaml")
+	s := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme,
+		scheme.Scheme)
+
+	_, _, err = s.Decode(namespacedYAML, nil, obj)
+
+	obj.SetNamespace(namespace)
+
+	obj.Subjects[0].Namespace = namespace
+
+	for _, subject := range obj.Subjects {
+		if subject.Kind == "ServiceAccount" {
+			subject.Namespace = namespace
+		}
+	}
+
+	err = test.Global.Client.Create(goctx.TODO(), obj,
+		&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+
+	if apierrors.IsAlreadyExists(err) {
+		t.Errorf("ClusterRoleBinding already exists: %s", obj.Name)
+	}
+	/////
+
+	// get global framework variables
+	f := framework.Global
+	// wait for memcached-operator to be ready
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = memcachedScaleTest(t, f, ctx); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
+	return waitForDaemonSet(t, kubeclient, namespace, name, replicas, retryInterval, timeout, false)
+}
+
+func waitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration, isOperator bool) error {
+	if isOperator && test.Global.LocalOperator {
+		t.Log("Operator is running locally; skip waitForDaemonSet")
+		return nil
+	}
+	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
+		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
+			if apierrors.IsNotFound(err) {
+				t.Logf("Waiting for availability of %s DaemonSet\n", name)
+				return false, nil
+			}
 			return false, err
 		}
 
-		return true, nil
-	})
-	if err != nil {
-		t.Logf("failed to wait for default Tuned CR to exist")
-		t.Logf("last known version: %+v", cr)
-	}
-
-	return err
-}
-
-func waitForTunedOperatorAvailable(t *testing.T, cfgv1client *configv1client.ConfigV1Client, timeout time.Duration) error {
-	clusterOperatorName := ntoconfig.OperatorName()
-
-	co := &configv1.ClusterOperator{}
-
-	err := wait.PollImmediate(time.Second, timeout, func() (done bool, err error) {
-		co, err = cfgv1client.ClusterOperators().Get(clusterOperatorName, metav1.GetOptions{})
-		if err != nil {
-			return false, nil
+		if int(daemonset.Status.NumberUnavailable) == 0 {
+			return true, nil
 		}
-
-		for _, cond := range co.Status.Conditions {
-			if cond.Type == configv1.OperatorAvailable &&
-				cond.Status == configv1.ConditionTrue {
-				return true, nil
-			}
-		}
-
+		t.Logf("Waiting for full availability of %s DaemonSet NumberUnavailable (%d/%d)\n", name, daemonset.Status.NumberUnavailable, 0)
 		return false, nil
 	})
 	if err != nil {
-		t.Logf("failed to wait for tuned Cluster Operator to be available")
-		t.Logf("last known version: %+v", co)
+		return err
 	}
-
-	return err
-}
-
-func testContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), apiTimeout)
+	t.Logf("DaemonSet NumberUnavailable (%d/%d)\n", 0, 0)
+	return nil
 }
