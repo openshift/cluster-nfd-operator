@@ -37,9 +37,11 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	state := n.idx
 	obj := n.resources[state].ServiceAccount
 
-	found := &corev1.ServiceAccount{}
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
-	//obj.ObjectMeta.ResourceVersion = ""
+	found := &corev1.ServiceAccount{}
 
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace, "Res", obj.GetObjectMeta().GetResourceVersion())
 
@@ -70,12 +72,16 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 func ClusterRole(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].ClusterRole
+	obj := n.resources[state].ClusterRole
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &rbacv1.ClusterRole{}
 	logger := log.WithValues("ClusterRole", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -83,7 +89,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -101,12 +107,16 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].ClusterRoleBinding
+	obj := n.resources[state].ClusterRoleBinding
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &rbacv1.ClusterRoleBinding{}
 	logger := log.WithValues("ClusterRoleBinding", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -114,7 +124,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -131,12 +141,16 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 func Role(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].Role
+	obj := n.resources[state].Role
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &rbacv1.Role{}
 	logger := log.WithValues("Role", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -144,7 +158,7 @@ func Role(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -162,12 +176,16 @@ func Role(n NFD) (ResourceStatus, error) {
 func RoleBinding(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].RoleBinding
+	obj := n.resources[state].RoleBinding
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &rbacv1.RoleBinding{}
 	logger := log.WithValues("RoleBinding", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -175,7 +193,7 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -193,12 +211,16 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 func ConfigMap(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].ConfigMap
+	obj := n.resources[state].ConfigMap
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &corev1.ConfigMap{}
 	logger := log.WithValues("ConfigMap", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -206,7 +228,7 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -224,12 +246,20 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 func DaemonSet(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].DaemonSet
+	obj := n.resources[state].DaemonSet
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
+
+	if len(n.ins.Spec.OperandImage) != 0 {
+		obj.Spec.Template.Spec.Containers[0].Image = n.ins.Spec.OperandImage
+	}
 
 	found := &appsv1.DaemonSet{}
 	logger := log.WithValues("DaemonSet", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -237,7 +267,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -255,12 +285,16 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 func Service(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].Service
+	obj := n.resources[state].Service
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &corev1.Service{}
 	logger := log.WithValues("Service", obj.Name, "Namespace", obj.Namespace)
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -268,7 +302,7 @@ func Service(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err
@@ -286,12 +320,16 @@ func Service(n NFD) (ResourceStatus, error) {
 func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].SecurityContextConstraints
+	obj := n.resources[state].SecurityContextConstraints
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
 
 	found := &secv1.SecurityContextConstraints{}
 	logger := log.WithValues("SecurityContextConstraints", obj.Name, "Namespace", "default")
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -299,7 +337,7 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create", "Error", err)
 			return NotReady, err

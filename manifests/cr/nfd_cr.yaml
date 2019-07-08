@@ -5,3 +5,4 @@ metadata:
   namespace: openshift-nfd-operator
 spec:
   namespace: openshift-nfd
+  image: quay.io/zvonkok/node-feature-discovery:v4.2

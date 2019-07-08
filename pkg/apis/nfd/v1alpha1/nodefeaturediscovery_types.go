@@ -9,8 +9,8 @@ import (
 
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 type NodeFeatureDiscoverySpec struct {
-	Namespace string
-	Image     string
+	OperandNamespace string `json:"operandNamespace"`
+	OperandImage     string `json:"operandImage"`
 }
 
 // NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery
