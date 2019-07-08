@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openshift-nfd
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nfd-operator
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: nfd-operator
+rules:
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - roles
+  - rolebindings
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  - services
+  - endpoints
+  - persistentvolumeclaims
+  - events
+  - configmaps
+  - secrets
+  - serviceaccounts
+  - nodes
+  verbs:
+  - '*'
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - '*'
+- apiGroups:
+  - monitoring.coreos.com
+  resources:
+  - servicemonitors
+  verbs:
+  - get
+  - create
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - '*'
+  verbs:
+  - '*'
+# from nfd-worker 
+- apiGroups:
+  - policy
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
+  resourceNames:
+  - nfd-worker
+- apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - '*'
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nfd-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nfd-operator
+  template:
+    metadata:
+      labels:
+        name: nfd-operator
+    spec:
+      serviceAccountName: nfd-operator
+      containers:
+        - name: nfd-operator
+          # Replace this with the built image name
+          image: quay.io/zvonkok/cluster-nfd-operator:e2e
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - cluster-nfd-operator
+          imagePullPolicy: Always
+          readinessProbe:
+            exec:
+              command:
+                - stat
+                - /tmp/operator-sdk-ready
+            initialDelaySeconds: 4
+            periodSeconds: 10
+            failureThreshold: 1
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: OPERATOR_NAME
+              value: "cluster-nfd-operator"
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+        - key: "node-role.kubernetes.io/master"
+          operator: "Equal"
+          value: ""
+          effect: "NoSchedule"
+
