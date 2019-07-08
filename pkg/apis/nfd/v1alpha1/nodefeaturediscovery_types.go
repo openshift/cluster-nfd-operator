@@ -9,8 +9,8 @@ import (
 
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 type NodeFeatureDiscoverySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
+	OperandNamespace string `json:"operandNamespace"`
+	OperandImage     string `json:"operandImage"`
 }
 
 // NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery

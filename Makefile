@@ -22,8 +22,8 @@ all: build
 build:
 	$(GO_BUILD_RECIPE)
 
-test-e2e: generate
-	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e -globalMan manifests/0500_crd.yaml
+test-e2e: 
+	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e  -globalMan manifests/0500_crd.yaml -namespacedMan manifests/operator.yaml 
 
 verify:	verify-gofmt
 
