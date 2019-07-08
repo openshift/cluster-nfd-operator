@@ -16,6 +16,7 @@ package e2e
 
 import (
 	goctx "context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -38,56 +39,24 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Second * 120
+	timeout              = time.Second * 60
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 30
+	opName               = "nfd-master-client"
+	opNamespace          = "openshift-nfd"
+	opImage              = "quay.io/zvonkok/node-feature-discovery:v4.2"
+	//opImage = "registry.svc.ci.openshift.org/openshift/node-feature-discovery-container:v4.2"
 )
 
-func TestMemcached(t *testing.T) {
+func TestNodeFeatureDiscoveryAddScheme(t *testing.T) {
 	nfdList := &operator.NodeFeatureDiscoveryList{}
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, nfdList)
 	if err != nil {
 		t.Fatalf("failed to add custom resource scheme to framework: %v", err)
 	}
-	// run subtests
-	t.Run("memcached-group", func(t *testing.T) {
-		t.Run("Cluster", MemcachedCluster)
-		//t.Run("Cluster2", MemcachedCluster)
-	})
 }
 
-func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
-	namespace, err := ctx.GetNamespace()
-	if err != nil {
-		return fmt.Errorf("could not get namespace: %v", err)
-	}
-	// create memcached custom resource
-	nfd := &operator.NodeFeatureDiscovery{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "nfd-master-client",
-			Namespace: namespace,
-		},
-		Spec: operator.NodeFeatureDiscoverySpec{},
-	}
-	// use TestCtx's create helper to create the object and add a cleanup function for the new object
-	err = f.Client.Create(goctx.TODO(), nfd, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
-	if err != nil {
-		return err
-	}
-
-	// wait for example-memcached to reach 3 replicas
-	//return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
-
-	err = WaitForDaemonSet(t, f.KubeClient, "openshift-nfd", "nfd-master", 0, retryInterval, timeout)
-	if err != nil {
-		return err
-	}
-
-	return WaitForDaemonSet(t, f.KubeClient, "openshift-nfd", "nfd-worker", 0, retryInterval, timeout)
-}
-
-func MemcachedCluster(t *testing.T) {
-	t.Parallel()
+func TestNodeFeatureDiscovery(t *testing.T) {
 	ctx := framework.NewTestCtx(t)
 
 	defer ctx.Cleanup()
@@ -101,8 +70,27 @@ func MemcachedCluster(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	////
-	///
+
+	err = createClusterRoleBinding(t, namespace, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// get global framework variables
+	f := framework.Global
+	// wait for memcached-operator to be ready
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err = nodeFeatureDiscovery(t, f, ctx); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func createClusterRoleBinding(t *testing.T, namespace string, ctx *framework.TestCtx) error {
+	// operator-sdk test cannot deploy clusterrolebinding
 	obj := &rbacv1.ClusterRoleBinding{}
 
 	namespacedYAML, err := ioutil.ReadFile("manifests/0400_cluster_role_binding.yaml")
@@ -127,19 +115,74 @@ func MemcachedCluster(t *testing.T) {
 	if apierrors.IsAlreadyExists(err) {
 		t.Errorf("ClusterRoleBinding already exists: %s", obj.Name)
 	}
-	/////
 
-	// get global framework variables
-	f := framework.Global
-	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
+	return err
+}
+
+func nodeFeatureDiscovery(t *testing.T, f *framework.Framework, ctx *framework.TestCtx) error {
+	namespace, err := ctx.GetNamespace()
 	if err != nil {
-		t.Fatal(err)
+		return fmt.Errorf("could not get namespace: %v", err)
+	}
+	// create memcached custom resource
+	nfd := &operator.NodeFeatureDiscovery{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      opName,
+			Namespace: namespace,
+		},
+		Spec: operator.NodeFeatureDiscoverySpec{
+			OperandNamespace: opNamespace,
+			OperandImage:     opImage,
+		},
 	}
 
-	if err = memcachedScaleTest(t, f, ctx); err != nil {
-		t.Fatal(err)
+	// use TestCtx's create helper to create the object and add a cleanup function for the new object
+	err = f.Client.Create(goctx.TODO(), nfd, &framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
+	if err != nil {
+		return err
 	}
+
+	t.Logf("Created CR with OperandNamespace: %s OperandImage %s", opNamespace, opImage)
+
+	err = WaitForDaemonSet(t, f.KubeClient, opNamespace, "nfd-master", 0, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	err = WaitForDaemonSet(t, f.KubeClient, opNamespace, "nfd-worker", 0, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
+
+	return checkDefaultLabels(t, f.KubeClient)
+}
+
+func checkDefaultLabels(t *testing.T, kubeclient kubernetes.Interface) error {
+
+	opts := metav1.ListOptions{}
+	nodeList, err := kubeclient.CoreV1().Nodes().List(opts)
+	if err != nil {
+		t.Error("Could not retrieve List of Nodes")
+		return err
+	}
+
+	for _, node := range nodeList.Items {
+		labels := node.GetLabels()
+		key := "node-role.kubernetes.io/master"
+		// don't care masters
+		if val, ok := labels[key]; ok {
+			t.Logf("Ignoring Master: %s=%s %s", key, val, node.Name)
+			continue
+		}
+		key = "feature.node.kubernetes.io/kernel-version.full"
+		if val, ok := labels[key]; ok {
+			t.Logf("%s=%s: %s", key, val, node.Name)
+		} else {
+			t.Errorf("Node %s Label %s not found", node.Name, key)
+			return errors.New("LabelIsNotFound")
+		}
+	}
+	return nil
 }
 
 func WaitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, name string, replicas int, retryInterval, timeout time.Duration) error {
