@@ -38,7 +38,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Second * 600
+	timeout              = time.Second * 120
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 30
 )
@@ -78,24 +78,12 @@ func memcachedScaleTest(t *testing.T, f *framework.Framework, ctx *framework.Tes
 	// wait for example-memcached to reach 3 replicas
 	//return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
 
-	return WaitForDaemonSet(t, f.KubeClient, namespace, "nfd-master", 0, retryInterval, timeout)
-	//	if err != nil {
-	//		return err
-	//	}
+	err = WaitForDaemonSet(t, f.KubeClient, "openshift-nfd", "nfd-master", 0, retryInterval, timeout)
+	if err != nil {
+		return err
+	}
 
-	//	err = f.Client.Get(goctx.TODO(), types.NamespacedName{Name: "nfd-master-client", Namespace: namespace}, nfdMasterClient)
-	//	if err != nil {
-	//		return err
-	//	}
-
-	//	nfdMasterClient.Spec.Size = 4
-	//	err = f.Client.Update(goctx.TODO(), nfdMasterClient)
-	//	if err != nil {
-	//		return err
-	//	}
-
-	// wait for example-memcached to reach 4 replicas
-	//	return e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "example-memcached", 4, retryInterval, timeout)
+	return WaitForDaemonSet(t, f.KubeClient, "openshift-nfd", "nfd-worker", 0, retryInterval, timeout)
 }
 
 func MemcachedCluster(t *testing.T) {
@@ -167,7 +155,7 @@ func waitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				t.Logf("Waiting for availability of %s DaemonSet\n", name)
+				t.Logf("Waiting for availability of %s/%s DaemonSet\n", namespace, name)
 				return false, nil
 			}
 			return false, err
@@ -176,7 +164,7 @@ func waitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 		if int(daemonset.Status.NumberUnavailable) == 0 {
 			return true, nil
 		}
-		t.Logf("Waiting for full availability of %s DaemonSet NumberUnavailable (%d/%d)\n", name, daemonset.Status.NumberUnavailable, 0)
+		t.Logf("Waiting for full availability of %s/%s DaemonSet NumberUnavailable (%d/%d)\n", namespace, name, daemonset.Status.NumberUnavailable, 0)
 		return false, nil
 	})
 	if err != nil {

@@ -2,7 +2,6 @@ package nodefeaturediscovery
 
 import (
 	"context"
-	"fmt"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -10,7 +9,6 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -54,7 +52,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Not found, creating")
+		logger.Info("Not found, creating ", err.Error())
 		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
@@ -223,21 +221,6 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	return Ready, nil
 }
 
-func isDaemonSetReady(d *appsv1.DaemonSet, n NFD) ResourceStatus {
-
-	opts := &client.ListOptions{}
-	opts.SetLabelSelector(fmt.Sprintf("app=%s", d.Name))
-	list := &appsv1.DaemonSetList{}
-	err := n.rec.client.List(context.TODO(), opts, list)
-	if err != nil {
-		log.Info("Could not get DaemonSetList", err)
-	}
-	log.Info("DEBUG: DaemonSet", "NumberOfDaemonSets", len(list.Items))
-	ds := list.Items[0]
-	log.Info("DEBUG: DaemonSet", "NumberUnavailable", ds.Status.NumberUnavailable)
-	return Ready
-}
-
 func DaemonSet(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
@@ -259,7 +242,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return isDaemonSetReady(obj, n), nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
