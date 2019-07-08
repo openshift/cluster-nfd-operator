@@ -249,7 +249,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 
 	logger.Info("Found")
 
-	return isDaemonSetReady(obj, n), nil
+	return Ready, nil
 }
 
 func Service(n NFD) (ResourceStatus, error) {
