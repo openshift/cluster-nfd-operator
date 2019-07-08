@@ -37,11 +37,11 @@ func (s ResourceStatus) String() string {
 func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := &n.resources[state].ServiceAccount
+	obj := n.resources[state].ServiceAccount
 
 	found := &corev1.ServiceAccount{}
 
-	obj.ObjectMeta.ResourceVersion = ""
+	//obj.ObjectMeta.ResourceVersion = ""
 
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace, "Res", obj.GetObjectMeta().GetResourceVersion())
 
@@ -58,7 +58,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -88,7 +88,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -119,7 +119,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -149,7 +149,7 @@ func Role(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -180,7 +180,7 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -211,7 +211,7 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
@@ -288,7 +288,7 @@ func Service(n NFD) (ResourceStatus, error) {
 			logger.Info("Couldn't create")
 			return NotReady, err
 		}
-		return NotReady, nil
+		return Ready, nil
 	} else if err != nil {
 		return NotReady, err
 	}
