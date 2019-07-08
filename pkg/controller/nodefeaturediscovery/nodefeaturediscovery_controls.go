@@ -45,7 +45,9 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace, "Res", obj.GetObjectMeta().GetResourceVersion())
 
-	if err := controllerutil.SetControllerReference(n.ins, obj, n.rec.scheme); err != nil {
+	logger.Info("XXXX")
+
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
 
@@ -53,7 +55,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Not found, creating")
-		err = n.rec.client.Create(context.TODO(), obj)
+		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")
 			return NotReady, err

@@ -38,7 +38,7 @@ import (
 
 var (
 	retryInterval        = time.Second * 5
-	timeout              = time.Second * 60
+	timeout              = time.Second * 600
 	cleanupRetryInterval = time.Second * 1
 	cleanupTimeout       = time.Second * 30
 )
@@ -102,7 +102,7 @@ func MemcachedCluster(t *testing.T) {
 	t.Parallel()
 	ctx := framework.NewTestCtx(t)
 
-	//defer ctx.Cleanup()
+	defer ctx.Cleanup()
 
 	err := ctx.InitializeClusterResources(&framework.CleanupOptions{TestContext: ctx, Timeout: cleanupTimeout, RetryInterval: cleanupRetryInterval})
 	if err != nil {
