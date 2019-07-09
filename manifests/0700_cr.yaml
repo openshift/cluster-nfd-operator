@@ -2,7 +2,7 @@ apiVersion: nfd.openshift.io/v1alpha1
 kind: NodeFeatureDiscovery
 metadata:
   name: nfd-master-server 
-  namespace: openshift-nfd-operator
+  namespace: REPLACE_NAMESPACE
 spec:
   namespace: openshift-nfd
   image: quay.io/zvonkok/node-feature-discovery:v4.2
