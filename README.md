@@ -16,13 +16,25 @@ Checkout the sources
 ```
 $ git clone https://github.com/openshift/cluster-nfd-operator
 ```
-Update `cluster-nfd-operator/manifests/0600_operator.yaml` with the a custom image built and create all files in `cluster-nfd-operator/manifests`
+Update the  `Makefile` with the a custom image built and configure the namespace where the operator should be deployed.
+
+The default CR will create the operand (NFD) in the `openshift-nfd` namespace, the CR can be edited to choose another namespace and image. See the `manifests/0700_cr.yaml` for the default values.
+
 ```
 $ cd cluster-nfd-operator/manifests
-$ kubectl create -f .
-$ kubectl create -f cr/nfd_cr.yaml
+$ make deploy
 ```
 The operator will use the NFD image built from: https://github.com/openshift/node-feature-discovery
+
+To uninstall the operator run 
+```
+$ make undeploy
+```
+
+To verify the correct working of NFD a e2e test can be run as well: 
+```
+$ make test-e2e
+```
 
 ## Extending NFD with sidecar containers and hooks
 
