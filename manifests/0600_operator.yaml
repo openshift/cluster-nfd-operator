@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nfd-operator
-  namespace: openshift-nfd-operator
+  namespace: REPLACE_NAMESPACE
 spec:
   replicas: 1
   selector:
@@ -17,7 +17,7 @@ spec:
       containers:
         - name: nfd-operator
           # Replace this with the built image name
-          image: quay.io/zvonkok/cluster-nfd-operator:p3
+          image: REPLACE_IMAGE
           ports:
           - containerPort: 60000
             name: metrics
