@@ -43,7 +43,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	found := &corev1.ServiceAccount{}
 
-	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace, "Res", obj.GetObjectMeta().GetResourceVersion())
+	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
 	logger.Info("XXXX")
 
@@ -54,7 +54,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Not found, creating ", err.Error())
+		logger.Info("Not found, creating ")
 		err = n.rec.client.Create(context.TODO(), &obj)
 		if err != nil {
 			logger.Info("Couldn't create")

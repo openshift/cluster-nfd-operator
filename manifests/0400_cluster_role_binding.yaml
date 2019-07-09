@@ -5,7 +5,7 @@ metadata:
 subjects:
 - kind: ServiceAccount
   name: nfd-operator
-  namespace: openshift-nfd-operator
+  namespace: REPLACE_NAMESPACE
 roleRef:
   kind: ClusterRole
   name: nfd-operator
