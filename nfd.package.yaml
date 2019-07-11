@@ -1,1 +1,5 @@
-controller-manifests/nfd.package.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: REPLACE_NAMESPACE
+
