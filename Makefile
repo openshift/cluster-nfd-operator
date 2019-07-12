@@ -1,6 +1,6 @@
 REGISTRY       ?= quay.io
 ORG            ?= zvonkok
-TAG            ?= e2e #$(shell git rev-parse --short HEAD)
+TAG            ?= latest #$(shell git rev-parse --short HEAD)
 IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd-operator
 TEMPLATE_CMD    = sed 's|REPLACE_IMAGE|${IMAGE}|g; s|REPLACE_NAMESPACE|${NAMESPACE}|g; s|Always|IfNotPresent|'
