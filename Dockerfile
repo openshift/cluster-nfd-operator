@@ -9,7 +9,7 @@ COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/cluster-nf
 RUN mkdir -p /opt/nfd
 COPY assets /opt/nfd
 
-ADD controller-manifests /manifests
+#ADD controller-manifests /manifests
 
 RUN useradd cluster-nfd-operator
 USER cluster-nfd-operator
