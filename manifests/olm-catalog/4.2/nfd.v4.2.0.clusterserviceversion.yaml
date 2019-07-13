@@ -11,7 +11,7 @@ metadata:
     createdAt: 2019-05-30T00:00:00Z
     certified: "false"
     repository: https://github.com/openshift/cluster-nfd-operator
-  name: nfd.v4.2
+  name: nfd.v4.2.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
