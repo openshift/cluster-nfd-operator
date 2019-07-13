@@ -1,0 +1,13 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+spec:
+  tags:
+  - name: node-feature-discovery
+    from:
+      kind: DockerImage
+      name: quay.io/openshift/origin-node-feature-discovery
+  - name: cluster-nfd-operator
+    from:
+      kind: DockerImage
+      name: quay.io/openshift/origin-cluster-nfd-operator
+© 2019 GitHub, Inc.
