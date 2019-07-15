@@ -10,4 +10,3 @@ spec:
     from:
       kind: DockerImage
       name: quay.io/openshift/origin-cluster-nfd-operator
-© 2019 GitHub, Inc.
