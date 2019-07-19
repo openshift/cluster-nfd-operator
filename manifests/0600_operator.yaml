@@ -17,7 +17,7 @@ spec:
       containers:
         - name: nfd-operator
           # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: quay.io/openshift/origin-cluster-nfd-operator:v4.2.0
           ports:
           - containerPort: 60000
             name: metrics
@@ -44,7 +44,7 @@ spec:
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
-              value: "quay.io/zvonkok/node-feature-discovery:v4.2"
+              value: "quay.io/openshift/origin-node-feature-discovery:v4.2.0"
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
