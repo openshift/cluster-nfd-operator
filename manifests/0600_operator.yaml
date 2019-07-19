@@ -43,6 +43,8 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
+            - name: NODE_FEATURE_DISCOVERY_IMAGE
+              value: "quay.io/zvonkok/node-feature-discovery:v4.2"
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
