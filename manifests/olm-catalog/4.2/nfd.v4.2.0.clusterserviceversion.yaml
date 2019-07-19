@@ -21,7 +21,7 @@ spec:
       name: nodefeaturediscoveries.nfd.openshift.io
       version: v1alpha1
       description: |
-        The NFD operator creates and maintiains the Node Feature Discovery (NFD) on Kubernetes. 
+        The NFD operator creates and maintains the Node Feature Discovery (NFD) on Kubernetes. 
         It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
       displayName: Node Feature Discovery    
   description: |
@@ -123,7 +123,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
-                image: quay.io/zvonkok/cluster-nfd-operator:p3
+                image: quay.io/openshift/origin-cluster-nfd-operator:latest
                 imagePullPolicy: Always
                 name: nfd-operator
                 ports:

@@ -5,8 +5,8 @@ spec:
   - name: node-feature-discovery
     from:
       kind: DockerImage
-      name: quay.io/openshift/origin-node-feature-discovery
+      name: quay.io/openshift/origin-node-feature-discovery:v4.2.0
   - name: cluster-nfd-operator
     from:
       kind: DockerImage
-      name: quay.io/openshift/origin-cluster-nfd-operator
+      name: quay.io/openshift/origin-cluster-nfd-operator:v4.2.0

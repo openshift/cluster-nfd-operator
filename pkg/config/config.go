@@ -14,9 +14,9 @@ const (
 	resyncPeriodDefault      int64  = 600
 )
 
-// NodeTunedImage returns the operator's operand/tuned image path.
-func NodeTunedImage() string {
-	nodeTunedImage := os.Getenv("CLUSTER_NODE_TUNED_IMAGE")
+// NodeFeatureDiscoveryImage returns the operator's operand/tuned image path.
+func NodeFeatureDiscoveryImage() string {
+	nodeTunedImage := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
 
 	if len(nodeTunedImage) > 0 {
 		return nodeTunedImage
