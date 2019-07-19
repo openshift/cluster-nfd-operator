@@ -10,6 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	nfdconfig "github.com/openshift/cluster-nfd-operator/pkg/config"
 )
 
 type controlFunc []func(n NFD) (ResourceStatus, error)
@@ -251,6 +253,8 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	if len(n.ins.Spec.OperandNamespace) != 0 {
 		obj.SetNamespace(n.ins.Spec.OperandNamespace)
 	}
+
+	obj.Spec.Template.Spec.Containers[0].Image = nfdconfig.NodeFeatureDiscoveryImage()
 
 	if len(n.ins.Spec.OperandImage) != 0 {
 		obj.Spec.Template.Spec.Containers[0].Image = n.ins.Spec.OperandImage
