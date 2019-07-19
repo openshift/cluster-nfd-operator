@@ -28,7 +28,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: ${NODE_FEATURE_DISCOVERY_IMAGE}
+          image: $(NODE_FEATURE_DISCOVERY_IMAGE)
           name: nfd-master
           command: ["nfd-master", "--port=12000"]
           securityContext:

@@ -27,7 +27,7 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          image: ${NODE_FEATURE_DISCOVERY_IMAGE}
+          image: $(NODE_FEATURE_DISCOVERY_IMAGE)
           name: nfd-worker
           command:
             - "nfd-worker"
