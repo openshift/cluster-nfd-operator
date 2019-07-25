@@ -37,6 +37,20 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 )
 
+//func GetLogs(kubeClient kubernetes.Interface, namespace string, podName, containerName string) (string, error) {
+//	logs, err := kubeClient.CoreV1().RESTClient().Get().
+//		Resource("pods").
+//		Namespace(namespace).
+//		Name(podName).SubResource("log").
+//		Param("container", containerName).
+//		Do().
+//		Raw()
+//	if err != nil {
+//		return "", err
+//	}
+//	return string(logs), err
+//}
+
 var (
 	retryInterval        = time.Second * 5
 	timeout              = time.Second * 60

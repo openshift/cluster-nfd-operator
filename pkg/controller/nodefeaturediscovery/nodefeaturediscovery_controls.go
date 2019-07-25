@@ -47,8 +47,6 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
-	logger.Info("XXXX")
-
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
@@ -380,7 +378,11 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	}
 
 	logger.Info("Found, updating")
-	err = n.rec.client.Update(context.TODO(), &obj)
+
+	required := obj.DeepCopy()
+	required.ResourceVersion = found.ResourceVersion
+
+	err = n.rec.client.Update(context.TODO(), required)
 	if err != nil {
 		return NotReady, err
 	}
