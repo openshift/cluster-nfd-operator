@@ -339,7 +339,12 @@ func Service(n NFD) (ResourceStatus, error) {
 	}
 
 	logger.Info("Found, updating")
-	err = n.rec.client.Update(context.TODO(), &obj)
+
+	required := obj.DeepCopy()
+	required.ResourceVersion = found.ResourceVersion
+
+	err = n.rec.client.Update(context.TODO(), required)
+
 	if err != nil {
 		return NotReady, err
 	}
