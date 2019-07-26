@@ -342,6 +342,7 @@ func Service(n NFD) (ResourceStatus, error) {
 
 	required := obj.DeepCopy()
 	required.ResourceVersion = found.ResourceVersion
+	required.Spec.ClusterIP = found.Spec.ClusterIP
 
 	err = n.rec.client.Update(context.TODO(), required)
 
