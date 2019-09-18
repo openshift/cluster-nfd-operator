@@ -65,7 +65,7 @@ undeploy:
 	 ## Delete everything for the operator from the cluster
 #	-${TEMPLATE_CMD} $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS) | kubectl delete -f -
 
-verify:	verify-gofmt 
+verify:	verify-gofmt
 
 verify-gofmt:
 ifeq (, $(GOFMT_CHECK))
