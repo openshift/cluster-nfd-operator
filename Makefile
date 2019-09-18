@@ -5,6 +5,7 @@ IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd-operator
 PULLPOLICY     ?= IfNotPresent
 TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+${IMAGE}+g; s+REPLACE_NAMESPACE+${NAMESPACE}+g; s+Always+${PULLPOLICY}+'
+
 DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0110_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
 DEPLOY_CRDS     = manifests/0500_crd.yaml
 DEPLOY_CRS      = manifests/0700_cr.yaml
