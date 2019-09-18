@@ -4,7 +4,7 @@ TAG            ?= latest #$(shell git rev-parse --short HEAD)
 IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd-operator
 PULLPOLICY     ?= IfNotPresent
-TEMPLATE_CMD    = sed 's|REPLACE_IMAGE|${IMAGE}|g; s|REPLACE_NAMESPACE|${NAMESPACE}|g; s|Always|${PULLPOLICY}|'
+TEMPLATE_CMD    = sed 's|REPLACE_IMAGE|${IMAGE}|g; s|REPLACE_NAMESPACE|${NAMESPACE}|g; s|IfNotPresent|${PULLPOLICY}|'
 DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0110_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
 DEPLOY_CRDS     = manifests/0500_crd.yaml
 DEPLOY_CRS      = manifests/0700_cr.yaml
@@ -65,7 +65,7 @@ undeploy:
 	 ## Delete everything for the operator from the cluster
 #	-${TEMPLATE_CMD} $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS) | kubectl delete -f -
 
-verify:	verify-gofmt
+verify:	verify-gofmt 
 
 verify-gofmt:
 ifeq (, $(GOFMT_CHECK))
