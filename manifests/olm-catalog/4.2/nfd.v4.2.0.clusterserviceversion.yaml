@@ -21,7 +21,9 @@ metadata:
           "metadata": {
             "name": "nfd-master-server"
           },
-          "spec": null
+          "spec": {
+            "namespace": "openshift-nfd"
+          }
         }
       ]
     description: This software enables node feature discovery for Kubernetes. It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
@@ -83,7 +85,7 @@ spec:
           resources:
           - namespaces
           verbs:
-          - get
+          - '*'
         - apiGroups:
           - apps
           resources:
@@ -149,10 +151,10 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-#                  value: quay.io/openshift/origin-node-feature-discovery:latest
-                  value: "quay.io/zvonkok/node-feature-discovery:v4.2"
-#                image: quay.io/openshift/origin-cluster-nfd-operator:latest
-                image: quay.io/zvonkok/cluster-nfd-operator:latest
+                  value: quay.io/openshift/origin-node-feature-discovery:latest
+#                  value: "quay.io/zvonkok/node-feature-discovery:v4.2"
+                image: quay.io/openshift/origin-cluster-nfd-operator:latest
+#                image: quay.io/zvonkok/cluster-nfd-operator:latest
                 imagePullPolicy: Always
                 name: nfd-operator
                 ports:
