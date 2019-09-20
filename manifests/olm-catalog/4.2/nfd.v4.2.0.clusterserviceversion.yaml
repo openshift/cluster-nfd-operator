@@ -21,13 +21,16 @@ metadata:
           "metadata": {
             "name": "nfd-master-server"
           },
-          "spec": null
+          "spec": {
+            "namespace": "openshift-nfd"
+          }
         }
       ]
     description: This software enables node feature discovery for Kubernetes. It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
 spec:
   maintainers: 
   - name: "Red Hat"
+    email: openshift-psap@redhat.com
   links: 
   - name: Documentation operator
     url: https://github.com/openshift/cluster-nfd-operator
@@ -82,7 +85,7 @@ spec:
           resources:
           - namespaces
           verbs:
-          - get
+          - '*'
         - apiGroups:
           - apps
           resources:
@@ -147,6 +150,8 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
+                - name: NODE_FEATURE_DISCOVERY_IMAGE
+                  value: quay.io/openshift/origin-node-feature-discovery:latest
                 image: quay.io/openshift/origin-cluster-nfd-operator:latest
                 imagePullPolicy: Always
                 name: nfd-operator

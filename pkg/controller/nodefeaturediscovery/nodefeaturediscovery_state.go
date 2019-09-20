@@ -40,6 +40,7 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 
 	secv1.AddToScheme(r.scheme)
 
+	addState(n, "/opt/nfd/config")
 	addState(n, "/opt/nfd/master")
 	addState(n, "/opt/nfd/worker")
 

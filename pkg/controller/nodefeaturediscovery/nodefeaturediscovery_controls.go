@@ -34,6 +34,41 @@ func (s ResourceStatus) String() string {
 	return names[s]
 }
 
+func Namespace(n NFD) (ResourceStatus, error) {
+
+	state := n.idx
+	obj := n.resources[state].Namespace
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetName(n.ins.Spec.OperandNamespace)
+	}
+
+	found := &corev1.Namespace{}
+	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
+
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Looking for")
+	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Not found, creating ")
+		err = n.rec.client.Create(context.TODO(), &obj)
+		if err != nil {
+			logger.Info("Couldn't create")
+			return NotReady, err
+		}
+		return Ready, nil
+	} else if err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Found, skpping update")
+
+	return Ready, nil
+}
+
 func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
@@ -44,7 +79,6 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	}
 
 	found := &corev1.ServiceAccount{}
-
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
