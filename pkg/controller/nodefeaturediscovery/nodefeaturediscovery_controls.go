@@ -44,7 +44,6 @@ func Namespace(n NFD) (ResourceStatus, error) {
 	}
 
 	found := &corev1.Namespace{}
-
 	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
@@ -80,7 +79,6 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	}
 
 	found := &corev1.ServiceAccount{}
-
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
