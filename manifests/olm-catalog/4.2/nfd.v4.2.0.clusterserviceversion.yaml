@@ -151,8 +151,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:latest
-                image: quay.io/openshift/origin-cluster-nfd-operator:latest
+                  value: quay.io/zvonkok/node-feature-discovery:v4.2
+                image: quay.io/zvonkok/cluster-nfd-operator
                 imagePullPolicy: Always
                 name: nfd-operator
                 ports:
