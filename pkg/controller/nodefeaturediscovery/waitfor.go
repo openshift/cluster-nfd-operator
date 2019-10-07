@@ -50,7 +50,6 @@ func makeStatusCallback(obj *unstructured.Unstructured, status interface{}, fiel
 }
 
 func waitForResource(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery) error {
-
 	if obj.GetKind() == "DaemonSet" {
 		return waitForDaemonSet(obj, r)
 	}
@@ -84,7 +83,6 @@ var (
 )
 
 func waitForResourceAvailability(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery) error {
-
 	found := obj.DeepCopy()
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
@@ -101,9 +99,7 @@ func waitForResourceAvailability(obj *unstructured.Unstructured, r *ReconcileNod
 }
 
 func waitForResourceFullAvailability(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery, callback statusCallback) error {
-
 	found := obj.DeepCopy()
-
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
 		err = r.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.GetNamespace(), Name: obj.GetName()}, found)
 		if err != nil {
