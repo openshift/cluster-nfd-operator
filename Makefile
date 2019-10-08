@@ -54,6 +54,7 @@ deploy-crds: $(DEPLOY_CRDS)
 deploy-objects: deploy-crds
 	for obj in $(DEPLOY_OBJECTS); do \
 		$(TEMPLATE_CMD) $$obj | kubectl apply -f - ;\
+		sleep 1;\
 	done	
 
 deploy: deploy-objects
