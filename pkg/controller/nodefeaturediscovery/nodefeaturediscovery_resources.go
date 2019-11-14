@@ -21,6 +21,7 @@ type assetsFromFile []byte
 var manifests []assetsFromFile
 
 type Resources struct {
+	Namespace                  corev1.Namespace
 	ServiceAccount             corev1.ServiceAccount
 	Role                       rbacv1.Role
 	RoleBinding                rbacv1.RoleBinding
@@ -78,6 +79,10 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 		kind = strings.TrimSpace(slce[1])
 
 		switch kind {
+		case "Namespace":
+			_, _, err := s.Decode(m, nil, &res.Namespace)
+			panicIfError(err)
+			ctrl = append(ctrl, Namespace)
 		case "ServiceAccount":
 			_, _, err := s.Decode(m, nil, &res.ServiceAccount)
 			panicIfError(err)

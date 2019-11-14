@@ -9,10 +9,10 @@ data:
       pci:
         deviceLabelFields:
           - "vendor"
-    #    deviceClassWhitelist:
-    #      - "0200"
-    #      - "03"
-    #      - "12"
+        deviceClassWhitelist:
+          - "0200"
+          - "03"
+          - "12"
     
     #      - "class"
           

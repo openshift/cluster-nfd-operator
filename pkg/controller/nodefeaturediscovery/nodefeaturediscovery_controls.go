@@ -34,20 +34,17 @@ func (s ResourceStatus) String() string {
 	return names[s]
 }
 
-func ServiceAccount(n NFD) (ResourceStatus, error) {
+func Namespace(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
-	obj := n.resources[state].ServiceAccount
+	obj := n.resources[state].Namespace
 
 	if len(n.ins.Spec.OperandNamespace) != 0 {
-		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+		obj.SetName(n.ins.Spec.OperandNamespace)
 	}
 
-	found := &corev1.ServiceAccount{}
-
-	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
-
-	logger.Info("XXXX")
+	found := &corev1.Namespace{}
+	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
@@ -67,7 +64,42 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, skpping update")
+
+	return Ready, nil
+}
+
+func ServiceAccount(n NFD) (ResourceStatus, error) {
+
+	state := n.idx
+	obj := n.resources[state].ServiceAccount
+
+	if len(n.ins.Spec.OperandNamespace) != 0 {
+		obj.SetNamespace(n.ins.Spec.OperandNamespace)
+	}
+
+	found := &corev1.ServiceAccount{}
+	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
+
+	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Looking for")
+	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Not found, creating ")
+		err = n.rec.client.Create(context.TODO(), &obj)
+		if err != nil {
+			logger.Info("Couldn't create")
+			return NotReady, err
+		}
+		return Ready, nil
+	} else if err != nil {
+		return NotReady, err
+	}
+
+	logger.Info("Found, skpping update")
 
 	return Ready, nil
 }
@@ -101,7 +133,11 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -136,7 +172,11 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -170,7 +210,11 @@ func Role(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -205,7 +249,11 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -240,7 +288,11 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -281,7 +333,11 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+	err = n.rec.client.Update(context.TODO(), &obj)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -316,7 +372,17 @@ func Service(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+
+	required := obj.DeepCopy()
+	required.ResourceVersion = found.ResourceVersion
+	required.Spec.ClusterIP = found.Spec.ClusterIP
+
+	err = n.rec.client.Update(context.TODO(), required)
+
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }
@@ -351,7 +417,15 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	logger.Info("Found")
+	logger.Info("Found, updating")
+
+	required := obj.DeepCopy()
+	required.ResourceVersion = found.ResourceVersion
+
+	err = n.rec.client.Update(context.TODO(), required)
+	if err != nil {
+		return NotReady, err
+	}
 
 	return Ready, nil
 }

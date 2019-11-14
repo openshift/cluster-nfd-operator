@@ -23,7 +23,7 @@ spec:
             name: metrics
           command:
           - cluster-nfd-operator
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           readinessProbe:
             exec:
               command:
