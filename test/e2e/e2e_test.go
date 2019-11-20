@@ -92,8 +92,8 @@ func TestNodeFeatureDiscovery(t *testing.T) {
 
 	// get global framework variables
 	f := framework.Global
-	// wait for memcached-operator to be ready
-	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "nfd-operator", 1, retryInterval, timeout)
+	// wait for cluster-nfd-operator to be ready
+	err = e2eutil.WaitForDeployment(t, f.KubeClient, namespace, "cluster-nfd-operator", 1, retryInterval, timeout)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func createClusterRoleBinding(t *testing.T, namespace string, ctx *framework.Tes
 	// operator-sdk test cannot deploy clusterrolebinding
 	obj := &rbacv1.ClusterRoleBinding{}
 
-	namespacedYAML, err := ioutil.ReadFile("manifests/0400_cluster_role_binding.yaml")
+	namespacedYAML, err := ioutil.ReadFile("deploy/cluster_role_binding.yaml")
 	s := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme.Scheme,
 		scheme.Scheme)
 
@@ -144,10 +144,7 @@ func nodeFeatureDiscovery(t *testing.T, f *framework.Framework, ctx *framework.T
 			Name:      opName,
 			Namespace: namespace,
 		},
-		Spec: operator.NodeFeatureDiscoverySpec{
-			OperandNamespace: opNamespace,
-			OperandImage:     opImage,
-		},
+		Spec: operator.NodeFeatureDiscoverySpec{},
 	}
 
 	// use TestCtx's create helper to create the object and add a cleanup function for the new object
@@ -156,14 +153,14 @@ func nodeFeatureDiscovery(t *testing.T, f *framework.Framework, ctx *framework.T
 		return err
 	}
 
-	t.Logf("Created CR with OperandNamespace: %s OperandImage %s", opNamespace, opImage)
+	t.Logf("Created CR with OperandNamespace: %s OperandImage %s", namespace, opImage)
 
-	err = WaitForDaemonSet(t, f.KubeClient, opNamespace, "nfd-master", 0, retryInterval, timeout)
+	err = WaitForDaemonSet(t, f.KubeClient, namespace, "nfd-master", 0, retryInterval, timeout)
 	if err != nil {
 		return err
 	}
 
-	err = WaitForDaemonSet(t, f.KubeClient, opNamespace, "nfd-worker", 0, retryInterval, timeout)
+	err = WaitForDaemonSet(t, f.KubeClient, namespace, "nfd-worker", 0, retryInterval, timeout)
 	if err != nil {
 		return err
 	}

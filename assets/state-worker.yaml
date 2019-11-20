@@ -40,8 +40,6 @@ subjects:
 - kind: ServiceAccount
   name: nfd-worker
   namespace: openshift-nfd
-userNames:
-- system:serviceaccount:openshift-nfd:nfd-worker
 --- 
 apiVersion: v1
 kind: ConfigMap
@@ -81,6 +79,7 @@ groups: []
 kind: SecurityContextConstraints
 metadata:
   annotations:
+    callback: prefix-scc-nfd-worker
     kubernetes.io/description: nfd-master allows using host networking, host ports
       and hostPath but still requires pods to be run with a UID and SELinux 
       context that are allocated to the namespace.
@@ -99,7 +98,8 @@ seLinuxContext:
 supplementalGroups:
   type: MustRunAs
 users: 
-- system:serviceaccount:openshift-nfd:nfd-worker
+- REPLACE_USERS
+#- system:serviceaccount:openshift-nfd:nfd-worker
 volumes:
 - configMap
 - downwardAPI

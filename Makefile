@@ -5,7 +5,7 @@ IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd
 PULLPOLICY     ?= IfNotPresent
 TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+${IMAGE}+g; s+REPLACE_NAMESPACE+${NAMESPACE}+g; s+IfNotPresent+${PULLPOLICY}+'
-DEPLOY_OBJECTS  = namespace.yaml service_account.yaml role.yaml role_binding.yaml operator.yaml
+DEPLOY_OBJECTS  = namespace.yaml service_account.yaml role.yaml role_binding.yaml cluster_role_binding.yaml operator.yaml
 DEPLOY_CRD      = crds/nfd_v1alpha1_nodefeaturediscovery_crd.yaml
 DEPLOY_CR       = crds/nfd_v1alpha1_nodefeaturediscovery_cr.yaml
 
@@ -15,9 +15,8 @@ MAIN_PACKAGE=$(PACKAGE)/cmd/manager
 DOCKERFILE=Dockerfile
 ENVVAR=GOOS=linux CGO_ENABLED=0
 GOOS=linux
-GO_BUILD_RECIPE=GOOS=$(GOOS) go build -o $(BIN) $(MAIN_PACKAGE)
+GO_BUILD_RECIPE=GOOS=$(GOOS) go build -mod=vendor -o $(BIN) $(MAIN_PACKAGE)
 
-TEST_RESOURCES  = $(shell mktemp -d)/test-init.yaml
 
 BIN=$(lastword $(subst /, ,$(PACKAGE)))
 
@@ -30,15 +29,23 @@ build:
 	$(GO_BUILD_RECIPE)
 
 test-e2e: 
-	@${TEMPLATE_CMD} manifests/service_account.yaml > $(TEST_RESOURCES)
-	echo -e "\n---\n" >> $(TEST_RESOURCES)
-	@${TEMPLATE_CMD} manifests/role.yaml >> $(TEST_RESOURCES)
-	echo -e "\n---\n" >> $(TEST_RESOURCES)
-	@${TEMPLATE_CMD} manifests/role_binding.yaml >> $(TEST_RESOURCES)
-	echo -e "\n---\n" >> $(TEST_RESOURCES)
-	@${TEMPLATE_CMD} manifests/operator.yaml >> $(TEST_RESOURCES)
+	-kubectl delete clusterroles        cluster-nfd-operator
+	-kubectl delete clusterrolebindings cluster-nfd-operator 
 
-	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e  -globalMan manifests/0500_crd.yaml -namespacedMan $(TEST_RESOURCES)
+	$(eval TEST_RESOURCES := $(shell mktemp -d)/test-init.yaml)
+	$(eval PULLPOLICY := Always)
+
+	@${TEMPLATE_CMD} deploy/service_account.yaml > $(TEST_RESOURCES)
+	echo -e "\n---\n" >> $(TEST_RESOURCES)
+	@${TEMPLATE_CMD} deploy/role.yaml >> $(TEST_RESOURCES)
+	echo -e "\n---\n" >> $(TEST_RESOURCES)
+	@${TEMPLATE_CMD} deploy/role_binding.yaml >> $(TEST_RESOURCES)
+	echo -e "\n---\n" >> $(TEST_RESOURCES)
+	@${TEMPLATE_CMD} deploy/operator.yaml >> $(TEST_RESOURCES)
+
+	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e  -globalMan ./deploy/crds/nfd_v1alpha1_nodefeaturediscovery_crd.yaml -namespacedMan $(TEST_RESOURCES)
+
+
 
 $(DEPLOY_CRD):
 	@${TEMPLATE_CMD} deploy/$@ | kubectl apply -f -

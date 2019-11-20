@@ -19,6 +19,8 @@ func SetupCallbacks() error {
 
 	prefix["prefix-nfd-master"] = prefixNFDmaster
 	prefix["prefix-nfd-worker"] = prefixNFDworker
+	prefix["prefix-crb-nfd-master"] = prefixCrbNFDmaster
+	prefix["prefix-scc-nfd-worker"] = prefixSccNFDworker
 
 	return nil
 }

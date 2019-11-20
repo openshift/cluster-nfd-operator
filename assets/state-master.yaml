@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: nfd-master
-  namespace: openshift-nfd
+  namespace: REPLACE_NAMESPACE
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -23,6 +23,8 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: nfd-master
+  annotations:
+    callback: prefix-crb-nfd-master
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -30,9 +32,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nfd-master
-  namespace: openshift-nfd
-userNames:
-- system:serviceaccount:openshift-nfd:nfd-master
+  namespace: REPLACE_NAMESPACE
 ---
 apiVersion: apps/v1
 kind: DaemonSet
@@ -40,7 +40,7 @@ metadata:
   labels:
     app: nfd-master
   name: nfd-master
-  namespace: openshift-nfd
+  namespace: REPLACE_NAMESPACE
   annotations:
     callback: prefix-nfd-master
 spec:
@@ -79,7 +79,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nfd-master
-  namespace: openshift-nfd
+  namespace: REPLACE_NAMESPACE
 spec:
   type: ClusterIP
   selector:

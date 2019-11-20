@@ -4,7 +4,8 @@ require (
 	github.com/NYTimes/gziphandler v1.0.1 // indirect
 	github.com/go-openapi/spec v0.19.0
 	github.com/openshift/api v3.9.0+incompatible
-	github.com/operator-framework/operator-sdk v0.10.1-0.20191003162215-1801b81d5400
+	github.com/operator-framework/operator-sdk v0.0.0-00010101000000-000000000000
+	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c // indirect
 	github.com/spf13/pflag v1.0.3
 	k8s.io/api v0.0.0-20190612125737-db0771252981
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad

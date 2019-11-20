@@ -41,3 +41,36 @@ func setDSimage(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery
 
 	return nil
 }
+
+func prefixCrbNFDmaster(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery) error {
+
+	subjects, found, err := unstructured.NestedSlice(obj.Object, "subjects")
+	checkNestedFields(found, err)
+	for _, subject := range subjects {
+		switch subject := subject.(type) {
+		case map[string]interface{}:
+			err = unstructured.SetNestedField(subject, r.nodefeaturediscovery.Namespace, "namespace")
+			checkNestedFields(true, err)
+
+		default:
+			panic(fmt.Errorf("cannot extract name,image from %T", subject))
+		}
+
+	}
+
+	err = unstructured.SetNestedSlice(obj.Object, subjects, "subjects")
+	checkNestedFields(true, err)
+
+	return nil
+}
+
+func prefixSccNFDworker(obj *unstructured.Unstructured, r *ReconcileNodeFeatureDiscovery) error {
+
+	users := make([]interface{}, 1)
+	users[0] = "system:serviceaccount:" + r.nodefeaturediscovery.Namespace + ":nfd-worker"
+
+	err := unstructured.SetNestedSlice(obj.Object, users, "users")
+	checkNestedFields(true, err)
+
+	return nil
+}
