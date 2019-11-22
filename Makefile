@@ -29,8 +29,8 @@ build:
 	$(GO_BUILD_RECIPE)
 
 test-e2e: 
-	-kubectl delete clusterroles        cluster-nfd-operator
-	-kubectl delete clusterrolebindings cluster-nfd-operator 
+	-kubectl delete clusterroles        cluster-nfd-operator > /dev/null 2>&1
+	-kubectl delete clusterrolebindings cluster-nfd-operator > /dev/null 2>&1
 
 	$(eval TEST_RESOURCES := $(shell mktemp -d)/test-init.yaml)
 	$(eval PULLPOLICY := Always)
