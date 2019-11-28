@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: nfd.v4.3.0
+  name: nfd.v4.4.0
   namespace: placeholder
   annotations:
     capabilities: Basic Install
@@ -199,4 +199,4 @@ spec:
   maturity: alpha
   provider:
     name: "Red Hat"
-  version: "4.3.0"
+  version: "4.4.0"
