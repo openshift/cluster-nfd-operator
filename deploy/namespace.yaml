@@ -4,6 +4,8 @@ metadata:
     name: REPLACE_NAMESPACE
     labels:
         openshift.io/cluster-monitoring: "true"
+    annotations:
+        openshift.io/node-selector: ""
 
 
 
