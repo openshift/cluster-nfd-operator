@@ -128,7 +128,7 @@ spec:
         app: nfd-worker
     spec:
       nodeSelector:
-        node-role.kubernetes.io/worker: ""
+        node-role.kubernetes.io/compute: "true"
       tolerations:
       - operator: Exists
       - key: nvidia.com/gpu

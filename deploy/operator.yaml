@@ -37,9 +37,9 @@ spec:
             - name: NODE_FEATURE_DISCOVERY_IMAGE
               value: "quay.io/zvonkok/node-feature-discovery:v4.2"
       nodeSelector:
-        node-role.kubernetes.io/master: ""
+        node-role.kubernetes.io/master: "true"
       tolerations:
         - key: "node-role.kubernetes.io/master"
           operator: "Equal"
-          value: ""
+          value: "true"
           effect: "NoSchedule"
