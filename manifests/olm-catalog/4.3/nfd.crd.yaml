@@ -17,6 +17,7 @@ spec:
   validation:
     openAPIV3Schema:
       description: 'The Cluster Node Feature Discovery operator manages detection of hardware features and configuration in a Openshift cluster. The operator orchestrates all resources needed to run the NFD DaemonSet (Upstream: https://github.com/kubernetes-sigs/node-feature-discovery)'
+      type: object
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
