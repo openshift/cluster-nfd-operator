@@ -51,72 +51,48 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, &handler.EnqueueRequestForOwner{
+	// Watch for changes to secondary resource Pods and requeue the owner NodeFeatureDiscovery
+	cache := &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	}
+
+	if err = c.Watch(&source.Kind{Type: &appsv1.DaemonSet{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &corev1.Service{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &corev1.Service{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &corev1.ServiceAccount{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &corev1.ServiceAccount{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &secv1.SecurityContextConstraints{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &secv1.SecurityContextConstraints{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &corev1.ConfigMap{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &rbacv1.Role{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &rbacv1.Role{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &rbacv1.RoleBinding{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &rbacv1.RoleBinding{}}, cache); err != nil {
 		return err
 	}
-	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRole{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRole{}}, cache); err != nil {
 		return err
 	}
 
-	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRoleBinding{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &nfdv1alpha1.NodeFeatureDiscovery{},
-	}); err != nil {
+	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRoleBinding{}}, cache); err != nil {
 		return err
 	}
 
