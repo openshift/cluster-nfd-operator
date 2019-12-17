@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nfd-worker
-  namespace: openshift-nfd
+#  namespace: openshift-nfd
 data:
   nfd-worker-conf: |
     sources:
