@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/cluster-nfd-operator/pkg/apis"
 	"github.com/openshift/cluster-nfd-operator/pkg/controller"
+	nodefeaturediscovery "github.com/openshift/cluster-nfd-operator/pkg/controller/nodefeaturediscovery"
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
 	"github.com/operator-framework/operator-sdk/pkg/ready"
@@ -18,6 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/signals"
+	 
 )
 
 var log = logf.Log.WithName("cmd")
@@ -83,6 +85,11 @@ func main() {
 
 	// Setup Scheme for all resources
 	if err := apis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "")
+		os.Exit(1)
+	}
+
+	if err := nodefeaturediscovery.Add3dpartyResourcesToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)
 	}
