@@ -40,13 +40,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 )
 
-const (
-	// Values taken from: https://github.com/kubernetes/apiserver/blob/master/pkg/apis/config/v1alpha1/defaults.go
-	defaultLeaseDuration = 15 * time.Second
-	defaultRenewDeadline = 10 * time.Second
-	defaultRetryPeriod   = 2 * time.Second
-)
-
 var log = logf.RuntimeLog.WithName("manager")
 
 type controllerManager struct {
@@ -57,12 +50,8 @@ type controllerManager struct {
 	// to scheme.scheme.
 	scheme *runtime.Scheme
 
-	// leaderElectionRunnables is the set of Controllers that the controllerManager injects deps into and Starts.
-	// These Runnables are managed by lead election.
-	leaderElectionRunnables []Runnable
-	// nonLeaderElectionRunnables is the set of webhook servers that the controllerManager injects deps into and Starts.
-	// These Runnables will not be blocked by lead election.
-	nonLeaderElectionRunnables []Runnable
+	// runnables is the set of Controllers that the controllerManager injects deps into and Starts.
+	runnables []Runnable
 
 	cache cache.Cache
 
@@ -90,10 +79,9 @@ type controllerManager struct {
 	// metricsListener is used to serve prometheus metrics
 	metricsListener net.Listener
 
-	mu            sync.Mutex
-	started       bool
-	startedLeader bool
-	errChan       chan error
+	mu      sync.Mutex
+	started bool
+	errChan chan error
 
 	// internalStop is the stop channel *actually* used by everything involved
 	// with the manager as a stop channel, so that we can pass a stop channel
@@ -111,25 +99,11 @@ type controllerManager struct {
 	port int
 	// host is the hostname that the webhook server binds to.
 	host string
-	// CertDir is the directory that contains the server key and certificate.
-	// if not set, webhook server would look up the server key and certificate in
-	// {TempDir}/k8s-webhook-server/serving-certs
-	certDir string
 
 	webhookServer *webhook.Server
-
-	// leaseDuration is the duration that non-leader candidates will
-	// wait to force acquire leadership.
-	leaseDuration time.Duration
-	// renewDeadline is the duration that the acting master will retry
-	// refreshing leadership before giving up.
-	renewDeadline time.Duration
-	// retryPeriod is the duration the LeaderElector clients should wait
-	// between tries of actions.
-	retryPeriod time.Duration
 }
 
-// Add sets dependencies on i, and adds it to the list of Runnables to start.
+// Add sets dependencies on i, and adds it to the list of runnables to start.
 func (cm *controllerManager) Add(r Runnable) error {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
@@ -139,18 +113,9 @@ func (cm *controllerManager) Add(r Runnable) error {
 		return err
 	}
 
-	var shouldStart bool
-
-	// Add the runnable to the leader election or the non-leaderelection list
-	if leRunnable, ok := r.(LeaderElectionRunnable); ok && !leRunnable.NeedLeaderElection() {
-		shouldStart = cm.started
-		cm.nonLeaderElectionRunnables = append(cm.nonLeaderElectionRunnables, r)
-	} else {
-		shouldStart = cm.startedLeader
-		cm.leaderElectionRunnables = append(cm.leaderElectionRunnables, r)
-	}
-
-	if shouldStart {
+	// Add the runnable to the list
+	cm.runnables = append(cm.runnables, r)
+	if cm.started {
 		// If already started, start the controller
 		go func() {
 			cm.errChan <- r.Start(cm.internalStop)
@@ -223,9 +188,8 @@ func (cm *controllerManager) GetAPIReader() client.Reader {
 func (cm *controllerManager) GetWebhookServer() *webhook.Server {
 	if cm.webhookServer == nil {
 		cm.webhookServer = &webhook.Server{
-			Port:    cm.port,
-			Host:    cm.host,
-			CertDir: cm.certDir,
+			Port: cm.port,
+			Host: cm.host,
 		}
 		if err := cm.Add(cm.webhookServer); err != nil {
 			panic("unable to add webhookServer to the controller manager")
@@ -235,19 +199,17 @@ func (cm *controllerManager) GetWebhookServer() *webhook.Server {
 }
 
 func (cm *controllerManager) serveMetrics(stop <-chan struct{}) {
-	var metricsPath = "/metrics"
 	handler := promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{
 		ErrorHandling: promhttp.HTTPErrorOnError,
 	})
 	// TODO(JoelSpeed): Use existing Kubernetes machinery for serving metrics
 	mux := http.NewServeMux()
-	mux.Handle(metricsPath, handler)
+	mux.Handle("/metrics", handler)
 	server := http.Server{
 		Handler: mux,
 	}
 	// Run the server
 	go func() {
-		log.Info("starting metrics server", "path", metricsPath)
 		if err := server.Serve(cm.metricsListener); err != nil && err != http.ErrServerClosed {
 			cm.errChan <- err
 		}
@@ -273,15 +235,13 @@ func (cm *controllerManager) Start(stop <-chan struct{}) error {
 		go cm.serveMetrics(cm.internalStop)
 	}
 
-	go cm.startNonLeaderElectionRunnables()
-
 	if cm.resourceLock != nil {
 		err := cm.startLeaderElection()
 		if err != nil {
 			return err
 		}
 	} else {
-		go cm.startLeaderElectionRunnables()
+		go cm.start()
 	}
 
 	select {
@@ -294,46 +254,9 @@ func (cm *controllerManager) Start(stop <-chan struct{}) error {
 	}
 }
 
-func (cm *controllerManager) startNonLeaderElectionRunnables() {
+func (cm *controllerManager) start() {
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
-
-	cm.waitForCache()
-
-	// Start the non-leaderelection Runnables after the cache has synced
-	for _, c := range cm.nonLeaderElectionRunnables {
-		// Controllers block, but we want to return an error if any have an error starting.
-		// Write any Start errors to a channel so we can return them
-		ctrl := c
-		go func() {
-			cm.errChan <- ctrl.Start(cm.internalStop)
-		}()
-	}
-}
-
-func (cm *controllerManager) startLeaderElectionRunnables() {
-	cm.mu.Lock()
-	defer cm.mu.Unlock()
-
-	cm.waitForCache()
-
-	// Start the leader election Runnables after the cache has synced
-	for _, c := range cm.leaderElectionRunnables {
-		// Controllers block, but we want to return an error if any have an error starting.
-		// Write any Start errors to a channel so we can return them
-		ctrl := c
-		go func() {
-			cm.errChan <- ctrl.Start(cm.internalStop)
-		}()
-	}
-
-	cm.startedLeader = true
-}
-
-func (cm *controllerManager) waitForCache() {
-	if cm.started {
-		return
-	}
 
 	// Start the Cache. Allow the function to start the cache to be mocked out for testing
 	if cm.startCache == nil {
@@ -348,18 +271,31 @@ func (cm *controllerManager) waitForCache() {
 	// Wait for the caches to sync.
 	// TODO(community): Check the return value and write a test
 	cm.cache.WaitForCacheSync(cm.internalStop)
+
+	// Start the runnables after the cache has synced
+	for _, c := range cm.runnables {
+		// Controllers block, but we want to return an error if any have an error starting.
+		// Write any Start errors to a channel so we can return them
+		ctrl := c
+		go func() {
+			cm.errChan <- ctrl.Start(cm.internalStop)
+		}()
+	}
+
 	cm.started = true
 }
 
 func (cm *controllerManager) startLeaderElection() (err error) {
 	l, err := leaderelection.NewLeaderElector(leaderelection.LeaderElectionConfig{
-		Lock:          cm.resourceLock,
-		LeaseDuration: cm.leaseDuration,
-		RenewDeadline: cm.renewDeadline,
-		RetryPeriod:   cm.retryPeriod,
+		Lock: cm.resourceLock,
+		// Values taken from: https://github.com/kubernetes/apiserver/blob/master/pkg/apis/config/v1alpha1/defaults.go
+		// TODO(joelspeed): These timings should be configurable
+		LeaseDuration: 15 * time.Second,
+		RenewDeadline: 10 * time.Second,
+		RetryPeriod:   2 * time.Second,
 		Callbacks: leaderelection.LeaderCallbacks{
 			OnStartedLeading: func(_ context.Context) {
-				cm.startLeaderElectionRunnables()
+				cm.start()
 			},
 			OnStoppedLeading: func() {
 				// Most implementations of leader election log.Fatal() here.
@@ -373,16 +309,7 @@ func (cm *controllerManager) startLeaderElection() (err error) {
 		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		select {
-		case <-cm.internalStop:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-
 	// Start the leader elector process
-	go l.Run(ctx)
+	go l.Run(context.Background())
 	return nil
 }
