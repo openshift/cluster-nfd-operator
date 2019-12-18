@@ -49,6 +49,11 @@ type GoCmdOptions struct {
 	Env []string
 	// Dir is the dir to run "go {cmd}" in; exec.Command.Dir is set to this value.
 	Dir string
+	// GoMod determines whether to set the "-mod=vendor" flag.
+	// If true, "go {cmd}" will use modules.
+	// If false, "go {cmd}" will not use go modules. This is the default.
+	// This applies to build, clean, get, install, list, run, and test.
+	GoMod bool
 }
 
 // GoTestOptions is the set of options for "go test".
@@ -58,84 +63,56 @@ type GoTestOptions struct {
 	TestBinaryArgs []string
 }
 
-var validVendorCmds = map[string]struct{}{
-	"build":   struct{}{},
-	"clean":   struct{}{},
-	"get":     struct{}{},
-	"install": struct{}{},
-	"list":    struct{}{},
-	"run":     struct{}{},
-	"test":    struct{}{},
-}
+const (
+	goBuildCmd = "build"
+	goTestCmd  = "test"
+)
 
 // GoBuild runs "go build" configured with opts.
 func GoBuild(opts GoCmdOptions) error {
-	return GoCmd("build", opts)
+	return goCmd(goBuildCmd, opts)
 }
 
 // GoTest runs "go test" configured with opts.
 func GoTest(opts GoTestOptions) error {
-	bargs, err := opts.getGeneralArgsWithCmd("test")
+	bargs, err := getGeneralArgs("test", opts.GoCmdOptions)
 	if err != nil {
 		return err
 	}
 	bargs = append(bargs, opts.TestBinaryArgs...)
 	c := exec.Command("go", bargs...)
-	opts.setCmdFields(c)
+	setCommandFields(c, opts.GoCmdOptions)
 	return ExecCmd(c)
 }
 
-// GoCmd runs "go {cmd}".
-func GoCmd(cmd string, opts GoCmdOptions) error {
-	bargs, err := opts.getGeneralArgsWithCmd(cmd)
+// goCmd runs "go cmd"..
+func goCmd(cmd string, opts GoCmdOptions) error {
+	bargs, err := getGeneralArgs(cmd, opts)
 	if err != nil {
 		return err
 	}
 	c := exec.Command("go", bargs...)
-	opts.setCmdFields(c)
+	setCommandFields(c, opts)
 	return ExecCmd(c)
 }
 
-func (opts GoCmdOptions) getGeneralArgsWithCmd(cmd string) ([]string, error) {
-	// Go subcommands with more than one child command must be passed as
-	// multiple arguments instead of a spaced string, ex. "go mod init".
-	bargs := []string{}
-	for _, c := range strings.Split(cmd, " ") {
-		if ct := strings.TrimSpace(c); ct != "" {
-			bargs = append(bargs, ct)
-		}
-	}
-	if len(bargs) == 0 {
-		return nil, fmt.Errorf("the go binary cannot be run without subcommands")
-	}
-
+func getGeneralArgs(cmd string, opts GoCmdOptions) ([]string, error) {
+	bargs := []string{cmd}
 	if opts.BinName != "" {
 		bargs = append(bargs, "-o", opts.BinName)
 	}
 	bargs = append(bargs, opts.Args...)
-
-	if goModOn, err := GoModOn(); err != nil {
-		return nil, err
-	} else if goModOn {
-		// Does vendor exist?
-		info, err := os.Stat("vendor")
-		if err != nil && !os.IsNotExist(err) {
+	if opts.GoMod {
+		if goModOn, err := GoModOn(); err != nil {
 			return nil, err
-		}
-		// Does the first "go" subcommand accept -mod=vendor?
-		_, ok := validVendorCmds[bargs[0]]
-		if err == nil && info.IsDir() && ok {
+		} else if goModOn {
 			bargs = append(bargs, "-mod=vendor")
 		}
 	}
-
-	if opts.PackagePath != "" {
-		bargs = append(bargs, opts.PackagePath)
-	}
-	return bargs, nil
+	return append(bargs, opts.PackagePath), nil
 }
 
-func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
+func setCommandFields(c *exec.Cmd, opts GoCmdOptions) {
 	c.Env = append(c.Env, os.Environ()...)
 	if len(opts.Env) != 0 {
 		c.Env = append(c.Env, opts.Env...)
@@ -147,28 +124,28 @@ func (opts GoCmdOptions) setCmdFields(c *exec.Cmd) {
 
 // From https://github.com/golang/go/wiki/Modules:
 //	You can activate module support in one of two ways:
-//	- Invoke the go command in a directory with a valid go.mod file in the
-//      current directory or any parent of it and the environment variable
-//      GO111MODULE unset (or explicitly set to auto).
+//	- Invoke the go command in a directory outside of the $GOPATH/src tree,
+//		with a valid go.mod file in the current directory or any parent of it and
+//		the environment variable GO111MODULE unset (or explicitly set to auto).
 //	- Invoke the go command with GO111MODULE=on environment variable set.
 //
-// GoModOn returns true if Go modules are on in one of the above two ways.
+// GoModOn returns true if go modules are on in one of the above two ways.
 func GoModOn() (bool, error) {
 	v, ok := os.LookupEnv(GoModEnv)
-	if !ok {
-		return true, nil
-	}
-	switch v {
-	case "", "auto", "on":
-		return true, nil
-	case "off":
+	if v == "off" {
 		return false, nil
-	default:
-		return false, fmt.Errorf("unknown environment setting GO111MODULE=%s", v)
 	}
+	if v == "on" {
+		return true, nil
+	}
+	inSrc, err := wdInGoPathSrc()
+	if err != nil {
+		return false, err
+	}
+	return !inSrc && (!ok || v == "" || v == "auto"), nil
 }
 
-func WdInGoPathSrc() (bool, error) {
+func wdInGoPathSrc() (bool, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return false, err

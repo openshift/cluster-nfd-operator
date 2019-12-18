@@ -1,6 +1,6 @@
 REGISTRY       ?= quay.io
 ORG            ?= zvonkok
-TAG            ?= latest #$(shell git rev-parse --short HEAD)
+TAG            ?= $(shell git branch | grep \* | cut -d ' ' -f2)
 IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd-operator
 PULLPOLICY     ?= IfNotPresent

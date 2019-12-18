@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -32,6 +33,15 @@ type Resources struct {
 	Pod                        corev1.Pod
 	Service                    corev1.Service
 	SecurityContextConstraints secv1.SecurityContextConstraints
+}
+
+// Add3dpartyResourcesToScheme Adds 3rd party resources To the operator
+func Add3dpartyResourcesToScheme(scheme *runtime.Scheme) error {
+
+	if err := secv1.AddToScheme(scheme); err != nil {
+		return err
+	}
+	return nil
 }
 
 func filePathWalkDir(root string) ([]string, error) {
