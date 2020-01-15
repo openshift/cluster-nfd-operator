@@ -47,7 +47,7 @@ spec:
         It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
       displayName: Node Feature Discovery    
   description: |
-    The NFD operator creates and maintiains the Node Feature Discovery (NFD) on Kubernetes. 
+    The NFD operator creates and maintains the Node Feature Discovery (NFD) on Kubernetes. 
     It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
   displayName: Node Feature Discovery    
   icon: 
