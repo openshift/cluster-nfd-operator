@@ -1,11 +1,14 @@
 package nodefeaturediscovery
 
 import (
+	"context"
+
 	secv1 "github.com/openshift/api/security/v1"
 	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -117,21 +120,21 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	reqLogger.Info("Reconciling NodeFeatureDiscovery")
 
 	reqLogger.Info("TEST TEST TEST")
-	/*
-		// Fetch the NodeFeatureDiscovery instance
-		instance := &nfdv1alpha1.NodeFeatureDiscovery{}
-		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				// Request object not found, could have been deleted after reconcile request.
-				// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-				// Return and don't requeue
-				return reconcile.Result{}, nil
-			}
-			// Error reading the object - requeue the request.
-			return reconcile.Result{}, err
+
+	// Fetch the NodeFeatureDiscovery instance
+	instance := &nfdv1alpha1.NodeFeatureDiscovery{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return reconcile.Result{}, nil
 		}
-	*/
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
 	/*
 		nfd.init(r, instance)
 
