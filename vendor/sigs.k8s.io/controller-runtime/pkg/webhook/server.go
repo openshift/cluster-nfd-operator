@@ -22,12 +22,14 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"path"
+	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/runtime/inject"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/internal/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics"
 )
 
@@ -78,13 +80,19 @@ func (s *Server) setDefaults() {
 		s.WebhookMux = http.NewServeMux()
 	}
 
-	if s.Port < 0 {
+	if s.Port <= 0 {
 		s.Port = DefaultPort
 	}
 
 	if len(s.CertDir) == 0 {
-		s.CertDir = path.Join("/tmp", "k8s-webhook-server", "serving-certs")
+		s.CertDir = filepath.Join(os.TempDir(), "k8s-webhook-server", "serving-certs")
 	}
+}
+
+// NeedLeaderElection implements the LeaderElectionRunnable interface, which indicates
+// the webhook server doesn't need leader election.
+func (*Server) NeedLeaderElection() bool {
+	return false
 }
 
 // Register marks the given webhook as being served at the given path.
@@ -98,6 +106,7 @@ func (s *Server) Register(path string, hook http.Handler) {
 	// TODO(directxman12): call setfields if we've already started the server
 	s.webhooks[path] = hook
 	s.WebhookMux.Handle(path, instrumentedHook(path, hook))
+	log.Info("registering webhook", "path", path)
 }
 
 // instrumentedHook adds some instrumentation on top of the given webhook.
@@ -117,6 +126,8 @@ func (s *Server) Start(stop <-chan struct{}) error {
 	s.defaultingOnce.Do(s.setDefaults)
 
 	baseHookLog := log.WithName("webhooks")
+	baseHookLog.Info("starting webhook server")
+
 	// inject fields here as opposed to in Register so that we're certain to have our setFields
 	// function available.
 	for hookPath, webhook := range s.webhooks {
@@ -132,20 +143,31 @@ func (s *Server) Start(stop <-chan struct{}) error {
 		}
 	}
 
-	// TODO: watch the cert dir. Reload the cert if it changes
-	cert, err := tls.LoadX509KeyPair(path.Join(s.CertDir, certName), path.Join(s.CertDir, keyName))
+	certPath := filepath.Join(s.CertDir, certName)
+	keyPath := filepath.Join(s.CertDir, keyName)
+
+	certWatcher, err := certwatcher.New(certPath, keyPath)
 	if err != nil {
 		return err
 	}
 
+	go func() {
+		if err := certWatcher.Start(stop); err != nil {
+			log.Error(err, "certificate watcher error")
+		}
+	}()
+
 	cfg := &tls.Config{
-		Certificates: []tls.Certificate{cert},
+		NextProtos:     []string{"h2"},
+		GetCertificate: certWatcher.GetCertificate,
 	}
 
 	listener, err := tls.Listen("tcp", net.JoinHostPort(s.Host, strconv.Itoa(int(s.Port))), cfg)
 	if err != nil {
 		return err
 	}
+
+	log.Info("serving webhook server", "host", s.Host, "port", s.Port)
 
 	srv := &http.Server{
 		Handler: s.WebhookMux,
@@ -154,6 +176,7 @@ func (s *Server) Start(stop <-chan struct{}) error {
 	idleConnsClosed := make(chan struct{})
 	go func() {
 		<-stop
+		log.Info("shutting down webhook server")
 
 		// TODO: use a context with reasonable timeout
 		if err := srv.Shutdown(context.Background()); err != nil {
