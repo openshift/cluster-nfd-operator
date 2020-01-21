@@ -3,6 +3,7 @@ package nodefeaturediscovery
 import (
 	"context"
 
+	secv1 "github.com/openshift/api/security/v1"
 	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -68,9 +69,9 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	//	if err = c.Watch(&source.Kind{Type: &secv1.SecurityContextConstraints{}}, cache); err != nil {
-	//		return err
-	//	}
+	if err = c.Watch(&source.Kind{Type: &secv1.SecurityContextConstraints{}}, cache); err != nil {
+		return err
+	}
 
 	if err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, cache); err != nil {
 		return err
@@ -87,13 +88,13 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	if err = c.Watch(&source.Kind{Type: &rbacv1.RoleBinding{}}, cache); err != nil {
 		return err
 	}
-	//	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRole{}}, cache); err != nil {
-	//		return err
-	//	}
+	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRole{}}, cache); err != nil {
+		return err
+	}
 
-	//	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRoleBinding{}}, cache); err != nil {
-	//		return err
-	//	}
+	if err = c.Watch(&source.Kind{Type: &rbacv1.ClusterRoleBinding{}}, cache); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -131,17 +132,18 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
+	/*
+		nfd.init(r, instance)
 
-	nfd.init(r, instance)
-
-	for {
-		err := nfd.step()
-		if err != nil {
-			return reconcile.Result{}, err
+		for {
+			err := nfd.step()
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+			if nfd.last() {
+				break
+			}
 		}
-		if nfd.last() {
-			break
-		}
-	}
+	*/
 	return reconcile.Result{}, nil
 }
