@@ -69,6 +69,8 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	found := &corev1.ServiceAccount{}
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
 
+	obj.SetNamespace(n.ins.GetNamespace())
+
 	logger.Info("Looking for")
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
@@ -165,6 +167,8 @@ func Role(n NFD) (ResourceStatus, error) {
 	found := &rbacv1.Role{}
 	logger := log.WithValues("Role", obj.Name, "Namespace", obj.Namespace)
 
+	obj.SetNamespace(n.ins.GetNamespace())
+
 	logger.Info("Looking for")
 
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
@@ -197,6 +201,8 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
 	obj := n.resources[state].RoleBinding
+
+	obj.SetNamespace(n.ins.GetNamespace())
 
 	found := &rbacv1.RoleBinding{}
 	logger := log.WithValues("RoleBinding", obj.Name, "Namespace", obj.Namespace)
@@ -233,6 +239,8 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
 	obj := n.resources[state].ConfigMap
+
+	obj.SetNamespace(n.ins.GetNamespace())
 
 	found := &corev1.ConfigMap{}
 	logger := log.WithValues("ConfigMap", obj.Name, "Namespace", obj.Namespace)
@@ -276,6 +284,8 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 		obj.Spec.Template.Spec.Containers[0].Image = n.ins.Spec.OperandImage
 	}
 
+	obj.SetNamespace(n.ins.GetNamespace())
+
 	found := &appsv1.DaemonSet{}
 	logger := log.WithValues("DaemonSet", obj.Name, "Namespace", obj.Namespace)
 
@@ -311,6 +321,8 @@ func Service(n NFD) (ResourceStatus, error) {
 
 	state := n.idx
 	obj := n.resources[state].Service
+
+	obj.SetNamespace(n.ins.GetNamespace())
 
 	found := &corev1.Service{}
 	logger := log.WithValues("Service", obj.Name, "Namespace", obj.Namespace)
