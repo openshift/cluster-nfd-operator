@@ -119,7 +119,7 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling NodeFeatureDiscovery")
 
-	reqLogger.Info("TEST TEST TEST")
+	reqLogger.Info("DEBUG TEST TEST TEST")
 
 	// Fetch the NodeFeatureDiscovery instance
 	instance := &nfdv1alpha1.NodeFeatureDiscovery{}
@@ -135,20 +135,19 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 		return reconcile.Result{}, err
 	}
 
-	/*
-		nfd.init(r, instance)
+	nfd.init(r, instance)
 
-		for {
-			err := nfd.step()
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			if nfd.last() {
-				break
-			}
+	for {
+		err := nfd.step()
+		if err != nil {
+			return reconcile.Result{}, err
 		}
-	*/
-	reqLogger.Info("TEST TEST TEST22222")
+		if nfd.last() {
+			break
+		}
+	}
+
+	reqLogger.Info("DEBUG TEST TEST TEST22222")
 
 	return reconcile.Result{Requeue: false}, nil
 }
