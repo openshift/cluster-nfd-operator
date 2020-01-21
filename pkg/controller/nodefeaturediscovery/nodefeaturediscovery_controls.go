@@ -66,10 +66,10 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	state := n.idx
 	obj := n.resources[state].ServiceAccount
 
+	obj.SetNamespace(n.ins.GetNamespace())
+
 	found := &corev1.ServiceAccount{}
 	logger := log.WithValues("ServiceAccount", obj.Name, "Namespace", obj.Namespace)
-
-	obj.SetNamespace(n.ins.GetNamespace())
 
 	logger.Info("Looking for")
 
@@ -134,7 +134,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	found := &rbacv1.ClusterRoleBinding{}
 	logger := log.WithValues("ClusterRoleBinding", obj.Name, "Namespace", obj.Namespace)
 
-	obj.Subjects[0].Namespace = n.ins.GetName()
+	obj.Subjects[0].Namespace = n.ins.GetNamespace()
 
 	logger.Info("Looking for")
 
@@ -164,10 +164,10 @@ func Role(n NFD) (ResourceStatus, error) {
 	state := n.idx
 	obj := n.resources[state].Role
 
+	obj.SetNamespace(n.ins.GetNamespace())
+
 	found := &rbacv1.Role{}
 	logger := log.WithValues("Role", obj.Name, "Namespace", obj.Namespace)
-
-	obj.SetNamespace(n.ins.GetNamespace())
 
 	logger.Info("Looking for")
 
