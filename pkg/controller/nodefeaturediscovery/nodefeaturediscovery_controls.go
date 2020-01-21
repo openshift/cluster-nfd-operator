@@ -118,9 +118,9 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 
 	logger.Info("Looking for")
 
-	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
-		return NotReady, err
-	}
+	//	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+	//		return NotReady, err
+	//	}
 
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
@@ -158,9 +158,9 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 
 	logger.Info("Looking for")
 
-	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
-		return NotReady, err
-	}
+	//	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+	//		return NotReady, err
+	//	}
 
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
@@ -409,9 +409,9 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 
 	logger.Info("Looking for")
 
-	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
-		return NotReady, err
-	}
+	//	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+	//		return NotReady, err
+	//	}
 
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
