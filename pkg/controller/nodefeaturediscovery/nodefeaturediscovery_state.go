@@ -37,17 +37,23 @@ func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
 	n.ins = i
 	n.idx = 0
 
+	log.Info("DEBUG init0")
+
 	addState(n, "/opt/nfd/config")
 	addState(n, "/opt/nfd/master")
 	addState(n, "/opt/nfd/worker")
+
+	log.Info("DEBUG init2")
 
 	return nil
 }
 
 func (n *NFD) step() error {
 
+	log.Info("DEBUG step")
 	for _, fs := range n.controls[n.idx] {
 
+		log.Info("DEBUG step2")
 		stat, err := fs(*n)
 		if err != nil {
 			return err
