@@ -115,6 +115,8 @@ type ReconcileNodeFeatureDiscovery struct {
 func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling NodeFeatureDiscovery")
+
+	reqLogger.Info("TEST TEST TEST")
 	/*
 		// Fetch the NodeFeatureDiscovery instance
 		instance := &nfdv1alpha1.NodeFeatureDiscovery{}
@@ -143,5 +145,7 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 			}
 		}
 	*/
-	return reconcile.Result{}, nil
+	reqLogger.Info("TEST TEST TEST22222")
+
+	return reconcile.Result{Requeue: false}, nil
 }
