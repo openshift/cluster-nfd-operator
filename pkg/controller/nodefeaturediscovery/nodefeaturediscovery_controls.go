@@ -53,9 +53,10 @@ func Namespace(n NFD) (ResourceStatus, error) {
 
 	log.Info("Namespace3")
 
-	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
-		return NotReady, err
-	}
+	//	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
+	//		return NotReady, err
+	//	}
+
 	log.Info("Namespace4")
 
 	logger.Info("Looking for")
