@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	internalrecorder "sigs.k8s.io/controller-runtime/pkg/internal/recorder"
 	"sigs.k8s.io/controller-runtime/pkg/leaderelection"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
@@ -42,14 +43,22 @@ import (
 // Manager initializes shared dependencies such as Caches and Clients, and provides them to Runnables.
 // A Manager is required to create Controllers.
 type Manager interface {
-	// Add will set reqeusted dependencies on the component, and cause the component to be
+	// Add will set requested dependencies on the component, and cause the component to be
 	// started when Start is called.  Add will inject any dependencies for which the argument
-	// implements the inject interface - e.g. inject.Client
+	// implements the inject interface - e.g. inject.Client.
+	// Depending on if a Runnable implements LeaderElectionRunnable interface, a Runnable can be run in either
+	// non-leaderelection mode (always running) or leader election mode (managed by leader election if enabled).
 	Add(Runnable) error
 
 	// SetFields will set any dependencies on an object for which the object has implemented the inject
 	// interface - e.g. inject.Client.
 	SetFields(interface{}) error
+
+	// AddHealthzCheck allows you to add Healthz checker
+	AddHealthzCheck(name string, check healthz.Checker) error
+
+	// AddReadyzCheck allows you to add Readyz checker
+	AddReadyzCheck(name string, check healthz.Checker) error
 
 	// Start starts all registered Controllers and blocks until the Stop channel is closed.
 	// Returns an error if there is an error starting any controller.
@@ -61,7 +70,10 @@ type Manager interface {
 	// GetScheme returns an initialized Scheme
 	GetScheme() *runtime.Scheme
 
-	// GetClient returns a client configured with the Config
+	// GetClient returns a client configured with the Config. This client may
+	// not be a fully "direct" client -- it may read from a cache, for
+	// instance.  See Options.NewClient for more information on how the default
+	// implementation works.
 	GetClient() client.Client
 
 	// GetFieldIndexer returns a client.FieldIndexer configured with the client
@@ -113,6 +125,17 @@ type Options struct {
 	// will use for holding the leader lock.
 	LeaderElectionID string
 
+	// LeaseDuration is the duration that non-leader candidates will
+	// wait to force acquire leadership. This is measured against time of
+	// last observed ack. Default is 15 seconds.
+	LeaseDuration *time.Duration
+	// RenewDeadline is the duration that the acting master will retry
+	// refreshing leadership before giving up. Default is 10 seconds.
+	RenewDeadline *time.Duration
+	// RetryPeriod is the duration the LeaderElector clients should wait
+	// between tries of actions. Default is 2 seconds.
+	RetryPeriod *time.Duration
+
 	// Namespace if specified restricts the manager's cache to watch objects in
 	// the desired namespace Defaults to all namespaces
 	//
@@ -122,8 +145,19 @@ type Options struct {
 	Namespace string
 
 	// MetricsBindAddress is the TCP address that the controller should bind to
-	// for serving prometheus metrics
+	// for serving prometheus metrics.
+	// It can be set to "0" to disable the metrics serving.
 	MetricsBindAddress string
+
+	// HealthProbeBindAddress is the TCP address that the controller should bind to
+	// for serving health probes
+	HealthProbeBindAddress string
+
+	// Readiness probe endpoint name, defaults to "readyz"
+	ReadinessEndpointName string
+
+	// Liveness probe endpoint name, defaults to "healthz"
+	LivenessEndpointName string
 
 	// Port is the port that the webhook server serves at.
 	// It is used to set webhook.Server.Port.
@@ -132,6 +166,10 @@ type Options struct {
 	// It is used to set webhook.Server.Host.
 	Host string
 
+	// CertDir is the directory that contains the server key and certificate.
+	// if not set, webhook server would look up the server key and certificate in
+	// {TempDir}/k8s-webhook-server/serving-certs
+	CertDir string
 	// Functions to all for a user to customize the values that will be injected.
 
 	// NewCache is the function that will create the cache to be used
@@ -143,10 +181,15 @@ type Options struct {
 	// use the cache for reads and the client for writes.
 	NewClient NewClientFunc
 
+	// EventBroadcaster records Events emitted by the manager and sends them to the Kubernetes API
+	// Use this to customize the event correlator and spam filter
+	EventBroadcaster record.EventBroadcaster
+
 	// Dependency injection for testing
-	newRecorderProvider func(config *rest.Config, scheme *runtime.Scheme, logger logr.Logger) (recorder.Provider, error)
-	newResourceLock     func(config *rest.Config, recorderProvider recorder.Provider, options leaderelection.Options) (resourcelock.Interface, error)
-	newMetricsListener  func(addr string) (net.Listener, error)
+	newRecorderProvider    func(config *rest.Config, scheme *runtime.Scheme, logger logr.Logger, broadcaster record.EventBroadcaster) (recorder.Provider, error)
+	newResourceLock        func(config *rest.Config, recorderProvider recorder.Provider, options leaderelection.Options) (resourcelock.Interface, error)
+	newMetricsListener     func(addr string) (net.Listener, error)
+	newHealthProbeListener func(addr string) (net.Listener, error)
 }
 
 // NewClientFunc allows a user to define how to create a client
@@ -170,6 +213,13 @@ type RunnableFunc func(<-chan struct{}) error
 // Start implements Runnable
 func (r RunnableFunc) Start(s <-chan struct{}) error {
 	return r(s)
+}
+
+// LeaderElectionRunnable knows if a Runnable needs to be run in the leader election mode.
+type LeaderElectionRunnable interface {
+	// NeedLeaderElection returns true if the Runnable needs to be run in the leader election mode.
+	// e.g. controllers need to be run in leader election mode, while webhook server doesn't.
+	NeedLeaderElection() bool
 }
 
 // New returns a new Manager for creating Controllers.
@@ -207,7 +257,7 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	// Create the recorder provider to inject event recorders for the components.
 	// TODO(directxman12): the log for the event provider should have a context (name, tags, etc) specific
 	// to the particular controller that it's being injected into, rather than a generic one like is here.
-	recorderProvider, err := options.newRecorderProvider(config, options.Scheme, log.WithName("events"))
+	recorderProvider, err := options.newRecorderProvider(config, options.Scheme, log.WithName("events"), options.EventBroadcaster)
 	if err != nil {
 		return nil, err
 	}
@@ -222,9 +272,16 @@ func New(config *rest.Config, options Options) (Manager, error) {
 		return nil, err
 	}
 
-	// Create the mertics listener. This will throw an error if the metrics bind
+	// Create the metrics listener. This will throw an error if the metrics bind
 	// address is invalid or already in use.
 	metricsListener, err := options.newMetricsListener(options.MetricsBindAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create health probes listener. This will throw an error if the bind
+	// address is invalid or already in use.
+	healthProbeListener, err := options.newHealthProbeListener(options.HealthProbeBindAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -232,21 +289,27 @@ func New(config *rest.Config, options Options) (Manager, error) {
 	stop := make(chan struct{})
 
 	return &controllerManager{
-		config:           config,
-		scheme:           options.Scheme,
-		errChan:          make(chan error),
-		cache:            cache,
-		fieldIndexes:     cache,
-		client:           writeObj,
-		apiReader:        apiReader,
-		recorderProvider: recorderProvider,
-		resourceLock:     resourceLock,
-		mapper:           mapper,
-		metricsListener:  metricsListener,
-		internalStop:     stop,
-		internalStopper:  stop,
-		port:             options.Port,
-		host:             options.Host,
+		config:                config,
+		scheme:                options.Scheme,
+		cache:                 cache,
+		fieldIndexes:          cache,
+		client:                writeObj,
+		apiReader:             apiReader,
+		recorderProvider:      recorderProvider,
+		resourceLock:          resourceLock,
+		mapper:                mapper,
+		metricsListener:       metricsListener,
+		internalStop:          stop,
+		internalStopper:       stop,
+		port:                  options.Port,
+		host:                  options.Host,
+		certDir:               options.CertDir,
+		leaseDuration:         *options.LeaseDuration,
+		renewDeadline:         *options.RenewDeadline,
+		retryPeriod:           *options.RetryPeriod,
+		healthProbeListener:   healthProbeListener,
+		readinessEndpointName: options.ReadinessEndpointName,
+		livenessEndpointName:  options.LivenessEndpointName,
 	}, nil
 }
 
@@ -268,6 +331,19 @@ func defaultNewClient(cache cache.Cache, config *rest.Config, options client.Opt
 	}, nil
 }
 
+// defaultHealthProbeListener creates the default health probes listener bound to the given address
+func defaultHealthProbeListener(addr string) (net.Listener, error) {
+	if addr == "" || addr == "0" {
+		return nil, nil
+	}
+
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("error listening on %s: %v", addr, err)
+	}
+	return ln, nil
+}
+
 // setOptionsDefaults set default values for Options fields
 func setOptionsDefaults(options Options) Options {
 	// Use the Kubernetes client-go scheme if none is specified
@@ -276,7 +352,9 @@ func setOptionsDefaults(options Options) Options {
 	}
 
 	if options.MapperProvider == nil {
-		options.MapperProvider = apiutil.NewDiscoveryRESTMapper
+		options.MapperProvider = func(c *rest.Config) (meta.RESTMapper, error) {
+			return apiutil.NewDynamicRESTMapper(c)
+		}
 	}
 
 	// Allow newClient to be mocked
@@ -301,6 +379,34 @@ func setOptionsDefaults(options Options) Options {
 
 	if options.newMetricsListener == nil {
 		options.newMetricsListener = metrics.NewListener
+	}
+	leaseDuration, renewDeadline, retryPeriod := defaultLeaseDuration, defaultRenewDeadline, defaultRetryPeriod
+	if options.LeaseDuration == nil {
+		options.LeaseDuration = &leaseDuration
+	}
+
+	if options.RenewDeadline == nil {
+		options.RenewDeadline = &renewDeadline
+	}
+
+	if options.RetryPeriod == nil {
+		options.RetryPeriod = &retryPeriod
+	}
+
+	if options.EventBroadcaster == nil {
+		options.EventBroadcaster = record.NewBroadcaster()
+	}
+
+	if options.ReadinessEndpointName == "" {
+		options.ReadinessEndpointName = defaultReadinessEndpoint
+	}
+
+	if options.LivenessEndpointName == "" {
+		options.LivenessEndpointName = defaultLivenessEndpoint
+	}
+
+	if options.newHealthProbeListener == nil {
+		options.newHealthProbeListener = defaultHealthProbeListener
 	}
 
 	return options
