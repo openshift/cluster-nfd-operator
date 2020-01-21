@@ -119,8 +119,6 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling NodeFeatureDiscovery")
 
-	reqLogger.Info("DEBUG TEST TEST TEST")
-
 	// Fetch the NodeFeatureDiscovery instance
 	instance := &nfdv1alpha1.NodeFeatureDiscovery{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
@@ -146,8 +144,6 @@ func (r *ReconcileNodeFeatureDiscovery) Reconcile(request reconcile.Request) (re
 			break
 		}
 	}
-
-	reqLogger.Info("DEBUG TEST TEST TEST22222")
 
 	return reconcile.Result{Requeue: false}, nil
 }

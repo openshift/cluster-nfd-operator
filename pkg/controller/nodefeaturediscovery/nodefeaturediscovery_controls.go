@@ -36,19 +36,27 @@ func (s ResourceStatus) String() string {
 
 func Namespace(n NFD) (ResourceStatus, error) {
 
+	log.Info("Namespace0")
+
 	state := n.idx
 	obj := n.resources[state].Namespace
+
+	log.Info("Namespace1")
 
 	if len(n.ins.Spec.OperandNamespace) != 0 {
 		obj.SetName(n.ins.Spec.OperandNamespace)
 	}
+	log.Info("Namespace2")
 
 	found := &corev1.Namespace{}
 	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
 
+	log.Info("Namespace3")
+
 	if err := controllerutil.SetControllerReference(n.ins, &obj, n.rec.scheme); err != nil {
 		return NotReady, err
 	}
+	log.Info("Namespace4")
 
 	logger.Info("Looking for")
 	err := n.rec.client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
