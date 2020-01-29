@@ -4,7 +4,6 @@ metadata:
   labels:
     app: nfd-master
   name: nfd-master
-  namespace: openshift-nfd
 spec:
   selector:
     matchLabels:
