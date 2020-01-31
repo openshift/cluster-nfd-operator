@@ -1,6 +1,6 @@
 REGISTRY       ?= quay.io
 ORG            ?= zvonkok
-TAG            ?= $(shell git branch | grep \* | cut -d ' ' -f2)
+TAG            ?= $(shell git describe --tags --dirty --always)
 IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
 NAMESPACE      ?= openshift-nfd
 PULLPOLICY     ?= IfNotPresent
@@ -91,7 +91,7 @@ local-image:
 test:
 	go test ./cmd/... ./pkg/... -coverprofile cover.out
 
-local-image-push:
+local-image-push: local-image
 	podman push $(IMAGE) 
 
 .PHONY: all build generate verify verify-gofmt clean local-image local-image-push $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS)
