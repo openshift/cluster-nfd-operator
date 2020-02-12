@@ -21,7 +21,7 @@ Update the  `Makefile` with the a custom image built and configure the namespace
 The default CR will create the operand (NFD) in the `openshift-nfd` namespace, the CR can be edited to choose another namespace and image. See the `manifests/0700_cr.yaml` for the default values.
 
 ```
-$ cd cluster-nfd-operator/manifests
+$ cd cluster-nfd-operator
 $ make deploy
 ```
 The operator will use the NFD image built from: https://github.com/openshift/node-feature-discovery
