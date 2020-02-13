@@ -113,7 +113,7 @@ func NewClient() (*NFDV1AlphaClient, error) {
 	config.GroupVersion = &SchemeGroupVersion
 	config.APIPath = "/apis"
 	config.ContentType = runtime.ContentTypeJSON
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: serializer.NewCodecFactory(scheme)}
+	config.NegotiatedSerializer = serializer.NegotiatedSerializerWrapper(runtime.SerializerInfo{})
 	client, err := rest.RESTClientFor(config)
 	if err != nil {
 		return nil, err
