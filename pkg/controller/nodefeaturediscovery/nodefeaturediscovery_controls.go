@@ -366,6 +366,9 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	state := n.idx
 	obj := n.resources[state].SecurityContextConstraints
 
+	// Set the correct namespace for SCC when installed in non default namespace
+	obj.Users[0] = "system:serviceaccount:" + n.ins.GetName() + ":" + obj.GetName()
+
 	found := &secv1.SecurityContextConstraints{}
 	logger := log.WithValues("SecurityContextConstraints", obj.Name, "Namespace", "default")
 
