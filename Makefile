@@ -1,10 +1,10 @@
 REGISTRY       ?= quay.io
 ORG            ?= zvonkok
 TAG            ?= $(shell git branch | grep \* | cut -d ' ' -f2)
-IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
+IMAGE          ?= $(REGISTRY)/$(ORG)/cluster-nfd-operator:$(TAG)
 NAMESPACE      ?= openshift-nfd
 PULLPOLICY     ?= IfNotPresent
-TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+${IMAGE}+g; s+REPLACE_NAMESPACE+${NAMESPACE}+g; s+IfNotPresent+${PULLPOLICY}+'
+TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+$(IMAGE)+g; s+REPLACE_NAMESPACE+$(NAMESPACE)+g; s+IfNotPresent+$(PULLPOLICY)+'
 
 DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
 DEPLOY_CRDS     = manifests/0500_crd.yaml
@@ -35,18 +35,18 @@ build:
 	$(GO_BUILD_RECIPE)
 
 test-e2e: 
-	@${TEMPLATE_CMD} manifests/0110_namespace.yaml > manifests/operator-init.yaml
+	@$(TEMPLATE_CMD) manifests/0100_namespace.yaml > manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
-	@${TEMPLATE_CMD} manifests/0200_service_account.yaml >> manifests/operator-init.yaml
+	@$(TEMPLATE_CMD) manifests/0200_service_account.yaml >> manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
-	@${TEMPLATE_CMD} manifests/0300_cluster_role.yaml >> manifests/operator-init.yaml
+	@$(TEMPLATE_CMD) manifests/0300_cluster_role.yaml >> manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
-	@${TEMPLATE_CMD} manifests/0600_operator.yaml >> manifests/operator-init.yaml
+	@$(TEMPLATE_CMD) manifests/0600_operator.yaml >> manifests/operator-init.yaml
 
 	go test -v ./test/e2e/... -root $(PWD) -kubeconfig=$(KUBECONFIG) -tags e2e  -globalMan manifests/0500_crd.yaml -namespacedMan manifests/operator-init.yaml 
 
 $(DEPLOY_CRDS):
-	@${TEMPLATE_CMD} $@ | kubectl apply -f -
+	@$(TEMPLATE_CMD) $@ | kubectl apply -f -
 
 deploy-crds: $(DEPLOY_CRDS) 
 	sleep 1
@@ -58,7 +58,7 @@ deploy-objects: deploy-crds
 	done	
 
 deploy: deploy-objects
-	@${TEMPLATE_CMD} $(DEPLOY_CRS) | kubectl apply -f -
+	@$(TEMPLATE_CMD) $(DEPLOY_CRS) | kubectl apply -f -
 
 undeploy:
 	for obj in $(DEPLOY_OBJECTS) $(DEPLOY_CRDS) $(DEPLOY_CRS); do \
@@ -66,7 +66,6 @@ undeploy:
 	done	
 
 	kubectl delete scc nfd-worker
-
 
 verify:	verify-gofmt
 
