@@ -6,7 +6,6 @@ metadata:
   annotations:
     capabilities: Basic Install
     categories: "Database"
-    
     provider: Red Hat
     support: Red Hat
     containerImage: 
@@ -30,7 +29,7 @@ metadata:
     olm.skipRange: ">=4.1.0 <4.5.0"
 spec:
   displayName: Node Feature Discovery    
-  version: 4.4
+  version: 4.4.0
   minKubeVersion: 1.17.1
   maintainers: 
   - name: "Red Hat"
