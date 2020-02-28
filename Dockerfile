@@ -4,7 +4,7 @@ COPY . .
 RUN make build
 
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
-ARG CSV=4.4
+ARG CSV=4.5
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/cluster-nfd-operator /usr/bin/
 
 RUN mkdir -p /opt/nfd
