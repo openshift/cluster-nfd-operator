@@ -30,7 +30,7 @@ metadata:
 spec:
   displayName: Node Feature Discovery    
   version: 4.4.0
-  minKubeVersion: 1.17.1
+  minKubeVersion: 1.17.0
   maintainers: 
   - name: "Red Hat"
     email: openshift-psap@redhat.com
