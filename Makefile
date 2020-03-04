@@ -1,5 +1,5 @@
 REGISTRY       ?= quay.io
-ORG            ?= zvonkok
+ORG            ?= openshift-psap
 TAG            ?= $(shell git branch | grep \* | cut -d ' ' -f2)
 IMAGE          ?= $(REGISTRY)/$(ORG)/cluster-nfd-operator:$(TAG)
 NAMESPACE      ?= openshift-nfd
@@ -19,7 +19,7 @@ BINDATA=pkg/manifests/bindata.go
 GOFMT_CHECK=$(shell find . -not \( \( -wholename './.*' -o -wholename '*/vendor/*' \) -prune \) -name '*.go' | sort -u | xargs gofmt -s -l)
 
 DOCKERFILE=Dockerfile
-IMAGE_TAG=openshift/origin-cluster-nfd-operator
+IMAGE_TAG=openshift-psap/origin-cluster-nfd-operator
 IMAGE_REGISTRY=quay.io
 
 vpath bin/go-bindata $(GOPATH)
