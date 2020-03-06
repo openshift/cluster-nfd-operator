@@ -36,7 +36,7 @@ build:
 	$(GO_BUILD_RECIPE)
 
 test-e2e: 
-	@${TEMPLATE_CMD} manifests/0110_namespace.yaml > manifests/operator-init.yaml
+	@${TEMPLATE_CMD} manifests/0100_namespace.yaml > manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
 	@${TEMPLATE_CMD} manifests/0200_service_account.yaml >> manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
