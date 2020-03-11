@@ -1,12 +1,12 @@
 REGISTRY       ?= quay.io
 ORG            ?= zvonkok
-TAG            ?= latest #$(shell git rev-parse --short HEAD)
+TAG            ?= $(shell git branch | grep \* | cut -d ' ' -f2)
 IMAGE          ?= ${REGISTRY}/${ORG}/cluster-nfd-operator:${TAG}
-NAMESPACE      ?= openshift-nfd-operator
+NAMESPACE      ?= openshift-nfd
 PULLPOLICY     ?= IfNotPresent
 TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+${IMAGE}+g; s+REPLACE_NAMESPACE+${NAMESPACE}+g; s+IfNotPresent+${PULLPOLICY}+'
 
-DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0110_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
+DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
 DEPLOY_CRDS     = manifests/0500_crd.yaml
 DEPLOY_CRS      = manifests/0700_cr.yaml
 
@@ -27,7 +27,7 @@ GOBINDATA_BIN=bin/go-bindata
 
 ENVVAR=GOOS=linux CGO_ENABLED=0
 GOOS=linux
-GO_BUILD_RECIPE=GOOS=$(GOOS) go build -o $(BIN) $(MAIN_PACKAGE)
+GO_BUILD_RECIPE=GOOS=$(GOOS) go build -mod=vendor -o $(BIN) $(MAIN_PACKAGE)
 
 all: build
 
@@ -85,21 +85,12 @@ clean:
 	rm -f $(BIN)
 
 local-image:
-ifdef USE_BUILDAH
-	buildah bud $(BUILDAH_OPTS) -t $(IMAGE_TAG) -f $(DOCKERFILE) .
-else
-	sudo docker build -t $(IMAGE_TAG) -f $(DOCKERFILE) .
-endif
+	podman build --no-cache -t $(IMAGE) -f $(DOCKERFILE) .
 
 test:
 	go test ./cmd/... ./pkg/... -coverprofile cover.out
 
 local-image-push:
-ifdef USE_BUILDAH
-	buildah push $(BUILDAH_OPTS) $(IMAGE_TAG) $(IMAGE_REGISTRY)/$(IMAGE_TAG)
-else
-	sudo docker tag $(IMAGE_TAG) $(IMAGE_REGISTRY)/$(IMAGE_TAG)
-	sudo docker push $(IMAGE_REGISTRY)/$(IMAGE_TAG)
-endif
+	podman push $(IMAGE) 
 
 .PHONY: all build generate verify verify-gofmt clean local-image local-image-push $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS)
