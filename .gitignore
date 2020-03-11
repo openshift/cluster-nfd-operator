@@ -1,6 +1,7 @@
 # Temporary Build Files
 build/_output
 build/_test
+manifests/operator-init.yaml
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
 # -*- mode: gitignore; -*-
