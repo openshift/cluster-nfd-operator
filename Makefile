@@ -63,8 +63,9 @@ undeploy:
 	for obj in $(DEPLOY_OBJECTS) $(DEPLOY_CRDS) $(DEPLOY_CRS); do \
 		$(TEMPLATE_CMD) $$obj | kubectl delete -f - ;\
 	done	
-	 ## Delete everything for the operator from the cluster
-#	-${TEMPLATE_CMD} $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS) | kubectl delete -f -
+
+	kubectl delete scc nfd-worker
+
 
 verify:	verify-gofmt
 
