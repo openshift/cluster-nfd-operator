@@ -8,21 +8,21 @@ import (
 )
 
 const (
-	nodeTunedImageDefault    string = "registry.svc.ci.openshift.org/openshift/origin-v4.0:cluster-node-tuned"
-	operatorNameDefault      string = "node-tuning"
-	operatorNamespaceDefault string = "openshift-nfd-operator"
-	resyncPeriodDefault      int64  = 600
+	nodeFeatureDiscoveryImageDefault string = "quay.io/openshift-psap/node-feature-discovery:latest"
+	operatorNameDefault              string = "node-feature-discovery"
+	operatorNamespaceDefault         string = "openshift-nfd-operator"
+	resyncPeriodDefault              int64  = 600
 )
 
 // NodeFeatureDiscoveryImage returns the operator's operand/tuned image path.
 func NodeFeatureDiscoveryImage() string {
-	nodeTunedImage := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	nodeFeatureDiscoveryImage := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
 
-	if len(nodeTunedImage) > 0 {
-		return nodeTunedImage
+	if len(nodeFeatureDiscoveryImage) > 0 {
+		return nodeFeatureDiscoveryImage
 	}
 
-	return nodeTunedImageDefault
+	return nodeFeatureDiscoveryImageDefault
 }
 
 // OperatorName returns the operator name.
@@ -36,7 +36,7 @@ func OperatorName() string {
 	return operatorNameDefault
 }
 
-// OperatorName returns the operator namespace.
+// OperatorNamespace returns the operator namespace.
 func OperatorNamespace() string {
 	operatorNamespace := os.Getenv("WATCH_NAMESPACE")
 
