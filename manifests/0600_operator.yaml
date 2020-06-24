@@ -44,7 +44,7 @@ spec:
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
-              value: "quay.io/zvonkok/node-feature-discovery:v4.2"
+              value: "quay.io/kubernetes_incubator/node-feature-discovery:v0.6.0"
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
