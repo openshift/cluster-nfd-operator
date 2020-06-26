@@ -7,7 +7,7 @@ Checkout the sources
 $ git clone https://github.com/openshift/cluster-nfd-operator $GOPATH/src/github.com/openshift/cluster-nfd-operator
 ```
 
-Update the `Makefile` and edit `IMAGE_TAG` and `IMAGE_REGISTRY` one will need those later to update the operator manifest (`image: $IMAGE_REGISTRY/$IMAGE_TAG`).
+Update the `Makefile` and edit `IMAGE`, `ORG` and `REGISTRY` one will need those later to update the operator manifest (`image: $(REGISTRY)/$(ORG)/$(cluster-nfd-operator:$(TAG))`).
 
 Update the Dockerfile with the correct golang build image and the base image the operator will run with. 
 
