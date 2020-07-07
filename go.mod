@@ -14,6 +14,8 @@ require (
 	github.com/openshift/client-go v0.0.0-20200116152001-92a2713fa240
 	github.com/operator-framework/operator-sdk v0.4.1-0.20190129222657-43d37ce85826
 	github.com/rogpeppe/go-internal v1.3.0 // indirect
+	// CVE-2020-14040
+	golang.org/x/text v0.3.3 // indirect
 	// Kubernetes 1.17
 	k8s.io/api v0.17.3
 	k8s.io/apiextensions-apiserver v0.17.3
