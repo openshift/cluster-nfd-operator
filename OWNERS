@@ -8,3 +8,5 @@ reviewers:
   - Deepthidharwar
   - ArangoGutierrez
   - dagrayvid
+  - kpouget
+component: "Node Feature Discovery Operator"
