@@ -206,4 +206,3 @@ spec:
   maturity: alpha
   provider:
     name: "Red Hat"
-  version: "4.6.0"
