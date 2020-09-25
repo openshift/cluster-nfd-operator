@@ -18,9 +18,10 @@ BINDATA=pkg/manifests/bindata.go
 
 GOFMT_CHECK=$(shell find . -not \( \( -wholename './.*' -o -wholename '*/vendor/*' \) -prune \) -name '*.go' | sort -u | xargs gofmt -s -l)
 
+# Container image-related variables
+IMAGE_BUILD_CMD	?= podman build
+IMAGE_PUSH_CMD	?= podman push
 DOCKERFILE=Dockerfile
-IMAGE_TAG=openshift-psap/origin-cluster-nfd-operator
-IMAGE_REGISTRY=quay.io
 
 vpath bin/go-bindata $(GOPATH)
 GOBINDATA_BIN=bin/go-bindata
@@ -85,13 +86,16 @@ clean:
 	go clean
 	rm -f $(BIN)
 
+clean-labels:
+	kubectl get no -o yaml | sed -e '/^\s*nfd.node.kubernetes.io/d' -e '/^\s*feature.node.kubernetes.io/d' | kubectl replace -f -
+
 local-image:
-	podman build --no-cache -t $(IMAGE) -f $(DOCKERFILE) .
+	$(IMAGE_BUILD_CMD) $(IMAGE_BUILD_EXTRA_OPTS) -t $(IMAGE) -f $(DOCKERFILE) .
+
+local-image-push:
+	$(IMAGE_PUSH_CMD) $(IMAGE_PUSH_EXTRA_OPTS) $(IMAGE)
 
 test:
 	go test ./cmd/... ./pkg/... -coverprofile cover.out
-
-local-image-push:
-	podman push $(IMAGE) 
 
 .PHONY: all build generate verify verify-gofmt clean local-image local-image-push $(DEPLOY_OBJECTS) $(DEPLOY_OPERATOR) $(DEPLOY_CRDS) $(DEPLOY_CRS)
