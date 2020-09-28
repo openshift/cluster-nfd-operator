@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	nodeFeatureDiscoveryImageDefault string = "quay.io/openshift-psap/node-feature-discovery:latest"
+	nodeFeatureDiscoveryImageDefault string = "quay.io/openshift/origin-node-feature-discovery:4.6"
 	operatorNameDefault              string = "node-feature-discovery"
 	operatorNamespaceDefault         string = "openshift-nfd-operator"
 	resyncPeriodDefault              int64  = 600

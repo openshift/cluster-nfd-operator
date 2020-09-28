@@ -58,7 +58,7 @@ var (
 	cleanupTimeout       = time.Second * 30
 	opName               = "nfd-master-client"
 	opNamespace          = "openshift-nfd"
-	opImage              = "quay.io/openshift-psap/node-feature-discovery:v0.6.0"
+	opImage              = "quay.io/openshift/origin-node-feature-discovery:4.6"
 	//opImage = "registry.svc.ci.openshift.org/openshift/node-feature-discovery-container:v4.2"
 )
 
