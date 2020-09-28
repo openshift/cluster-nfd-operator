@@ -20,7 +20,7 @@ ENTRYPOINT ["/usr/bin/cluster-nfd-operator"]
 LABEL io.k8s.display-name="OpenShift cluster-nfd-operator" \
       io.k8s.description="This is a component of OpenShift and manages the node feature discovery." \
       io.openshift.tags="openshift" \
-      com.redhat.delivery.appregistry=true \
+      com.redhat.delivery.appregistry=False \
       maintainer="ATS Auto Tuning Scalability  <aos-scalability@redhat.com>"
 
 
