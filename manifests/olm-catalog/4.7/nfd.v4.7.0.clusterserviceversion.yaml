@@ -1,7 +1,7 @@
 apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
-  name: nfd.v4.6.0
+  name: nfd.v4.7.0
   namespace: placeholder
   labels:
     "operatorframework.io/arch.amd64": supported
@@ -34,7 +34,7 @@ metadata:
     olm.skipRange: ">=4.1.0 <4.7.0"
 spec:
   displayName: Node Feature Discovery    
-  version: 4.6.0
+  version: 4.7.0
   minKubeVersion: 1.18.0
   maintainers: 
   - name: "Red Hat"
