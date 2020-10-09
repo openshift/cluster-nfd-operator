@@ -1,10 +1,10 @@
-FROM registry.svc.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.6 AS builder
+FROM registry.svc.ci.openshift.org/ocp/builder:rhel-8-golang-1.15-openshift-4.7 AS builder
 WORKDIR /go/src/github.com/openshift/cluster-nfd-operator
 COPY . .
 RUN make build
 
-FROM registry.svc.ci.openshift.org/ocp/4.6:base
-ARG CSV=4.6
+FROM registry.svc.ci.openshift.org/ocp/4.7:base
+ARG CSV=4.7
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/cluster-nfd-operator /usr/bin/
 
 RUN mkdir -p /opt/nfd
