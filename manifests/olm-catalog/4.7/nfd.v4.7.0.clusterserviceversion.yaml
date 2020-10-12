@@ -31,7 +31,7 @@ metadata:
         }
       ]
     description: This software enables node feature discovery for Kubernetes. It detects hardware features available on each node in a Kubernetes cluster, and advertises those features using node labels.
-    olm.skipRange: ">=4.1.0 <4.7.0"
+    olm.skipRange: ">=4.2.0 <4.8.0"
 spec:
   displayName: Node Feature Discovery    
   version: 4.7.0
