@@ -3,7 +3,7 @@ package nodefeaturediscovery
 import (
 	"errors"
 
-	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1"
 )
 
 type state interface {
@@ -17,7 +17,7 @@ type NFD struct {
 	resources []Resources
 	controls  []controlFunc
 	rec       *ReconcileNodeFeatureDiscovery
-	ins       *nfdv1alpha1.NodeFeatureDiscovery
+	ins       *nfdv1.NodeFeatureDiscovery
 	idx       int
 }
 
@@ -31,8 +31,10 @@ func addState(n *NFD, path string) error {
 	return nil
 }
 
-func (n *NFD) init(r *ReconcileNodeFeatureDiscovery,
-	i *nfdv1alpha1.NodeFeatureDiscovery) error {
+func (n *NFD) init(
+	r *ReconcileNodeFeatureDiscovery,
+	i *nfdv1.NodeFeatureDiscovery,
+) {
 	n.rec = r
 	n.ins = i
 	n.idx = 0
