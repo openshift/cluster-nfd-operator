@@ -7,7 +7,7 @@ import (
 )
 
 type state interface {
-	init(*ReconcileNodeFeatureDiscovery, *nfdv1alpha1.NodeFeatureDiscovery)
+	init(*ReconcileNodeFeatureDiscovery, *nfdv1.NodeFeatureDiscovery)
 	step()
 	validate()
 	last()
@@ -42,7 +42,7 @@ func (n *NFD) init(
 	addState(n, "/opt/nfd/master")
 	addState(n, "/opt/nfd/worker")
 
-	return nil
+	return
 }
 
 func (n *NFD) step() error {

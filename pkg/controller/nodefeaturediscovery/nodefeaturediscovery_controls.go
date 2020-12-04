@@ -10,8 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
-	nfdconfig "github.com/openshift/cluster-nfd-operator/pkg/config"
 )
 
 type controlFunc []func(n NFD) (ResourceStatus, error)

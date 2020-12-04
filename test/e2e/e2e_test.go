@@ -15,6 +15,7 @@
 package e2e
 
 import (
+	"context"
 	goctx "context"
 	"errors"
 	"fmt"
@@ -23,7 +24,7 @@ import (
 	"time"
 
 	apis "github.com/openshift/cluster-nfd-operator/pkg/apis"
-	operator "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+	operator "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 
@@ -58,8 +59,9 @@ var (
 	cleanupTimeout       = time.Second * 30
 	opName               = "nfd-master-client"
 	opNamespace          = "openshift-nfd"
-	opImage              = "quay.io/openshift/origin-node-feature-discovery:4.6"
-	//opImage = "registry.svc.ci.openshift.org/openshift/node-feature-discovery-container:v4.2"
+	opImage              = "quay.io/openshift/origin-node-feature-discovery:4.7"
+	opSpec               = operator.OperandSpec{Namespace: opNamespace, Image: opImage, ImagePullPolicy: "Always"}
+	opWorkerConfig       = operator.ConfigSpec{ConfigData: ""}
 )
 
 func TestNodeFeatureDiscoveryAddScheme(t *testing.T) {
@@ -145,8 +147,8 @@ func nodeFeatureDiscovery(t *testing.T, f *framework.Framework, ctx *framework.T
 			Namespace: namespace,
 		},
 		Spec: operator.NodeFeatureDiscoverySpec{
-			OperandNamespace: opNamespace,
-			OperandImage:     opImage,
+			Operand:      opSpec,
+			WorkerConfig: opWorkerConfig,
 		},
 	}
 
@@ -174,7 +176,7 @@ func nodeFeatureDiscovery(t *testing.T, f *framework.Framework, ctx *framework.T
 func checkDefaultLabels(t *testing.T, kubeclient kubernetes.Interface) error {
 
 	opts := metav1.ListOptions{}
-	nodeList, err := kubeclient.CoreV1().Nodes().List(opts)
+	nodeList, err := kubeclient.CoreV1().Nodes().List(context.TODO(), opts)
 	if err != nil {
 		t.Error("Could not retrieve List of Nodes")
 		return err
@@ -209,7 +211,7 @@ func waitForDaemonSet(t *testing.T, kubeclient kubernetes.Interface, namespace, 
 		return nil
 	}
 	err := wait.Poll(retryInterval, timeout, func() (done bool, err error) {
-		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(name, metav1.GetOptions{IncludeUninitialized: true})
+		daemonset, err := kubeclient.AppsV1().DaemonSets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			if apierrors.IsNotFound(err) {
 				t.Logf("Waiting for availability of %s/%s DaemonSet\n", namespace, name)

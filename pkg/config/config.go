@@ -14,11 +14,7 @@ const (
 	resyncPeriodDefault              int64  = 600
 )
 
-<<<<<<< HEAD
-// NodeFeatureDiscoveryImage returns the operator's operand/tuned image path.
-=======
 // NodeFeatureDiscoveryImage returns the operator's operand/nfd image.
->>>>>>> 97bc00ea... Expand nodeFeatureDiscovery CRD
 func NodeFeatureDiscoveryImage() string {
 	nodeFeatureDiscoveryImage := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
 

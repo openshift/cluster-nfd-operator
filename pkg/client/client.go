@@ -1,13 +1,14 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 
 	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
-	nfdv1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -158,7 +159,7 @@ func (c *nfdConfigClient) Create(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFe
 	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Post().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Body(obj).Do().Into(result)
+		Body(obj).Do(context.TODO()).Into(result)
 	return result, err
 }
 
@@ -166,14 +167,14 @@ func (c *nfdConfigClient) Update(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFe
 	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Put().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Body(obj).Do().Into(result)
+		Body(obj).Do(context.TODO()).Into(result)
 	return result, err
 }
 
 func (c *nfdConfigClient) Delete(name string, options *meta_v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Name(name).Body(options).Do().
+		Name(name).Body(options).Do(context.TODO()).
 		Error()
 }
 
@@ -181,6 +182,6 @@ func (c *nfdConfigClient) Get(name string) (*nfdv1.NodeFeatureDiscovery, error) 
 	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Get().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Name(name).Do().Into(result)
+		Name(name).Do(context.TODO()).Into(result)
 	return result, err
 }
