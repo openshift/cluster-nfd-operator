@@ -13,8 +13,17 @@ Update the Dockerfile with the correct golang build image and the base image the
 
 ## Manual deploy of the operator
 Checkout the sources
+
 ```
 $ git clone https://github.com/openshift/cluster-nfd-operator
+
+The default `NodeFeatureDiscovery` CR will create the operand (NFD) in the `node-feature-discovery-operator` namespace,
+also an empty [nfd-worker-conf](https://kubernetes-sigs.github.io/node-feature-discovery/v0.6/get-started/deployment-and-usage.html#configuration),
+the CR can be edited to choose another namespace, image, imagePullPolicy and nfd-worker-conf. See the `manifests/0700_cr.yaml` for the default values.
+
+```bash
+IMAGE_REGISTRY=<my registry>
+make deploy 
 ```
 Update the  `Makefile` with the a custom image built and configure the namespace where the operator should be deployed.
 

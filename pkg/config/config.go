@@ -14,7 +14,7 @@ const (
 	resyncPeriodDefault              int64  = 600
 )
 
-// NodeFeatureDiscoveryImage returns the operator's operand/tuned image path.
+// NodeFeatureDiscoveryImage returns the operator's operand/nfd image.
 func NodeFeatureDiscoveryImage() string {
 	nodeFeatureDiscoveryImage := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
 

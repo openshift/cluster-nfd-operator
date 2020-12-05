@@ -1,13 +1,14 @@
 package client
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 
 	configv1client "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
-	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1alpha1"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/pkg/apis/nfd/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -124,8 +125,8 @@ func NewClient() (*NFDV1AlphaClient, error) {
 // CR related
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&nfdv1alpha1.NodeFeatureDiscovery{},
-		&nfdv1alpha1.NodeFeatureDiscoveryList{},
+		&nfdv1.NodeFeatureDiscovery{},
+		&nfdv1.NodeFeatureDiscoveryList{},
 	)
 	meta_v1.AddToGroupVersion(scheme, SchemeGroupVersion)
 	return nil
@@ -143,10 +144,10 @@ type NFDV1AlphaClient struct {
 }
 
 type NfdConfigInterface interface {
-	Create(obj *nfdv1alpha1.NodeFeatureDiscovery) (*nfdv1alpha1.NodeFeatureDiscovery, error)
-	Update(obj *nfdv1alpha1.NodeFeatureDiscovery) (*nfdv1alpha1.NodeFeatureDiscovery, error)
+	Create(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFeatureDiscovery, error)
+	Update(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFeatureDiscovery, error)
 	Delete(name string, options *meta_v1.DeleteOptions) error
-	Get(name string) (*nfdv1alpha1.NodeFeatureDiscovery, error)
+	Get(name string) (*nfdv1.NodeFeatureDiscovery, error)
 }
 
 type nfdConfigClient struct {
@@ -154,33 +155,33 @@ type nfdConfigClient struct {
 	ns     string
 }
 
-func (c *nfdConfigClient) Create(obj *nfdv1alpha1.NodeFeatureDiscovery) (*nfdv1alpha1.NodeFeatureDiscovery, error) {
-	result := &nfdv1alpha1.NodeFeatureDiscovery{}
+func (c *nfdConfigClient) Create(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFeatureDiscovery, error) {
+	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Post().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Body(obj).Do().Into(result)
+		Body(obj).Do(context.TODO()).Into(result)
 	return result, err
 }
 
-func (c *nfdConfigClient) Update(obj *nfdv1alpha1.NodeFeatureDiscovery) (*nfdv1alpha1.NodeFeatureDiscovery, error) {
-	result := &nfdv1alpha1.NodeFeatureDiscovery{}
+func (c *nfdConfigClient) Update(obj *nfdv1.NodeFeatureDiscovery) (*nfdv1.NodeFeatureDiscovery, error) {
+	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Put().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Body(obj).Do().Into(result)
+		Body(obj).Do(context.TODO()).Into(result)
 	return result, err
 }
 
 func (c *nfdConfigClient) Delete(name string, options *meta_v1.DeleteOptions) error {
 	return c.client.Delete().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Name(name).Body(options).Do().
+		Name(name).Body(options).Do(context.TODO()).
 		Error()
 }
 
-func (c *nfdConfigClient) Get(name string) (*nfdv1alpha1.NodeFeatureDiscovery, error) {
-	result := &nfdv1alpha1.NodeFeatureDiscovery{}
+func (c *nfdConfigClient) Get(name string) (*nfdv1.NodeFeatureDiscovery, error) {
+	result := &nfdv1.NodeFeatureDiscovery{}
 	err := c.client.Get().
 		Namespace(c.ns).Resource("nodefeaturediscoveries").
-		Name(name).Do().Into(result)
+		Name(name).Do(context.TODO()).Into(result)
 	return result, err
 }
