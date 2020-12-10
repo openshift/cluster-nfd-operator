@@ -8,6 +8,8 @@ spec:
   selector:
     matchLabels:
       name: nfd-operator
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
