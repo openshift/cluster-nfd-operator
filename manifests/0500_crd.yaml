@@ -3,9 +3,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations: #https://github.com/kubernetes/enhancements/pull/1111
     "api-approved.kubernetes.io": "unapproved, experimental-only"
-  name: nodefeaturediscoveries.nfd.kubernetes.io
+  name: nodefeaturediscoveries.nfd.openshift.io
 spec:
-  group: nfd.kubernetes.io
+  group: nfd.openshift.io
   names:
     kind: NodeFeatureDiscovery
     listKind: NodeFeatureDiscoveryList
@@ -55,13 +55,13 @@ spec:
                   namespace:
                     pattern: '[a-zA-Z0-9\.\-\/]+'
                     type: string
-              nfd-worker:
+              workerConfig:
                 description: NFD configuration files
                 type: object
                 required:
-                  - config
+                  - configData
                 properties:
-                  config:
+                  configData:
                     description: NFD Worker configuration file
                     type: string
           status:

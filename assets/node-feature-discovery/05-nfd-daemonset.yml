@@ -34,8 +34,6 @@ spec:
               mountPath: "/host-sys"
             - name: host-os-release
               mountPath: "/host-etc/os-release"
-            - name: config
-              mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
               mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
           securityContext:
@@ -53,9 +51,3 @@ spec:
         - name: host-boot
           hostPath:
             path: "/boot"
-        - name: config
-          configMap:
-            name: node-feature-discovery
-            items:
-              - key: node-feature-discovery-conf
-                path: node-feature-discovery.conf
