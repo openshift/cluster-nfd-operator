@@ -79,7 +79,7 @@ spec:
           hostPath:
             path: "/etc/kubernetes/node-feature-discovery/features.d"
         - name: config 
-          configMap:
+          configMap: 
             name: nfd-worker
             items:
               - key: nfd-worker-conf
