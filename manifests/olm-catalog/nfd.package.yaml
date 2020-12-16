@@ -2,4 +2,4 @@ packageName: nfd
 channels:
 - name: '4.7'
   currentCSV: nfd.v4.7.0
-  
+defaultChannel: "4.7"
