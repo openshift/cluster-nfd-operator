@@ -10,7 +10,6 @@ metadata:
   annotations:
     capabilities: Basic Install
     categories: "Database"
-    
     provider: Red Hat
     support: Red Hat
     containerImage: 
