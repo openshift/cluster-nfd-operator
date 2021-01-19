@@ -13,6 +13,7 @@ spec:
       labels:
         app: nfd-worker
     spec:
+      dnsPolicy: ClusterFirstWithHostNet
       tolerations:
         - operator: "Exists"
           effect: "NoSchedule"
@@ -41,7 +42,7 @@ spec:
             - "nfd-worker"
           args:
             - "--sleep-interval=60s"
-            - "--server=$(NFD_MASTER_SERVICE_HOST):$(NFD_MASTER_SERVICE_PORT)"
+            - "--server=nfd-master:12000"
           volumeMounts:
             - name: host-boot
               mountPath: "/host-boot"
