@@ -22,7 +22,7 @@ metadata:
             "apiVersion": "nfd.openshift.io/v1",
             "kind": "NodeFeatureDiscovery",
             "metadata": {
-                "name": "nfd-master-server",
+                "name": "nfd-master-server"
             },
             "spec": {
                 "operand": {
