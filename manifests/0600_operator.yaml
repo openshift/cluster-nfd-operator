@@ -24,14 +24,6 @@ spec:
           command:
           - cluster-nfd-operator
           imagePullPolicy: IfNotPresent
-          readinessProbe:
-            exec:
-              command:
-                - stat
-                - /tmp/operator-sdk-ready
-            initialDelaySeconds: 4
-            periodSeconds: 10
-            failureThreshold: 1
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -50,12 +42,6 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          volumeMounts:
-          - mountPath: /tmp
-            name: tmp
-      volumes:
-      - name: tmp
-        emptyDir: {}
       nodeSelector:
         node-role.kubernetes.io/master: ""
       tolerations:
