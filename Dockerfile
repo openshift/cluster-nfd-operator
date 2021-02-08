@@ -3,8 +3,8 @@ WORKDIR /go/src/github.com/openshift/cluster-nfd-operator
 COPY . .
 RUN make build
 
-FROM registry.ci.openshift.org/ocp/4.7:base
-ARG CSV=4.7
+FROM registry.ci.openshift.org/ocp/4.8:base
+ARG CSV=4.8
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/cluster-nfd-operator /usr/bin/
 
 RUN mkdir -p /opt/nfd
@@ -22,5 +22,3 @@ LABEL io.k8s.display-name="OpenShift cluster-nfd-operator" \
       io.openshift.tags="openshift" \
       com.redhat.delivery.appregistry=False \
       maintainer="ATS Auto Tuning Scalability  <aos-scalability@redhat.com>"
-
-
