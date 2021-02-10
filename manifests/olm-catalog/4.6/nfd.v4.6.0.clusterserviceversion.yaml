@@ -165,11 +165,6 @@ spec:
                 ports:
                 - containerPort: 60000
                   name: metrics
-                readinessProbe:
-                  exec:
-                    command:
-                    - stat
-                    - /tmp/operator-sdk-ready
                   failureThreshold: 1
                   initialDelaySeconds: 4
                   periodSeconds: 10
@@ -180,9 +175,6 @@ spec:
                     drop:
                     - ALL
                   readOnlyRootFilesystem: true
-                volumeMounts:
-                - mountPath: /tmp
-                  name: tmp
               nodeSelector:
                 node-role.kubernetes.io/master: ""
               serviceAccountName: nfd-operator
@@ -190,9 +182,6 @@ spec:
               - effect: NoSchedule
                 key: node-role.kubernetes.io/master
                 operator: Equal
-              volumes:
-              - emptyDir: {}
-                name: tmp
     strategy: deployment
   installModes:
   - supported: true
