@@ -3,8 +3,16 @@
  
 ## Building the operator
 Checkout the sources
-```
+
+```bash
 $ git clone https://github.com/openshift/cluster-nfd-operator $GOPATH/src/github.com/openshift/cluster-nfd-operator
+```
+
+Build the operator image
+
+```bash
+IMAGE_REGISTRY=<my registry>
+make image
 ```
 
 Update the `Makefile` and edit `IMAGE`, `ORG` and `REGISTRY` one will need those later to update the operator manifest (`image: $(REGISTRY)/$(ORG)/$(cluster-nfd-operator:$(TAG))`).
@@ -23,7 +31,7 @@ the CR can be edited to choose another namespace, image, imagePullPolicy and nfd
 
 ```bash
 IMAGE_REGISTRY=<my registry>
-make deploy 
+make deploy
 ```
 Update the  `Makefile` with the a custom image built and configure the namespace where the operator should be deployed.
 
