@@ -39,8 +39,10 @@ func (n *NFD) init(
 	n.ins = i
 	n.idx = 0
 
-	addState(n, "/opt/nfd/master")
-	addState(n, "/opt/nfd/worker")
+	if len(n.controls) == 0 {
+		addState(n, "/opt/nfd/master")
+		addState(n, "/opt/nfd/worker")
+	}
 
 	return
 }
