@@ -12,7 +12,7 @@ metadata:
     categories: "Database"
     provider: Red Hat
     support: Red Hat
-    containerImage: 
+    containerImage: registry.redhat.io/openshift4/ose-cluster-nfd-operator:v4.8.0
     createdAt: 2019-05-30T00:00:00Z
     certified: "false"
     repository: https://github.com/openshift/cluster-nfd-operator
