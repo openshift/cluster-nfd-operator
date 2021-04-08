@@ -5,7 +5,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
-    api-approved.kubernetes.io: "unapproved, experimental-only"
+    "api-approved.kubernetes.io": "unapproved, experimental-only"
   creationTimestamp: null
   name: nodefeaturediscoveries.nfd.kubernetes.io
 spec:
@@ -48,6 +48,8 @@ spec:
                 required:
                 - configData
                 type: object
+              instance:
+                type: string
               operand:
                 description: OperandSpec describes configuration options for the operand
                 properties:

@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -302,6 +303,22 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	// update image pull policy
 	if n.ins.Spec.Operand.ImagePullPolicy != "" {
 		obj.Spec.Template.Spec.Containers[0].ImagePullPolicy = n.ins.Spec.Operand.ImagePolicy(n.ins.Spec.Operand.ImagePullPolicy)
+	}
+
+	// check if running as instance
+	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
+	if n.ins.Spec.Instance != "" && obj.ObjectMeta.Name == "nfd-master" {
+		instanceFlag := fmt.Sprintf("--instance=%s", n.ins.Spec.Instance)
+		var found bool
+		for _, c := range obj.Spec.Template.Spec.Containers[0].Command {
+			if c == instanceFlag {
+				// all set!
+				found = true
+			}
+		}
+		if !found {
+			obj.Spec.Template.Spec.Containers[0].Command = append(obj.Spec.Template.Spec.Containers[0].Command, instanceFlag)
+		}
 	}
 
 	obj.SetNamespace(n.ins.GetNamespace())

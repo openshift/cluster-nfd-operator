@@ -4,9 +4,10 @@ metadata:
   name: nfd-master-server
   namespace: node-feature-discovery-operator
 spec:
+  instance: # instance is empty by default
   operand:
     namespace: node-feature-discovery-operator
-    image: quay.io/openshift/origin-node-feature-discovery:4.7
+    image: gcr.io/k8s-staging-nfd/node-feature-discovery:master
     imagePullPolicy: Always
   workerConfig:
     configData: |
@@ -115,4 +116,12 @@ spec:
       #            vendor: ["15b3"]
       #            device: ["1014", "1017"]
       #          loadedKMod : ["vendor_kmod1", "vendor_kmod2"]
-
+  customConfig:
+    configData: |
+      #    - name: "more.kernel.features"
+      #      matchOn:
+      #      - loadedKMod: ["example_kmod3"]
+      #    - name: "more.features.by.nodename"
+      #      value: customValue
+      #      matchOn:
+      #      - nodename: ["special-.*-node-.*"]
