@@ -1,8 +1,3 @@
-IMAGE_BUILD_CMD ?= docker build
-IMAGE_BUILD_EXTRA_OPTS ?=
-IMAGE_PUSH_CMD ?= docker push
-CONTAINER_RUN_CMD ?= docker run -u "`id -u`:`id -g`"
-
 # VERSION defines the project version for the bundle.
 # Update this value when you upgrade the version of your project.
 # To re-generate a bundle for another specific version without changing the standard setup, you can:

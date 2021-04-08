@@ -25,7 +25,8 @@ import (
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
 	Operand      OperandSpec `json:"operand"`
-	WorkerConfig ConfigSpec  `json:"workerConfig"`
+	WorkerConfig ConfigMap   `json:"workerConfig"`
+	CustomConfig ConfigMap   `json:"customConfig"`
 }
 
 // OperandSpec describes configuration options for the operand
@@ -41,8 +42,8 @@ type OperandSpec struct {
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
-// ConfigSpec describes configuration options for the NFD worker
-type ConfigSpec struct {
+// ConfigMap describes configuration options for the NFD worker
+type ConfigMap struct {
 	// BinaryData holds the NFD configuration file
 	ConfigData string `json:"configData"`
 }
@@ -50,19 +51,10 @@ type ConfigSpec struct {
 // NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoveryStatus struct {
-<<<<<<< HEAD:pkg/apis/nfd/v1/nodefeaturediscovery_types.go
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-=======
 	// Conditions represents the latest available observations of current state.
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
->>>>>>> 5132e9f5 (operator-sdk upgrade to 1.4.2):api/v1/nodefeaturediscovery_types.go
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
@@ -108,6 +100,6 @@ func (o *OperandSpec) ImagePolicy(pullPolicy string) corev1.PullPolicy {
 }
 
 // Data returns a valid ConfigMap name
-func (c *ConfigSpec) Data() string {
+func (c *ConfigMap) Data() string {
 	return c.ConfigData
 }
