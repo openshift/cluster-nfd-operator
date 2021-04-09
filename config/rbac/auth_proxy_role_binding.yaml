@@ -9,5 +9,5 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: node-feature-discovery-operator
+  namespace: openshift-nfd
 

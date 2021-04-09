@@ -1,5 +1,5 @@
 # Adds namespace to all resources.
-namespace: node-feature-discovery-operator
+namespace: openshift-nfd
 
 # Value of this field is prepended to the
 # names of all resources, e.g. a deployment named

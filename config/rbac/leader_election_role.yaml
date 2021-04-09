@@ -93,8 +93,3 @@ rules:
   - securitycontextconstraints
   verbs:
   - '*'
-<<<<<<< HEAD:manifests/0300_cluster_role.yaml
-  
-=======
-
->>>>>>> 5132e9f5 (operator-sdk upgrade to 1.4.2):config/rbac/leader_election_role.yaml

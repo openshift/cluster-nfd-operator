@@ -5,7 +5,7 @@ metadata:
   name: nodefeaturediscovery-viewer-role
 rules:
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries/status
   verbs:

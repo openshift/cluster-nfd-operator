@@ -5,7 +5,7 @@ metadata:
   name: nodefeaturediscovery-editor-role
 rules:
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries/status
   verbs:

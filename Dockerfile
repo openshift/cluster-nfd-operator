@@ -9,7 +9,7 @@ RUN make build
 # Create production image for running the operator
 FROM registry.ci.openshift.org/ocp/4.8:base
 ARG CSV=4.8
-COPY --from=builder /workspace/node-feature-discovery-operator /
+COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/node-feature-discovery-operator /
 
 RUN mkdir -p /opt/nfd
 COPY build/assets /opt/nfd

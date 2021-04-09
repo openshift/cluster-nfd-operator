@@ -3,13 +3,13 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
-  name: node-feature-discovery-operator
+  name: openshift-nfd
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager
-  namespace: node-feature-discovery-operator
+  namespace: openshift-nfd
   labels:
     control-plane: controller-manager
 spec:
@@ -22,6 +22,7 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
+      serviceAccountName: nfd-operator
       containers:
         - name: manager
           securityContext:
@@ -49,7 +50,7 @@ spec:
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
-              value: "k8s.gcr.io/nfd/node-feature-discovery:v0.7.0"
+              value: "quay.io/openshift/origin-node-feature-discovery:4.8"
           livenessProbe:
             httpGet:
               path: /healthz

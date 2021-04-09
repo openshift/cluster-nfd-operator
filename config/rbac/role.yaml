@@ -31,6 +31,67 @@ rules:
   - update
   - watch
 - apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cert-manager.io
+  resources:
+  - issuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - clusteroperators
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - clusteroperators/status
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - clusterversions
+  verbs:
+  - get
+- apiGroups:
+  - config.openshift.io
+  resources:
+  - proxies
+  verbs:
+  - get
+  - list
+- apiGroups:
   - coordination.k8s.io
   resources:
   - leases
@@ -203,7 +264,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries
   verbs:
@@ -215,13 +276,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries/finalizers
   verbs:
   - update
 - apiGroups:
-  - nfd.kubernetes.io
+  - nfd.openshift.io
   resources:
   - nodefeaturediscoveries/status
   verbs:
@@ -277,9 +338,9 @@ rules:
   - update
   - watch
 - apiGroups:
-  - storage.k8s.io
+  - route.openshift.io
   resources:
-  - csidrivers
+  - routes
   verbs:
   - create
   - delete
@@ -289,16 +350,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - storage.k8s.io
+  - security.openshift.io
   resources:
-  - csinodes
+  - securitycontextconstraints
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - storageclasses
-  verbs:
+  - patch
+  - update
+  - use
   - watch

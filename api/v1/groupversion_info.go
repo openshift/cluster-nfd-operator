@@ -13,9 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1 contains API Schema definitions for the nfd.kubernetes.io v1 API group
+// Package v1 contains API Schema definitions for the nfd.openshift.io v1 API group
 // +kubebuilder:object:generate=true
-// +groupName=nfd.kubernetes.io
+// +groupName=nfd.openshift.io
 package v1
 
 import (
@@ -25,7 +25,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "nfd.kubernetes.io", Version: "v1"}
+	GroupVersion = schema.GroupVersion{Group: "nfd.openshift.io", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

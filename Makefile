@@ -33,7 +33,7 @@ IMAGE_BUILD_CMD ?= docker build
 IMAGE_PUSH_CMD ?= docker push
 IMAGE_BUILD_EXTRA_OPTS ?=
 IMAGE_REGISTRY ?= quay.io/openshift-psap
-IMAGE_NAME := openshift-psap
+IMAGE_NAME := cluster-nfd-operator
 IMAGE_TAG_NAME ?= $(VERSION)
 IMAGE_EXTRA_TAG_NAMES ?=
 IMAGE_REPO := $(IMAGE_REGISTRY)/$(IMAGE_NAME)
@@ -64,6 +64,7 @@ test: generate fmt vet manifests
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
+
 go_mod:
 	@go mod download
 
@@ -103,10 +104,6 @@ fmt:
 # Run go vet against code
 vet:
 	go vet ./...
-
-verify:	verify-gofmt ci-lint
-
-	kubectl delete scc nfd-worker
 
 verify:	verify-gofmt
 
