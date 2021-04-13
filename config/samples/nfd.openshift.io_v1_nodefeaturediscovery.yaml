@@ -4,7 +4,7 @@ metadata:
   name: nfd-master-server
   namespace: openshift-nfd
 spec:
-  instance: # instance is empty by default
+  instance: "" # instance is empty by default
   operand:
     namespace: openshift-nfd
     image: quay.io/openshift/origin-node-feature-discovery:4.8
