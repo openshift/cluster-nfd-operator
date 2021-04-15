@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/eduardoarango/cluster-nfd-operator
-  newTag: 2afeebbb-dirty
+  newTag: "4.8"
