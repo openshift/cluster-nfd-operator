@@ -13,7 +13,7 @@ COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/node-featu
 
 RUN mkdir -p /opt/nfd
 COPY build/assets /opt/nfd
-COPY manifests /manifests
+COPY bundle /bundle
 
 RUN useradd  -r -u 499 nonroot
 RUN getent group nonroot || groupadd -o -g 499 nonroot 

@@ -1,13 +1,18 @@
-domain: nodefeaturediscoveries.nfd.kubernetes.io
+domain: nodefeaturediscoveries.nfd.openshift.io
 layout: go.kubebuilder.io/v3
 projectName: node-feature-discovery-operator
 repo: github.com/openshift/cluster-nfd-operator
 resources:
-- crdVersion: v1
-  group: nfd.kubernetes.io
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: nodefeaturediscoveries.nfd.openshift.io
+  group: nfd.openshift.io
   kind: NodeFeatureDiscovery
+  path: github.com/openshift/cluster-nfd-operator/api/v1
   version: v1
-version: 3-alpha
+version: "3"
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
