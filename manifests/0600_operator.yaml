@@ -24,7 +24,7 @@ spec:
           - containerPort: 60000
             name: metrics
           command:
-          - cluster-nfd-operator
+          - node-feature-discovery-operator
           imagePullPolicy: IfNotPresent
           env:
             - name: WATCH_NAMESPACE
@@ -38,7 +38,7 @@ spec:
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
-              value: "quay.io/openshift/origin-node-feature-discovery:4.7"
+              value: "quay.io/openshift/origin-node-feature-discovery:4.8"
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
