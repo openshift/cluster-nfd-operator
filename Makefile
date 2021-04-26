@@ -52,7 +52,7 @@ endif
 
 GOOS=linux
 
-PACKAGE=github.com/openshift/cluster-nfd-opoerator
+PACKAGE=github.com/openshift/cluster-nfd-operator
 MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
 

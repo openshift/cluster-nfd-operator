@@ -73,8 +73,6 @@ spec:
                 - configData
                 type: object
             required:
-            - customConfig
-            - instance
             - operand
             - workerConfig
             type: object
