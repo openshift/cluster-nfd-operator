@@ -45,12 +45,14 @@ spec:
                 description: OperandSpec describes configuration options for the operand
                 properties:
                   image:
+                    description: Image defines the image to pull for the NFD operand [defaults to quay.io/openshift/origin-node-feature-discovery]
                     pattern: '[a-zA-Z0-9\-]+'
                     type: string
                   imagePullPolicy:
-                    description: Image pull policy
+                    description: ImagePullPolicy defines Image pull policy for the NFD operand image [defaults to Always]
                     type: string
                   namespace:
+                    description: Namespace defines the namespace to deploy nfd-master and nfd-worker pods
                     pattern: '[a-zA-Z0-9\.\-\/]+'
                     type: string
                 type: object
@@ -64,8 +66,6 @@ spec:
                 - configData
                 type: object
             required:
-            - customConfig
-            - instance
             - operand
             - workerConfig
             type: object

@@ -1,7 +1,7 @@
 apiVersion: nfd.openshift.io/v1
 kind: NodeFeatureDiscovery
 metadata:
-  name: nfd-master-server
+  name: nfd-instance
   namespace: openshift-nfd
 spec:
   instance: "" # instance is empty by default
