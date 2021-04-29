@@ -20,6 +20,3 @@ USER cluster-nfd-operator
 
 ENTRYPOINT ["/node-feature-discovery-operator"]
 LABEL io.k8s.display-name="node-feature-discovery-operator"
-      io.k8s.description="This software enables node feature discovery for OpenShift. It detects hardware features available on each node in an OpenShift cluster, and advertises those features using node labels." \
-      io.openshift.tags="openshift" \
-      maintainer="OpenShift-PSAP  <openshift-psap@redhat.com>"
