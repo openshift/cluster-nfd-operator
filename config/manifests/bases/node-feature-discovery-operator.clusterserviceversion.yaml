@@ -514,7 +514,7 @@ spec:
   maintainers:
   - email: openshift-psap@redhat.com
     name: openshift-psap
-  maturity: alpha
+  maturity: stable
   minKubeVersion: 1.20.0
   provider:
     name: Red Hat
