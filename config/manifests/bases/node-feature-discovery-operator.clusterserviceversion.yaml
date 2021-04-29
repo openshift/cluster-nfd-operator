@@ -29,7 +29,7 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Database
-    containerImage: quay.io/eduardoarango/cluster-nfd-operator:4.8.0
+    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.8
     description: This software enables node feature discovery for OpenShift. It detects hardware features available on each node in an OpenShift cluster, and advertises those features using node labels.
     olm.skipRange: '>=4.6.0 <4.8.0'
     operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
@@ -470,7 +470,7 @@ spec:
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
                   value: quay.io/openshift/origin-node-feature-discovery:4.8
-                image: quay.io/eduardoarango/cluster-nfd-operator:4.8.0
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.8
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
