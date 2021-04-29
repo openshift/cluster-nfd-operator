@@ -20,7 +20,7 @@ resources:
 patchesJSON6902:
 - target:
     kind: ClusterRole
-    name: manager-role
+    name: nfd-operator
   patch: |-
     - op: add
       path: /rules/0
