@@ -28,7 +28,7 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
-BUNDLE_IMG ?= quay.io/eduardoarango/nfd-operator-bundle:$(VERSION)
+BUNDLE_IMG ?= quay.io/openshift-psap/nfd-operator-bundle:$(VERSION)
 
 # Image URL to use all building/pushing image targets
 IMAGE_BUILD_CMD ?= docker build
