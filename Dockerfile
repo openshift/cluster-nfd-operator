@@ -15,8 +15,8 @@ RUN mkdir -p /opt/nfd
 COPY build/assets /opt/nfd
 COPY manifests /manifests
 
-RUN useradd  -r -u 499 nonroot
-RUN getent group nonroot || groupadd -o -g 499 nonroot 
+RUN useradd cluster-nfd-operator
+USER cluster-nfd-operator
 
 ENTRYPOINT ["/node-feature-discovery-operator"]
 LABEL io.k8s.display-name="node-feature-discovery-operator"

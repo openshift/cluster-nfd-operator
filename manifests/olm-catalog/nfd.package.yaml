@@ -1,5 +1,0 @@
-packageName: nfd
-channels:
-- name: '4.8'
-  currentCSV: nfd.v4.8.0
-defaultChannel: "4.8"

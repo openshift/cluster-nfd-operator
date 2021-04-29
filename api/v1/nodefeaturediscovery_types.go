@@ -25,20 +25,29 @@ import (
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
 	Operand      OperandSpec `json:"operand"`
-	Instance     string      `json:"instance"`
 	WorkerConfig ConfigMap   `json:"workerConfig"`
-	CustomConfig ConfigMap   `json:"customConfig"`
+
+	// +optional
+	Instance string `json:"instance"`
+	// +optional
+	CustomConfig ConfigMap `json:"customConfig"`
 }
 
 // OperandSpec describes configuration options for the operand
 type OperandSpec struct {
+	// Namespace defines the namespace to deploy nfd-master
+	// and nfd-worker pods
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\.\-\/]+
 	Namespace string `json:"namespace,omitempty"`
 
+	// Image defines the image to pull for the
+	// NFD operand
+	// [defaults to quay.io/openshift/origin-node-feature-discovery]
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
 	Image string `json:"image,omitempty"`
 
-	// Image pull policy
+	// ImagePullPolicy defines Image pull policy for the
+	// NFD operand image [defaults to Always]
 	// +kubebuilder:validation:Optional
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
