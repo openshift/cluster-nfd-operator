@@ -1,5 +1,5 @@
 updates:
-  - file: "{MAJOR}.{MINOR}/nfd.v{MAJOR}.{MINOR}.0.clusterserviceversion.yaml" # relative to this file
+  - file: "{MAJOR}.{MINOR}/manifests/nfd.v{MAJOR}.{MINOR}.0.clusterserviceversion.yaml" # relative to this file
     update_list:
     - search: "nfd.v{MAJOR}.{MINOR}.0"
       replace: "nfd.{FULL_VER}"
