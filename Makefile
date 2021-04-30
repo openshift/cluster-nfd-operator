@@ -187,10 +187,15 @@ endef
 bundle: manifests kustomize
 	operator-sdk generate kustomize manifests -q
 	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle --output-dir manifests -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
-	operator-sdk bundle validate ./manifests
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle --output-dir bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	operator-sdk bundle validate ./bundle
 
 # Build the bundle image.
 .PHONY: bundle-build
 bundle-build:
 	$(IMAGE_BUILD_CMD) -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+
+# push the bundle image.
+.PHONY: bundle-push
+bundle-push:
+	$(IMAGE_PUSH_CMD) $(BUNDLE_IMG)
