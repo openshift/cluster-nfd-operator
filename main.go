@@ -66,7 +66,13 @@ func getWatchNamespace() (string, error) {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+
+        // probeAddr is responsible for the health probe bind address, where the health
+        // probe is responsible for determining liveness, readiness, and configuration 
+        // of the NFD containers. Note that the port which is being binded must match
+        // the bind port under './config' and './manifests'
 	var probeAddr string
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
