@@ -67,7 +67,7 @@ func filePathWalkDir(root string) ([]string, error) {
 	// 'root'
 	var files []string
 
-	// Walk through the path, and if the os.FileInfo object
+	// Walk through the files in path, and if the os.FileInfo object
 	// states that the item is not a directory, append it
 	// to the list of files
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
