@@ -32,6 +32,10 @@ spec:
               mountPath: "/host-boot"
             - name: host-sys
               mountPath: "/host-sys"
+            - name: host-usr-lib
+              mountPath: "/host-usr/lib"
+            - name: host-usr-src
+              mountPath: "/host-usr/src"
             - name: host-os-release
               mountPath: "/host-etc/os-release"
             - name: nfd-hooks
@@ -51,3 +55,9 @@ spec:
         - name: host-boot
           hostPath:
             path: "/boot"
+        - name: host-usr-lib
+          hostPath:
+            path: "/usr/lib"
+        - name: host-usr-src
+          hostPath:
+            path: "/usr/src"
