@@ -68,7 +68,7 @@ func main() {
 
         // enableLeaderElection should be set to 'disable' by default If we enable leader
         // election, then only one node can run the controller manager and we will not
-        // have NFD running on all nodes.
+        // have NFD Operator running on all nodes.
 	var enableLeaderElection bool
 	var probeAddr string
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
