@@ -30,12 +30,18 @@ type NFD struct {
 	idx       int
 }
 
+// addState takes a given path and finds resources in that path,
+// then appends a list of ctrl's functions to the NFD object's
+// 'controls' field and adds the list of resources found to
+// 'n.resources'
 func (n *NFD) addState(path string) {
 	res, ctrl := addResourcesControls(path)
 	n.controls = append(n.controls, ctrl)
 	n.resources = append(n.resources, res)
 }
 
+// init initializes an NFD object by populating the fields before
+// attempting to run any kind of check.
 func (n *NFD) init(
 	r *NodeFeatureDiscoveryReconciler,
 	i *nfdv1.NodeFeatureDiscovery,
@@ -49,7 +55,18 @@ func (n *NFD) init(
 	}
 }
 
+// step steps through the list of functions stored in 'n.controls',
+// then attempts to determine if the given resource is Ready or
+// NotReady. (See the following file for a list of functions that
+// 'n.controls' can take on: ./nodefeaturediscovery_resources.go.)
 func (n *NFD) step() error {
+
+	// For each function in n.controls, attempt to check the
+	// status of the relevant resource. If no error occurs and
+	// the resource is defined as being "NotReady," then return
+	// an error saying it's not ready. Otherwise, return the
+	// status as being ready, then increment the index for 
+	// n.controls so that we can parse the next resource.
 	for _, fs := range n.controls[n.idx] {
 		stat, err := fs(*n)
 		if err != nil {
@@ -63,6 +80,8 @@ func (n *NFD) step() error {
 	return nil
 }
 
+// last checks if the last index equals the number of functions
+// stored in n.controls.
 func (n *NFD) last() bool {
 	return n.idx == len(n.controls)
 }
