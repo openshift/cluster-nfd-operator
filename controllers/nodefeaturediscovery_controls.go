@@ -30,7 +30,7 @@ import (
 
 type controlFunc []func(n NFD) (ResourceStatus, error)
 
-// Status of the resource (0 or 1, for Ready/NotReady)
+// ResourceStatus defines the status of the resource (0 or 1, for Ready/NotReady)
 type ResourceStatus int
 
 // Ready/NotReady defines if a resource is ready.
