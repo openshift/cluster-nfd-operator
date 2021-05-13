@@ -33,7 +33,9 @@ import (
 
 type assetsFromFile []byte
 
-// Resources holds objects owned by NFD
+// Resources holds objects owned by NFD. This struct is used with the
+// 'NFD' struct to assist in the process of checking if NFD's resources
+// are 'Ready' or 'NotReady'.
 type Resources struct {
 	Namespace                  corev1.Namespace
 	ServiceAccount             corev1.ServiceAccount
