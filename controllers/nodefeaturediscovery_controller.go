@@ -41,7 +41,23 @@ var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
 var nfd NFD
 
-// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
+// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
+// Below is a description of each field within this struct:
+//
+//	- client.Client reads and writes directly from/to the OCP API server.
+//	  This field needs to be added to the reconciler because it is
+//	  responsible for for fetching objects from the server, which NFD
+//	  needs to do in order to add its labels to each node in the cluster.
+//
+//	- Log is used to log the reconciliation. Every controllers needs this.
+//
+//	- Scheme is used by the kubebuilder library to set OwnerReferences.
+//	  Every controller needs this.
+//
+//	- Recorder defines interfaces for working with OCP event recorders. 
+//	  This field is needed by NFD in order for NFD to write events.
+//
+//	- AssetsDir defines the directory with assets under the operator image 
 type NodeFeatureDiscoveryReconciler struct {
 	client.Client
 	Log       logr.Logger
@@ -50,7 +66,10 @@ type NodeFeatureDiscoveryReconciler struct {
 	AssetsDir string
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controller with the Manager in order to create
+// the controller. The Manager serves the purpose of initializing shared
+// dependencies (like caches and clients) from the 'client.Client' field in the
+// NodeFeatureDiscoveryReconciler struct.
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// we want to initate reconcile loop only on spec change of the object
@@ -71,6 +90,9 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Complete(r)
 }
 
+// validateUpdateEvent validates whether or not NFD receives a spec change of
+// the input object -- which we use to validate NodeFeatureDiscoveryReconciler
+// objects.
 func validateUpdateEvent(e *event.UpdateEvent) bool {
 	if e.ObjectOld == nil {
 		klog.Error("Update event has no old runtime object to update")
