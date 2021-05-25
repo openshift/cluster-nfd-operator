@@ -26,6 +26,11 @@ import (
 type NodeFeatureDiscoverySpec struct {
 	Operand      OperandSpec `json:"operand"`
 	WorkerConfig ConfigMap   `json:"workerConfig"`
+        ServiceAccount     map[string]string `json:"serviceAccount,omitempty"`
+        ClusterRole        map[string]string `json:"role,omitempty"`
+        ClusterRoleBinding map[string]string `json:"roleBinding,omitempty"`
+        Service            map[string]string `json:"service,omitempty"`
+        DaemonSet          map[string]string `json:"daemonSet,omitempty"`
 
 	// +optional
 	Instance string `json:"instance"`

@@ -15,7 +15,52 @@ limitations under the License.
 
 package components
 
+import (
+        "errors"
+        nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+)
+
 const (
 	// AssetsDir defines the directory with assets under the operator image
 	AssetsDir = "/assets"
 )
+
+// Get the NFD operator's service account
+func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
+	if nfd.Spec.ServiceAccount != nil {
+		return nfd.Spec.ServiceAccount, nil
+	}
+	return nil, errors.New("Could not find ServiceAccount")
+}
+
+// Get the NFD operator's cluster role
+func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
+	if nfd.Spec.ClusterRole != nil {
+		return nfd.Spec.ClusterRole, nil
+	}
+	return nil, errors.New("Could not find ClusterRole")
+}
+
+// Get the NFD operator's cluster role binding
+func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
+	if nfd.Spec.ClusterRoleBinding != nil {
+		return nfd.Spec.ClusterRoleBinding, nil
+	}
+	return nil, errors.New("Could not find Cluster RoleBinding")
+}
+
+// Get the NFD operator's daemon set
+func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
+	if nfd.Spec.DaemonSet != nil {
+		return nfd.Spec.DaemonSet, nil
+	}
+	return nil, errors.New("Could not find DaemonSet")
+}
+
+// Get the NFD operator's service
+func GetService(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
+	if nfd.Spec.Service != nil {
+		return nfd.Spec.Service, nil
+	}
+	return nil, errors.New("Could not find Service")
+}
