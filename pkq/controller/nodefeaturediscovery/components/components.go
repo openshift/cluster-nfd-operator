@@ -18,6 +18,9 @@ package components
 import (
         "errors"
         nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 const (
@@ -26,41 +29,41 @@ const (
 )
 
 // Get the NFD operator's service account
-func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
-	if nfd.Spec.ServiceAccount != nil {
-		return nfd.Spec.ServiceAccount, nil
+func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.ServiceAccount, error) {
+	if &nfd.Spec.ServiceAccount != nil {
+		return &nfd.Spec.ServiceAccount, nil
 	}
 	return nil, errors.New("Could not find ServiceAccount")
 }
 
 // Get the NFD operator's cluster role
-func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
-	if nfd.Spec.ClusterRole != nil {
-		return nfd.Spec.ClusterRole, nil
+func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
+	if &nfd.Spec.ClusterRole != nil {
+		return &nfd.Spec.ClusterRole, nil
 	}
 	return nil, errors.New("Could not find ClusterRole")
 }
 
 // Get the NFD operator's cluster role binding
-func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
-	if nfd.Spec.ClusterRoleBinding != nil {
-		return nfd.Spec.ClusterRoleBinding, nil
+func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
+	if &nfd.Spec.ClusterRoleBinding != nil {
+		return &nfd.Spec.ClusterRoleBinding, nil
 	}
-	return nil, errors.New("Could not find Cluster RoleBinding")
+	return nil, errors.New("Could not find ClusterRoleBinding")
 }
 
 // Get the NFD operator's daemon set
-func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
-	if nfd.Spec.DaemonSet != nil {
-		return nfd.Spec.DaemonSet, nil
+func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
+	if &nfd.Spec.DaemonSet != nil {
+		return &nfd.Spec.DaemonSet, nil
 	}
 	return nil, errors.New("Could not find DaemonSet")
 }
 
 // Get the NFD operator's service
-func GetService(nfd *nfdv1.NodeFeatureDiscovery) (map[string]string, error) {
-	if nfd.Spec.Service != nil {
-		return nfd.Spec.Service, nil
+func GetService(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Service, error) {
+	if &nfd.Spec.Service != nil {
+		return &nfd.Spec.Service, nil
 	}
 	return nil, errors.New("Could not find Service")
 }

@@ -10,7 +10,6 @@ import (
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/klog"
 )
 
@@ -169,9 +168,6 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 		return nil, err
 	}
 
-	// Find the service account
-	sa := labels.Set(nfdServiceAccount)
-
 	// This variable will keep track of the degraded condition
 	var degradedServiceAccountCondition conditionsv1.Condition
 
@@ -181,7 +177,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 	// We need to iterate through all the service account's conditions, and keep track if any of
 	// them are listed as being degraded
 	isDegraded := false
-	for _, condition := range sa.Status.Conditions {
+	for _, condition := range nfdServiceAccount.Status.Conditions {
 		if (condition.Type == conditionDegraded) && condition.Status == corev1.ConditionTrue {
 			isDegraded = true
 			degradedServiceAccountCondition = &condition
@@ -196,7 +192,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 		//if len(degradedServiceAccountCondition.Message) > 0 {
 		//	message.WriteString("ServiceAccount " + sa.GetName() + " Degraded Message: " + degradedServiceAccountCondition.Message + ".\n")
 		//}
-		messageString = setMessageString("ServiceAccount", sa.GetName(), degradedServiceAccountCondition)
+		messageString = setMessageString("ServiceAccount", nfdServiceAccount.GetName(), degradedServiceAccountCondition)
 	}
 
 	// If we have no message, then everything looks good
