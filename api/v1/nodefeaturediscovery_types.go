@@ -17,8 +17,8 @@ package v1
 
 import (
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	corev1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,11 +28,11 @@ import (
 type NodeFeatureDiscoverySpec struct {
 	Operand            OperandSpec               `json:"operand"`
 	WorkerConfig       ConfigMap                 `json:"workerConfig"`
-        ServiceAccount     corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
-        ClusterRole        rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
-        ClusterRoleBinding rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
-        Service            corev1.Service            `json:"service,omitempty"`
-        DaemonSet          appsv1.DaemonSet          `json:"daemonSet,omitempty"`
+	ServiceAccount     corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
+	ClusterRole        rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
+	ClusterRoleBinding rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
+	Service            corev1.Service            `json:"service,omitempty"`
+	DaemonSet          appsv1.DaemonSet          `json:"daemonSet,omitempty"`
 
 	// +optional
 	Instance string `json:"instance"`

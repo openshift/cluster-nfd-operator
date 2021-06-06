@@ -144,8 +144,29 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// apply components
 	r.Log.Info("Ready to apply components")
-
 	nfd.init(r, instance)
+
+	// Check the status of the NFD service account
+	conditions, err := r.getServiceAccountConditions(instance)
+	if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+	}
+
+	// Check the status of the NFD service
+	if conditions == nil {
+		conditions, err = r.getServiceConditions(instance)
+		if err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+		}
+	}
+
+	// Check the status of the NFD Daemon Sets
+	if conditions == nil {
+		conditions, err = r.getDaemonSetConditions(instance)
+		if err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
+		}
+	}
 
 	for {
 		err := nfd.step()

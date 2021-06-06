@@ -45,7 +45,7 @@ func (in *NodeFeatureDiscovery) DeepCopyInto(out *NodeFeatureDiscovery) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
 	in.ObjectMeta.DeepCopyInto(&out.ObjectMeta)
-	out.Spec = in.Spec
+	in.Spec.DeepCopyInto(&out.Spec)
 	in.Status.DeepCopyInto(&out.Status)
 }
 
@@ -104,6 +104,11 @@ func (in *NodeFeatureDiscoverySpec) DeepCopyInto(out *NodeFeatureDiscoverySpec) 
 	*out = *in
 	out.Operand = in.Operand
 	out.WorkerConfig = in.WorkerConfig
+	in.ServiceAccount.DeepCopyInto(&out.ServiceAccount)
+	in.ClusterRole.DeepCopyInto(&out.ClusterRole)
+	in.ClusterRoleBinding.DeepCopyInto(&out.ClusterRoleBinding)
+	in.Service.DeepCopyInto(&out.Service)
+	in.DaemonSet.DeepCopyInto(&out.DaemonSet)
 	out.CustomConfig = in.CustomConfig
 }
 
