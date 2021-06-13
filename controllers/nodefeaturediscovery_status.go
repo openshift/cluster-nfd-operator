@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"errors"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
@@ -29,6 +30,7 @@ const (
 	conditionFailedGettingNFDServiceAccount = "FailedGettingNFDServiceAccount"
 	conditionFailedGettingNFDService        = "FailedGettingNFDService"
 	conditionFailedGettingNFDDaemonSet      = "FailedGettingNFDDaemonSet"
+	conditionFailedGettingNFDClusterRole    = "FailedGettingNFDClusterRole"
 
 	// Condition references
 	conditionAvailable   = conditionsv1.ConditionAvailable
@@ -196,10 +198,10 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
 	// Attempt to get the service account
-	_, err := components.GetServiceAccount(nfd)
-	if err != nil {
+	sa, err := components.GetServiceAccount(nfd)
+	if err != nil || sa == nil {
 		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), nil
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}
 
 	return nil, nil
@@ -208,10 +210,10 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
 	// Attempt to get the role
-	_, err := components.GetClusterRole(nfd)
-	if err != nil {
+	cr, err := components.GetClusterRole(nfd)
+	if err != nil || cr == nil {
 		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), nil
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}
 
 	return nil, nil
@@ -220,10 +222,22 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.Nod
 func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
 	// Attempt to get the cluster role binding
-	_, err := components.GetClusterRoleBinding(nfd)
-	if err != nil {
+	crb, err := components.GetClusterRoleBinding(nfd)
+	if err != nil || crb == nil {
 		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), nil
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+	}
+
+	return nil, nil
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getPodConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+
+	// Attempt to get the pod
+	pod, err := components.GetPod(nfd)
+	if err != nil || pod == nil {
+		messageString := fmt.Sprint(err)
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}
 
 	return nil, nil
@@ -232,10 +246,10 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nf
 func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
 	// Attempt to get the daemon set binding
-	_, err := components.GetDaemonSet(nfd)
-	if err != nil {
+	ds, err := components.GetDaemonSet(nfd)
+	if err != nil || ds == nil {
 		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), nil
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}
 
 	return nil, nil
@@ -244,10 +258,10 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
 	// Attempt to get the daemon set binding
-	_, err := components.GetService(nfd)
-	if err != nil {
+	svc, err := components.GetService(nfd)
+	if err != nil || svc == nil {
 		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), nil
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}
 
 	return nil, nil

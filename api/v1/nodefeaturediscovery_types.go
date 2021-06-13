@@ -33,6 +33,7 @@ type NodeFeatureDiscoverySpec struct {
 	ClusterRoleBinding rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
 	Service            corev1.Service            `json:"service,omitempty"`
 	DaemonSet          appsv1.DaemonSet          `json:"daemonSet,omitempty"`
+	Pod                corev1.Pod                `json:"pod,omitempty`
 
 	// +optional
 	Instance string `json:"instance"`

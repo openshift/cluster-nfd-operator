@@ -52,6 +52,14 @@ func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole
 	return nil, errors.New("Could not find ClusterRoleBinding")
 }
 
+// Get the NFD operator's pods
+func GetPod(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Pod, error) {
+	if &nfd.Spec.Pod != nil {
+		return &nfd.Spec.Pod, nil
+	}
+	return nil, errors.New("Could not find Pod")
+}
+
 // Get the NFD operator's daemon set
 func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
 	if &nfd.Spec.DaemonSet != nil {

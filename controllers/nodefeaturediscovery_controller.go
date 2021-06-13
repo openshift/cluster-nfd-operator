@@ -146,18 +146,10 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
 
-	// Check the status of the NFD service account
-	conditions, err := r.getServiceAccountConditions(instance)
-	if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
-	}
-
 	// Check the status of the NFD service
-	if conditions == nil {
-		conditions, err = r.getServiceConditions(instance)
-		if err != nil {
-			return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
-		}
+	conditions, err := r.getServiceConditions(instance)
+	if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
 	}
 
 	// Check the status of the NFD Daemon Sets
@@ -165,6 +157,14 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		conditions, err = r.getDaemonSetConditions(instance)
 		if err != nil {
 			return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
+		}
+	}
+
+	// Check the status of the NFD cluster roles
+	if conditions == nil {
+		conditions, err = r.getClusterRoleConditions(instance)
+		if err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRole, err)
 		}
 	}
 
