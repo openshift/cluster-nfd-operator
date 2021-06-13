@@ -168,6 +168,22 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}
 
+	if conditions == nil {
+		conditions = r.getAvailableConditions()
+	}
+
+	var result *reconcile.Result
+	if err := r.updateStatus(instance, conditions); err != nil {
+		if &result != nil {
+			return *result, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	if result != nil {
+		return *result, nil
+	}
+
 	for {
 		err := nfd.step()
 		if err != nil {
