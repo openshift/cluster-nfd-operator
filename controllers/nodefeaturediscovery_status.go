@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
-	"errors"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
@@ -257,9 +257,21 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 
 func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 
-	// Attempt to get the daemon set binding
+	// Attempt to get service
 	svc, err := components.GetService(nfd)
 	if err != nil || svc == nil {
+		messageString := fmt.Sprint(err)
+		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+	}
+
+	return nil, nil
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+
+	// Attempt to get the worker config
+	wc, err := components.GetWorkerConfig(nfd)
+	if err != nil || wc == nil {
 		messageString := fmt.Sprint(err)
 		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
 	}

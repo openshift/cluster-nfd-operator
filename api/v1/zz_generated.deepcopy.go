@@ -109,6 +109,7 @@ func (in *NodeFeatureDiscoverySpec) DeepCopyInto(out *NodeFeatureDiscoverySpec) 
 	in.ClusterRoleBinding.DeepCopyInto(&out.ClusterRoleBinding)
 	in.Service.DeepCopyInto(&out.Service)
 	in.DaemonSet.DeepCopyInto(&out.DaemonSet)
+	in.Pod.DeepCopyInto(&out.Pod)
 	out.CustomConfig = in.CustomConfig
 }
 

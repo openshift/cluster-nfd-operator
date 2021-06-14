@@ -68,6 +68,14 @@ func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
 	return nil, errors.New("Could not find DaemonSet")
 }
 
+// Get the NFD operator's worker config
+func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) {
+	if &nfd.Spec.WorkerConfig != nil {
+		return &nfd.Spec.WorkerConfig, nil
+	}
+	return nil, errors.New("Could not find Worker Config")
+}
+
 // Get the NFD operator's service
 func GetService(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Service, error) {
 	if &nfd.Spec.Service != nil {

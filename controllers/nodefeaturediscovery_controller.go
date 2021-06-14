@@ -168,6 +168,14 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		}
 	}
 
+	// Check the status of the NFD operator worker config map
+	if conditions == nil {
+		conditions, err = r.getWorkerConfigConditions(instance)
+		if err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+		}
+	}
+
 	if conditions == nil {
 		conditions = r.getAvailableConditions()
 	}
