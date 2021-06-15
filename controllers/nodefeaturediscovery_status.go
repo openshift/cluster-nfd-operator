@@ -11,6 +11,7 @@ import (
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -48,37 +49,46 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 	// to set temporary conditions.
 	nfdCopy := nfd.DeepCopy()
 
-	if conditions != nil {
-		nfdCopy.Status.Conditions = conditions
-	}
+	nfdCopy.Status.Conditions = conditions
 
-	// Next step is to check if we need to update the status
-	modified := false
+	//// If a set of conditions exists, then it should be added to the
+	//// 'nfd' Copy.
+	//if conditions != nil {
+	//	nfdCopy.Status.Conditions = conditions
+	//}
 
-	// Because there are only four possible conditions (degraded, available,
-	// updatable, and progressing), it isn't necessary to check if old
-	// conditions should be removed.
-	for _, newCondition := range nfdCopy.Status.Conditions {
-		oldCondition := conditionsv1.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
-		if oldCondition == nil {
-			modified = true
-			break
-		}
+	//// Next step is to check if we need to update the status
+	//modified := false
+	//
+	//// Because there are only four possible conditions (degraded, available,
+	//// updatable, and progressing), it isn't necessary to check if old
+	//// conditions should be removed.
+	//for _, newCondition := range nfdCopy.Status.Conditions {
+	//	oldCondition := conditionsv1.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
+	//	if oldCondition == nil {
+	//		modified = true
+	//		break
+	//	}
+	//
+	//	// Ignore timestamps to avoid infinite reconcile loops
+	//	if oldCondition.Status != newCondition.Status ||
+	//		oldCondition.Reason != newCondition.Reason ||
+	//		oldCondition.Message != newCondition.Message {
+	//
+	//		modified = true
+	//		break
+	//	}
+	//}
 
-		// Ignore timestamps to avoid infinite reconcile loops
-		if oldCondition.Status != newCondition.Status ||
-			oldCondition.Reason != newCondition.Reason ||
-			oldCondition.Message != newCondition.Message {
+	//// If nothing has been modified, then return nothing. Even if the list
+	//// of 'conditions' is not empty, it should not be counted as an update
+	//// if it was already counted as an update before.
+	//if !modified {
+	//	return nil
+	//}
 
-			modified = true
-			break
-		}
-	}
-
-	if !modified {
-		return nil
-	}
-
+	klog.Infof("Updating the NFD status")
+	klog.Infof("Conditions: %v", conditions)
 	return r.Status().Update(context.TODO(), nfdCopy)
 }
 

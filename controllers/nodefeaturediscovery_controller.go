@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-logr/logr"
 	security "github.com/openshift/api/security/v1"
@@ -24,15 +25,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/cri-api/pkg/errors"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	criapierrors "k8s.io/cri-api/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
@@ -40,6 +42,93 @@ import (
 var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
 var nfd NFD
+
+
+// Determines if a resource is degraded or not
+func (r *NodeFeatureDiscoveryReconciler) resourceIsDegraded(resourceName string, conditions []conditionsv1.Condition) bool {
+	_, _, _, isDegraded := r.getConditionOfResource(resourceName, conditions)
+	if isDegraded == true {
+		return true
+	}
+	return false
+}
+
+// getConditionOfResource gets the conditions of a specific resource
+func (r *NodeFeatureDiscoveryReconciler) getConditionOfResource(resourceName string, conditions []conditionsv1.Condition) (bool, bool, bool, bool) {
+
+	// Set vars that determine if a status is 'true' or 'false
+	var isAvailable    bool
+	var isUpgradeable  bool
+	var isProgressing  bool
+	var isDegraded     bool
+
+	isAvailable   = false
+	isUpgradeable = false
+	isProgressing = false
+	isDegraded    = false
+
+	// The next step captures the statuses, so use this variable to
+	// keep track of the number of "true" results
+	var numStatusesAsTrue int
+	numStatusesAsTrue = 0
+
+	// Get the resource status via index in the 'Condition' interface
+	for _, c := range conditions {
+
+		r.Log.Info("%q", c)
+
+		// If available, check the status to make sure that it's
+		// set to 'True'
+		if c.Type == "Available" {
+			r.Log.Info("Available")
+			availableStatus := c.Status
+			if availableStatus == "True" {
+				isAvailable = true
+				numStatusesAsTrue++
+			}
+		} else if c.Type == "Upgradeable" {
+			r.Log.Info("Upgradeable")
+			upgradeableStatus := c.Status
+			if upgradeableStatus == "True" {
+				isUpgradeable = true
+				numStatusesAsTrue++
+			}
+		} else if c.Type == "Progressing" {
+			r.Log.Info("Progressing")
+			progressingStatus := c.Status
+			if progressingStatus == "True" {
+				isProgressing = true
+				numStatusesAsTrue++
+			}
+		} else if c.Type == "Degraded" {
+			r.Log.Info("Degraded")
+			degradedStatus := c.Status
+			if degradedStatus == "True" {
+				isDegraded = true
+				numStatusesAsTrue++
+			}
+		} else {
+			var errorMessage string
+			errorMessage = resourceName + " condition status unrecognized"
+			err := errors.New(errorMessage)
+			panic(err)
+		}
+		r.Log.Info("Status: %q", c.Status)
+	}
+
+	// Just to be sure, check if there are no multiple "true" bool
+	// values
+	if numStatusesAsTrue > 1 {
+		err := errors.New("Too many statuses are listed as 'True'.")
+		panic(err)
+	}
+	if numStatusesAsTrue == 0 {
+		err := errors.New("All statuses are listed as 'False'.")
+		panic(err)
+	}
+
+	return isAvailable, isUpgradeable, isProgressing, isDegraded
+}
 
 // NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
 type NodeFeatureDiscoveryReconciler struct {
@@ -130,7 +219,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// Error reading the object - requeue the request.
 	if err != nil {
 		// handle deletion of resource
-		if errors.IsNotFound(err) {
+		if criapierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -146,51 +235,66 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
 
+	var isDegraded bool = false
+
 	// Check the status of the NFD service
 	conditions, err := r.getServiceConditions(instance)
 	if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+		r.Log.Error(err, "Failed getting NFD operator Service")
+		isDegraded = r.resourceIsDegraded("Service", conditions)
+		if isDegraded == true {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+		}
 	}
 
 	// Check the status of the NFD Daemon Sets
-	if conditions == nil {
-		conditions, err = r.getDaemonSetConditions(instance)
-		if err != nil {
+	conditions, err = r.getDaemonSetConditions(instance)
+	if err != nil {
+		r.Log.Error(err, "Failed getting NFD operator DaemonSet")
+		isDegraded = r.resourceIsDegraded("DaemonSet", conditions)
+		if isDegraded == true {
 			return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
 		}
 	}
 
-	// Check the status of the NFD cluster roles
-	if conditions == nil {
-		conditions, err = r.getClusterRoleConditions(instance)
-		if err != nil {
-			return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRole, err)
-		}
-	}
+	//// Check the status of the NFD cluster roles
+	//if isDegraded == false {
+	//	conditions, err = r.getClusterRoleConditions(instance)
+	//	isDegraded = r.resourceIsDegraded("ClusterRole", conditions)
+	//	if err != nil || isDegraded == false {
+	//		r.Log.Error(err, "Failed getting NFD operator cluster role")
+	//		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRole, err)
+	//	}
+	//}
+	//
+	//// Check the status of the NFD operator worker config map
+	//if isDegraded == false {
+	//	conditions, err = r.getWorkerConfigConditions(instance)
+	//	isDegraded = r.resourceIsDegraded("WorkerConfig", conditions)
+	//	if err != nil || isDegraded == false {
+	//		r.Log.Error(err, "Failed getting NFD Worker Config")
+	//		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	//	}
+	//}
 
-	// Check the status of the NFD operator worker config map
-	if conditions == nil {
-		conditions, err = r.getWorkerConfigConditions(instance)
-		if err != nil {
-			return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
-		}
-	}
-
-	if conditions == nil {
+	if isDegraded == false {
 		conditions = r.getAvailableConditions()
 	}
 
-	var result *reconcile.Result
-	if err := r.updateStatus(instance, conditions); err != nil {
-		if &result != nil {
-			return *result, nil
-		}
-		return reconcile.Result{}, err
-	}
+	// Update the status of the resource on the CRD
+	r.updateStatus(instance, conditions)
 
-	if result != nil {
-		return *result, nil
-	}
+	//var result *reconcile.Result
+	//if err := r.updateStatus(instance, conditions); err != nil {
+	//	if &result != nil {
+	//		return *result, nil
+	//	}
+	//	return reconcile.Result{}, err
+	//}
+
+	//if result != nil {
+	//	return *result, nil
+	//}
 
 	for {
 		err := nfd.step()
