@@ -17,7 +17,7 @@ metadata:
             },
             "instance": "",
             "operand": {
-              "image": "quay.io/openshift/origin-node-feature-discovery:4.8",
+              "image": "quay.io/openshift/origin-node-feature-discovery:4.9",
               "imagePullPolicy": "Always",
               "namespace": "openshift-nfd"
             },
@@ -29,9 +29,9 @@ metadata:
       ]
     capabilities: Basic Install
     categories: Database
-    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.8
+    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.9
     description: This software enables node feature discovery for OpenShift. It detects hardware features available on each node in an OpenShift cluster, and advertises those features using node labels.
-    olm.skipRange: '>=4.6.0 <4.8.0'
+    olm.skipRange: '>=4.6.0 <4.9.0'
     operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
@@ -41,7 +41,7 @@ metadata:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: node-feature-discovery-operator.v4.8.0
+  name: node-feature-discovery-operator.v4.9.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -469,8 +469,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:4.8
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.8
+                  value: quay.io/openshift/origin-node-feature-discovery:4.9
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.9
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -519,4 +519,4 @@ spec:
   provider:
     name: Red Hat
     url: https://github.com/openshift/cluster-nfd-operator
-  version: 4.8.0
+  version: 4.9.0
