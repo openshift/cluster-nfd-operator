@@ -1,5 +1,5 @@
 packageName: nfd
 channels:
-- name: '4.8'
-  currentCSV: nfd.v4.8.0
-defaultChannel: "4.8"
+- name: '4.9'
+  currentCSV: nfd.v4.9.0
+defaultChannel: "4.9"

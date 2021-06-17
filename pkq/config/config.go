@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	nodeFeautreDiscoveryImageDefault string = "quay.io/openshift/origin-node-feature-discovery:4.8"
+	nodeFeautreDiscoveryImageDefault string = "quay.io/openshift/origin-node-feature-discovery:4.9"
 )
 
 // NodeFeatureDiscoveryImage returns the operator's operand/nfd image.
