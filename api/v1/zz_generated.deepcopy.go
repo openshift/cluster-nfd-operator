@@ -22,6 +22,9 @@ package v1
 
 import (
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -104,12 +107,36 @@ func (in *NodeFeatureDiscoverySpec) DeepCopyInto(out *NodeFeatureDiscoverySpec) 
 	*out = *in
 	out.Operand = in.Operand
 	out.WorkerConfig = in.WorkerConfig
-	in.ServiceAccount.DeepCopyInto(&out.ServiceAccount)
-	in.ClusterRole.DeepCopyInto(&out.ClusterRole)
-	in.ClusterRoleBinding.DeepCopyInto(&out.ClusterRoleBinding)
-	in.Service.DeepCopyInto(&out.Service)
-	in.DaemonSet.DeepCopyInto(&out.DaemonSet)
-	in.Pod.DeepCopyInto(&out.Pod)
+	if in.ServiceAccount != nil {
+		in, out := &in.ServiceAccount, &out.ServiceAccount
+		*out = new(corev1.ServiceAccount)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ClusterRole != nil {
+		in, out := &in.ClusterRole, &out.ClusterRole
+		*out = new(rbacv1.ClusterRole)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.ClusterRoleBinding != nil {
+		in, out := &in.ClusterRoleBinding, &out.ClusterRoleBinding
+		*out = new(rbacv1.ClusterRoleBinding)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Service != nil {
+		in, out := &in.Service, &out.Service
+		*out = new(corev1.Service)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.DaemonSet != nil {
+		in, out := &in.DaemonSet, &out.DaemonSet
+		*out = new(appsv1.DaemonSet)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.Pod != nil {
+		in, out := &in.Pod, &out.Pod
+		*out = new(corev1.Pod)
+		(*in).DeepCopyInto(*out)
+	}
 	out.CustomConfig = in.CustomConfig
 }
 

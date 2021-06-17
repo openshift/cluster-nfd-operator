@@ -2,19 +2,19 @@ package controllers
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	appsv1 "k8s.io/api/apps/v1"
 )
+//	"errors"
+//	"fmt"
 
 const (
 	// Condition failed/degraded messages
@@ -33,72 +33,87 @@ const (
 	conditionFailedGettingNFDDaemonSet      = "FailedGettingNFDDaemonSet"
 	conditionFailedGettingNFDClusterRole    = "FailedGettingNFDClusterRole"
 
-	// Condition references
-	conditionAvailable   = conditionsv1.ConditionAvailable
-	conditionUpgradeable = conditionsv1.ConditionUpgradeable
-	conditionDegraded    = conditionsv1.ConditionDegraded
-	conditionProgressing = conditionsv1.ConditionProgressing
 )
+//	// Condition references
+//	conditionAvailable   = conditionsv1.ConditionAvailable
+//	conditionUpgradeable = conditionsv1.ConditionUpgradeable
+//	conditionDegraded    = conditionsv1.ConditionDegraded
+//	conditionProgressing = conditionsv1.ConditionProgressing
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
 // available, etc.)
 func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDiscovery, conditions []conditionsv1.Condition) error {
+
+	r.Log.Info("HERE IN 'updateStatus' func - INIT")
 
 	// The actual 'nfd' object should *not* be modified when trying to
 	// check the object's status. This variable is a dummy variable used
 	// to set temporary conditions.
 	nfdCopy := nfd.DeepCopy()
 
-	nfdCopy.Status.Conditions = conditions
+	r.Log.Info("HERE IN 'updateStatus' func - COPIED NFD")
 
-	//// If a set of conditions exists, then it should be added to the
-	//// 'nfd' Copy.
-	//if conditions != nil {
-	//	nfdCopy.Status.Conditions = conditions
-	//}
+	//nfdCopy.Status.Conditions = conditions
 
-	//// Next step is to check if we need to update the status
-	//modified := false
-	//
-	//// Because there are only four possible conditions (degraded, available,
-	//// updatable, and progressing), it isn't necessary to check if old
-	//// conditions should be removed.
-	//for _, newCondition := range nfdCopy.Status.Conditions {
-	//	oldCondition := conditionsv1.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
-	//	if oldCondition == nil {
-	//		modified = true
-	//		break
-	//	}
-	//
-	//	// Ignore timestamps to avoid infinite reconcile loops
-	//	if oldCondition.Status != newCondition.Status ||
-	//		oldCondition.Reason != newCondition.Reason ||
-	//		oldCondition.Message != newCondition.Message {
-	//
-	//		modified = true
-	//		break
-	//	}
-	//}
+	// If a set of conditions exists, then it should be added to the
+	// 'nfd' Copy.
+	if conditions != nil {
+		nfdCopy.Status.Conditions = conditions
+		r.Log.Info("HERE IN 'updateStatus' func - COPIED CONDITIONS TO NFD")
+	} else {
+		r.Log.Info("HERE IN 'updateStatus' func - DID NOT COPY CONDITIONS TO NFD")
 
-	//// If nothing has been modified, then return nothing. Even if the list
-	//// of 'conditions' is not empty, it should not be counted as an update
-	//// if it was already counted as an update before.
-	//if !modified {
-	//	return nil
-	//}
+	}
 
-	klog.Infof("Updating the NFD status")
-	klog.Infof("Conditions: %v", conditions)
+	// Next step is to check if we need to update the status
+	modified := false
+
+	// Because there are only four possible conditions (degraded, available,
+	// updatable, and progressing), it isn't necessary to check if old
+	// conditions should be removed.
+	for _, newCondition := range nfdCopy.Status.Conditions {
+		oldCondition := conditionsv1.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
+		if oldCondition == nil {
+			modified = true
+			break
+		}
+		// Ignore timestamps to avoid infinite reconcile loops
+		if oldCondition.Status != newCondition.Status ||
+			oldCondition.Reason != newCondition.Reason ||
+			oldCondition.Message != newCondition.Message {
+			modified = true
+			break
+		}
+	}
+
+	// If nothing has been modified, then return nothing. Even if the list
+	// of 'conditions' is not empty, it should not be counted as an update
+	// if it was already counted as an update before.
+	if !modified {
+		r.Log.Info("HERE IN 'updateStatus' func - STATUS WAS NOT MODIFIED")
+		return nil
+	}
+	r.Log.Info("HERE IN 'updateStatus' func - RETURNING STATUS UPDATE")
+
+	//klog.Infof("Updating the NFD status")
+	//klog.Infof("Conditions: %v", conditions)
 	return r.Status().Update(context.TODO(), nfdCopy)
 }
 
 // updateDegradedCondition is used to mark a given resource as "degraded" so that
 // the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
+	r.Log.Info("Entering degraded condition func")
 
 	// It is already assumed that the resource has been degraded, so the first
 	// step is to gather the correct list of conditions.
-	conditions := r.getDegradedConditions(condition, conditionErr.Error())
+	//r.Log.Info("Condition: %s", condition)
+	//r.Log.Info("conditionError: %s", conditionErr.Error())
+	var conditions []conditionsv1.Condition = r.getDegradedConditions(condition, conditionErr.Error())
+	r.Log.Info("Got degraded conditions")
+	if nfd == nil {
+		r.Log.Info("nfd is 'nil'")
+	}
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -173,118 +188,325 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 	}
 }
 
-// getProgressingConditions returns a list of conditionsv1.Condition objects and marks
-// every condition as FALSE except for conditionsv1.ConditionProgressing so that the
-// reconciler can determine that the resource is progressing.
-func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
-	now := time.Now()
+//// getProgressingConditions returns a list of conditionsv1.Condition objects and marks
+//// every condition as FALSE except for conditionsv1.ConditionProgressing so that the
+//// reconciler can determine that the resource is progressing.
+//func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
+//	now := time.Now()
+//
+//	return []conditionsv1.Condition{
+//		{
+//			Type:               conditionsv1.ConditionAvailable,
+//			Status:             corev1.ConditionFalse,
+//			LastTransitionTime: metav1.Time{Time: now},
+//		},
+//		{
+//			Type:               conditionsv1.ConditionUpgradeable,
+//			Status:             corev1.ConditionFalse,
+//			LastTransitionTime: metav1.Time{Time: now},
+//		},
+//		{
+//			Type:               conditionsv1.ConditionProgressing,
+//			Status:             corev1.ConditionTrue,
+//			LastTransitionTime: metav1.Time{Time: now},
+//			Reason:             reason,
+//			Message:            message,
+//		},
+//		{
+//			Type:               conditionsv1.ConditionDegraded,
+//			Status:             corev1.ConditionFalse,
+//			LastTransitionTime: metav1.Time{Time: now},
+//		},
+//	}
+//}
 
-	return []conditionsv1.Condition{
-		{
-			Type:               conditionsv1.ConditionAvailable,
-			Status:             corev1.ConditionFalse,
-			LastTransitionTime: metav1.Time{Time: now},
-		},
-		{
-			Type:               conditionsv1.ConditionUpgradeable,
-			Status:             corev1.ConditionFalse,
-			LastTransitionTime: metav1.Time{Time: now},
-		},
-		{
-			Type:               conditionsv1.ConditionProgressing,
-			Status:             corev1.ConditionTrue,
-			LastTransitionTime: metav1.Time{Time: now},
-			Reason:             reason,
-			Message:            message,
-		},
-		{
-			Type:               conditionsv1.ConditionDegraded,
-			Status:             corev1.ConditionFalse,
-			LastTransitionTime: metav1.Time{Time: now},
-		},
-	}
-}
+//// getConditionOfResource gets the conditions of a specific resource
+//func (r *NodeFeatureDiscoveryReconciler) getConditionOfResource(resourceName string, conditions []conditionsv1.Condition) (bool, bool, bool, bool) {
+//
+//	// Set vars that determine if a status is 'true' or 'false
+//	var isAvailable    bool
+//	var isUpgradeable  bool
+//	var isProgressing  bool
+//	var isDegraded     bool
+//
+//	isAvailable   = false
+//	isUpgradeable = false
+//	isProgressing = false
+//	isDegraded    = false
+//
+//	// The next step captures the statuses, so use this variable to
+//	// keep track of the number of "true" results
+//	var numStatusesAsTrue int
+//	numStatusesAsTrue = 0
+//
+//	// Get the resource status via index in the 'Condition' interface
+//	for _, c := range conditions {
+//
+//		r.Log.Info("%q", c)
+//
+//		// If available, check the status to make sure that it's
+//		// set to 'True'
+//		if c.Type == "Available" {
+//			r.Log.Info("Available")
+//			availableStatus := c.Status
+//			if availableStatus == "True" {
+//				isAvailable = true
+//				numStatusesAsTrue++
+//			}
+//		} else if c.Type == "Upgradeable" {
+//			r.Log.Info("Upgradeable")
+//			upgradeableStatus := c.Status
+//			if upgradeableStatus == "True" {
+//				isUpgradeable = true
+//				numStatusesAsTrue++
+//			}
+//		} else if c.Type == "Progressing" {
+//			r.Log.Info("Progressing")
+//			progressingStatus := c.Status
+//			if progressingStatus == "True" {
+//				isProgressing = true
+//				numStatusesAsTrue++
+//			}
+//		} else if c.Type == "Degraded" {
+//			r.Log.Info("Degraded")
+//			degradedStatus := c.Status
+//			if degradedStatus == "True" {
+//				isDegraded = true
+//				numStatusesAsTrue++
+//			}
+//		}
+//	}
+//
+//	if numStatusesAsTrue == 0 {
+//		panic("All statuses are false. There should be at least 1 true type")
+//	} else if numStatusesAsTrue > 1 {
+//		panic("More than 1 status is set to true")
+//	}
+//
+//	return isAvailable, isUpgradeable, isProgressing, isDegraded
+//}
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//// resourceIsDegraded determines if a resource is degraded or not
+//func (r *NodeFeatureDiscoveryReconciler) resourceIsDegraded(resourceName string, conditions []conditionsv1.Condition) bool {
+//	_, _, _, isDegraded := r.getConditionOfResource(resourceName, conditions)
+//	if isDegraded == true {
+//		return true
+//	}
+//	return false
+//}
 
-	// Attempt to get the service account
-	sa, err := components.GetServiceAccount(nfd)
-	if err != nil || sa == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-	}
+//func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//
+//	// Attempt to get the service account
+//	sa, err := components.GetServiceAccount(nfd)
+//	if err != nil || sa == nil {
+//		messageString := fmt.Sprint(err)
+//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+//	}
+//
+//	return nil, nil
+//}
 
-	return nil, nil
-}
+//func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//
+//	// Attempt to get the role
+//	cr, err := components.GetClusterRole(nfd)
+//	if err != nil || cr == nil {
+//		messageString := fmt.Sprint(err)
+//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+//	}
+//
+//	return nil, nil
+//}
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//
+//	// Attempt to get the cluster role binding
+//	crb, err := components.GetClusterRoleBinding(nfd)
+//	if err != nil || crb == nil {
+//		messageString := fmt.Sprint(err)
+//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+//	}
+//
+//	return nil, nil
+//}
 
-	// Attempt to get the role
-	cr, err := components.GetClusterRole(nfd)
-	if err != nil || cr == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-	}
+//func (r *NodeFeatureDiscoveryReconciler) getPodConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//
+//	// Attempt to get the pod
+//	pod, err := components.GetPod(nfd)
+//	if err != nil || pod == nil {
+//		messageString := fmt.Sprint(err)
+//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+//	}
+//
+//	return nil, nil
+//}
 
-	return nil, nil
-}
-
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-
-	// Attempt to get the cluster role binding
-	crb, err := components.GetClusterRoleBinding(nfd)
-	if err != nil || crb == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-	}
-
-	return nil, nil
-}
-
-func (r *NodeFeatureDiscoveryReconciler) getPodConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-
-	// Attempt to get the pod
-	pod, err := components.GetPod(nfd)
-	if err != nil || pod == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-	}
-
-	return nil, nil
-}
-
-func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
 
 	// Attempt to get the daemon set binding
 	ds, err := components.GetDaemonSet(nfd)
-	if err != nil || ds == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+	if err != nil  {
+		return false, false, false, true, err
 	}
 
-	return nil, nil
+	// Set vars that determine if a status is 'true' or 'false
+	var isAvailable    bool = false
+	var isUpgradeable  bool = false
+	var isProgressing  bool = false
+	var isDegraded     bool = false
+
+	// Get the DaemonSet conditions as an array of DaemonSet structs
+	dsConditions := ds.Status.Conditions
+
+	// Get the types and the status
+	var conditionsType   appsv1.DaemonSetConditionType
+	var conditionsStatus corev1.ConditionStatus
+
+	// The next step captures the statuses, so use this variable to
+	// keep track of the number of "true" results
+	var numStatusesAsTrue int
+	numStatusesAsTrue = 0
+
+	// Get the resource status via index in the 'Condition' interface
+	for _, c := range dsConditions {
+
+		conditionsType   = c.Type
+		conditionsStatus = c.Status
+
+		r.Log.Info("%q", c)
+
+		// If available, check the status to make sure that it's
+		// set to 'True'
+		if conditionsType == "Available" {
+			r.Log.Info("Available")
+			if conditionsStatus == "True" {
+				isAvailable = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Upgradeable" {
+			r.Log.Info("Upgradeable")
+			if conditionsStatus == "True" {
+				isUpgradeable = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Progressing" {
+			r.Log.Info("Progressing")
+			if conditionsStatus == "True" {
+				isProgressing = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Degraded" {
+			r.Log.Info("Degraded")
+			if conditionsStatus == "True" {
+				isDegraded = true
+				numStatusesAsTrue++
+			}
+		}
+	}
+
+	// We have a problem if all of the statuses are false
+	if conditionsStatus == "False" {
+		panic("Statuses of the DaemonSet resurce are all 'False'.")
+	}
+
+	if numStatusesAsTrue == 0 {
+		panic("All statuses are false. There should be at least 1 true type")
+	} else if numStatusesAsTrue > 1 {
+		panic("More than 1 status is set to true")
+	}
+
+	return isAvailable, isUpgradeable, isProgressing, isDegraded, err
+
+
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
 
-	// Attempt to get service
+	// Attempt to get the NFD Operator service
 	svc, err := components.GetService(nfd)
-	if err != nil || svc == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+	if err != nil  {
+		return false, false, false, true, err
 	}
 
-	return nil, nil
-}
+	// Set vars that determine if a status is 'true' or 'false
+	var isAvailable    bool = false
+	var isUpgradeable  bool = false
+	var isProgressing  bool = false
+	var isDegraded     bool = false
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+	// Get the Service conditions as an array of Service structs
+	svcConditions := svc.Status.Conditions
 
-	// Attempt to get the worker config
-	wc, err := components.GetWorkerConfig(nfd)
-	if err != nil || wc == nil {
-		messageString := fmt.Sprint(err)
-		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+	// Get the types and the status
+	var conditionsType   string
+	var conditionsStatus metav1.ConditionStatus
+
+	// The next step captures the statuses, so use this variable to
+	// keep track of the number of "true" results
+	var numStatusesAsTrue int
+	numStatusesAsTrue = 0
+
+	// Get the resource status via index in the 'Condition' interface
+	for _, c := range svcConditions {
+
+		conditionsType   = c.Type
+		conditionsStatus = c.Status
+
+		r.Log.Info("%q", c)
+
+		// If available, check the status to make sure that it's
+		// set to 'True'
+		if conditionsType == "Available" {
+			r.Log.Info("Available")
+			if conditionsStatus == "True" {
+				isAvailable = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Upgradeable" {
+			r.Log.Info("Upgradeable")
+			if conditionsStatus == "True" {
+				isUpgradeable = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Progressing" {
+			r.Log.Info("Progressing")
+			if conditionsStatus == "True" {
+				isProgressing = true
+				numStatusesAsTrue++
+			}
+		} else if conditionsType == "Degraded" {
+			r.Log.Info("Degraded")
+			if conditionsStatus == "True" {
+				isDegraded = true
+				numStatusesAsTrue++
+			}
+		}
 	}
 
-	return nil, nil
+	// We have a problem if all of the statuses are false
+	if conditionsStatus == "False" {
+		panic("Statuses of the DaemonSet resurce are all 'False'.")
+	}
+
+	if numStatusesAsTrue == 0 {
+		panic("All statuses are false. There should be at least 1 true type")
+	} else if numStatusesAsTrue > 1 {
+		panic("More than 1 status is set to true")
+	}
+
+	return isAvailable, isUpgradeable, isProgressing, isDegraded, err
 }
+
+//func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
+//
+//	// Attempt to get the worker config
+//	wc, err := components.GetWorkerConfig(nfd)
+//	if err != nil || wc == nil {
+//		messageString := fmt.Sprint(err)
+//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
+//	}
+//
+//	return nil, nil
+//}

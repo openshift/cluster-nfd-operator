@@ -28,12 +28,12 @@ import (
 type NodeFeatureDiscoverySpec struct {
 	Operand            OperandSpec               `json:"operand"`
 	WorkerConfig       ConfigMap                 `json:"workerConfig"`
-	ServiceAccount     corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
-	ClusterRole        rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
-	ClusterRoleBinding rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
-	Service            corev1.Service            `json:"service,omitempty"`
-	DaemonSet          appsv1.DaemonSet          `json:"daemonSet,omitempty"`
-	Pod                corev1.Pod                `json:"pod,omitempty"`
+	ServiceAccount     *corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
+	ClusterRole        *rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
+	ClusterRoleBinding *rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
+	Service            *corev1.Service            `json:"service,omitempty"`
+	DaemonSet          *appsv1.DaemonSet         `json:"daemonSet,omitempty"`
+	Pod                *corev1.Pod                `json:"pod,omitempty"`
 
 	// +optional
 	Instance string `json:"instance"`

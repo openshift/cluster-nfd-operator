@@ -20,66 +20,68 @@ import (
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	rbacv1 "k8s.io/api/rbac/v1"
 )
+//	rbacv1 "k8s.io/api/rbac/v1"
 
 const (
 	// AssetsDir defines the directory with assets under the operator image
 	AssetsDir = "/assets"
 )
 
-// Get the NFD operator's service account
-func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.ServiceAccount, error) {
-	if &nfd.Spec.ServiceAccount != nil {
-		return &nfd.Spec.ServiceAccount, nil
-	}
-	return nil, errors.New("Could not find ServiceAccount")
-}
+//// Get the NFD operator's service account
+//func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.ServiceAccount, error) {
+//	if &nfd.Spec.ServiceAccount != nil {
+//		return &nfd.Spec.ServiceAccount, nil
+//	}
+//	return nil, errors.New("Could not find ServiceAccount")
+//}
 
-// Get the NFD operator's cluster role
-func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
-	if &nfd.Spec.ClusterRole != nil {
-		return &nfd.Spec.ClusterRole, nil
-	}
-	return nil, errors.New("Could not find ClusterRole")
-}
+//// Get the NFD operator's cluster role
+//func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
+//	if &nfd.Spec.ClusterRole != nil {
+//		return &nfd.Spec.ClusterRole, nil
+//	}
+//	return nil, errors.New("Could not find ClusterRole")
+//}
 
-// Get the NFD operator's cluster role binding
-func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
-	if &nfd.Spec.ClusterRoleBinding != nil {
-		return &nfd.Spec.ClusterRoleBinding, nil
-	}
-	return nil, errors.New("Could not find ClusterRoleBinding")
-}
+//// Get the NFD operator's cluster role binding
+//func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
+//	if &nfd.Spec.ClusterRoleBinding != nil {
+//		return &nfd.Spec.ClusterRoleBinding, nil
+//	}
+//	return nil, errors.New("Could not find ClusterRoleBinding")
+//}
 
-// Get the NFD operator's pods
-func GetPod(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Pod, error) {
-	if &nfd.Spec.Pod != nil {
-		return &nfd.Spec.Pod, nil
-	}
-	return nil, errors.New("Could not find Pod")
-}
+//// Get the NFD operator's pods
+//func GetPod(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Pod, error) {
+//	if &nfd.Spec.Pod != nil {
+//		return &nfd.Spec.Pod, nil
+//	}
+//	return nil, errors.New("Could not find Pod")
+//}
 
 // Get the NFD operator's daemon set
 func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
-	if &nfd.Spec.DaemonSet != nil {
-		return &nfd.Spec.DaemonSet, nil
+	var err error = nil
+	if nfd.Spec.DaemonSet == nil {
+		err = errors.New("Could not find NFD Operator DaemonSet")
 	}
-	return nil, errors.New("Could not find DaemonSet")
+	return nfd.Spec.DaemonSet, err
 }
 
-// Get the NFD operator's worker config
-func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) {
-	if &nfd.Spec.WorkerConfig != nil {
-		return &nfd.Spec.WorkerConfig, nil
-	}
-	return nil, errors.New("Could not find Worker Config")
-}
+//// Get the NFD operator's worker config
+//func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) {
+//	if &nfd.Spec.WorkerConfig != nil {
+//		return &nfd.Spec.WorkerConfig, nil
+//	}
+//	return nil, errors.New("Could not find Worker Config")
+//}
 
 // Get the NFD operator's service
 func GetService(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Service, error) {
-	if &nfd.Spec.Service != nil {
-		return &nfd.Spec.Service, nil
+	var err error = nil
+	if nfd.Spec.Service == nil {
+		err = errors.New("Could not find NFD Operator Service")
 	}
-	return nil, errors.New("Could not find Service")
+	return nfd.Spec.Service, err
 }
