@@ -11,8 +11,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	appsv1 "k8s.io/api/apps/v1"
 )
+//	appsv1 "k8s.io/api/apps/v1"
 //	"errors"
 //	"fmt"
 
@@ -343,6 +343,84 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 //	return nil, nil
 //}
 
+// The status of the resource (available, upgradeable, progressing, or
+// degraded).
+type resourceStatus struct {
+
+	// Is the resource available, upgradable, etc.?
+	isAvailable       bool
+	isUpgradeable     bool
+	isProgressing     bool
+	isDegraded        bool
+
+	// How many statuses are set to 'true'?
+	numActiveStatuses int
+}
+
+// genericStatusGetter is a genric function that interprets the condition
+// status of a given resource (e.g., DaemonSet, Service, etc.)
+func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*genericResource) resourceStatus {
+
+	// Initialize object which will hold all the results
+	rstatus := resourceStatus{isAvailable: false,
+			isUpgradeable: false,
+			isProgressing: false,
+			isDegraded: false,
+			numActiveStatuses: 0,
+	}
+
+	var ctype string
+	var cstatus string
+
+	// Get the resource status via index in the 'Condition' interface
+	for _,  c := range conditions {
+
+		ctype   = c.Type
+		cstatus = c.Status
+
+		// If available, check the status to make sure that it's
+		// set to 'True'
+		if ctype == "Available" {
+			r.Log.Info("Available")
+			if cstatus == "True" {
+				rstatus.isAvailable = true
+				rstatus.numActiveStatuses++
+			}
+		} else if ctype == "Upgradeable" {
+			r.Log.Info("Upgradeable")
+			if cstatus == "True" {
+				rstatus.isUpgradeable = true
+				rstatus.numActiveStatuses++
+			}
+		} else if ctype == "Progressing" {
+			r.Log.Info("Progressing")
+			if cstatus == "True" {
+				rstatus.isProgressing = true
+				rstatus.numActiveStatuses++
+			}
+		} else if ctype == "Degraded" {
+			r.Log.Info("Degraded")
+			if cstatus == "True" {
+				rstatus.isDegraded = true
+				rstatus.numActiveStatuses++
+			}
+		}
+	}
+
+	if rstatus.numActiveStatuses == 0 {
+		panic("Number of active condition statuses are 0")
+	} else if rstatus.numActiveStatuses > 1{
+		panic("Number of active condition statuses are >1. Only one active status is allowed.")
+	}
+
+	return rstatus
+}
+
+type genericResource struct {
+	Type  string
+	Status string
+}
+
 func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
 
 	// Attempt to get the daemon set binding
@@ -351,73 +429,25 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 		return false, false, false, true, err
 	}
 
-	// Set vars that determine if a status is 'true' or 'false
-	var isAvailable    bool = false
-	var isUpgradeable  bool = false
-	var isProgressing  bool = false
-	var isDegraded     bool = false
-
 	// Get the DaemonSet conditions as an array of DaemonSet structs
 	dsConditions := ds.Status.Conditions
 
-	// Get the types and the status
-	var conditionsType   appsv1.DaemonSetConditionType
-	var conditionsStatus corev1.ConditionStatus
+	// Convert results to a list of genericResource objects so that
+	// the results can be easily interpreted
+	var dsResourcesList []*genericResource
+	for _, dsc := range dsConditions {
 
-	// The next step captures the statuses, so use this variable to
-	// keep track of the number of "true" results
-	var numStatusesAsTrue int
-	numStatusesAsTrue = 0
+		var dsItem = new(genericResource)
+		dsItem.Type = string(dsc.Type)
+		dsItem.Status = string(dsc.Status)
 
-	// Get the resource status via index in the 'Condition' interface
-	for _, c := range dsConditions {
-
-		conditionsType   = c.Type
-		conditionsStatus = c.Status
-
-		r.Log.Info("%q", c)
-
-		// If available, check the status to make sure that it's
-		// set to 'True'
-		if conditionsType == "Available" {
-			r.Log.Info("Available")
-			if conditionsStatus == "True" {
-				isAvailable = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Upgradeable" {
-			r.Log.Info("Upgradeable")
-			if conditionsStatus == "True" {
-				isUpgradeable = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Progressing" {
-			r.Log.Info("Progressing")
-			if conditionsStatus == "True" {
-				isProgressing = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Degraded" {
-			r.Log.Info("Degraded")
-			if conditionsStatus == "True" {
-				isDegraded = true
-				numStatusesAsTrue++
-			}
-		}
+		dsResourcesList = append(dsResourcesList, dsItem)
 	}
 
-	// We have a problem if all of the statuses are false
-	if conditionsStatus == "False" {
-		panic("Statuses of the DaemonSet resurce are all 'False'.")
-	}
+	// Return
+	rstatus := r.genericStatusGetter(dsResourcesList)
 
-	if numStatusesAsTrue == 0 {
-		panic("All statuses are false. There should be at least 1 true type")
-	} else if numStatusesAsTrue > 1 {
-		panic("More than 1 status is set to true")
-	}
-
-	return isAvailable, isUpgradeable, isProgressing, isDegraded, err
+	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
 
 
 }
@@ -430,73 +460,25 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 		return false, false, false, true, err
 	}
 
-	// Set vars that determine if a status is 'true' or 'false
-	var isAvailable    bool = false
-	var isUpgradeable  bool = false
-	var isProgressing  bool = false
-	var isDegraded     bool = false
-
-	// Get the Service conditions as an array of Service structs
+	// Get the Service conditions as an array of DaemonSet structs
 	svcConditions := svc.Status.Conditions
 
-	// Get the types and the status
-	var conditionsType   string
-	var conditionsStatus metav1.ConditionStatus
+	// Convert results to a list of genericResource objects so that
+	// the results can be easily interpreted
+	var svccResourcesList []*genericResource
+	for _, svcc := range svcConditions {
 
-	// The next step captures the statuses, so use this variable to
-	// keep track of the number of "true" results
-	var numStatusesAsTrue int
-	numStatusesAsTrue = 0
+		var svcItem = new(genericResource)
+		svcItem.Type = string(svcc.Type)
+		svcItem.Status = string(svcc.Status)
 
-	// Get the resource status via index in the 'Condition' interface
-	for _, c := range svcConditions {
-
-		conditionsType   = c.Type
-		conditionsStatus = c.Status
-
-		r.Log.Info("%q", c)
-
-		// If available, check the status to make sure that it's
-		// set to 'True'
-		if conditionsType == "Available" {
-			r.Log.Info("Available")
-			if conditionsStatus == "True" {
-				isAvailable = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Upgradeable" {
-			r.Log.Info("Upgradeable")
-			if conditionsStatus == "True" {
-				isUpgradeable = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Progressing" {
-			r.Log.Info("Progressing")
-			if conditionsStatus == "True" {
-				isProgressing = true
-				numStatusesAsTrue++
-			}
-		} else if conditionsType == "Degraded" {
-			r.Log.Info("Degraded")
-			if conditionsStatus == "True" {
-				isDegraded = true
-				numStatusesAsTrue++
-			}
-		}
+		svccResourcesList = append(svccResourcesList, svcItem)
 	}
 
-	// We have a problem if all of the statuses are false
-	if conditionsStatus == "False" {
-		panic("Statuses of the DaemonSet resurce are all 'False'.")
-	}
+	// Return
+	rstatus := r.genericStatusGetter(svccResourcesList)
 
-	if numStatusesAsTrue == 0 {
-		panic("All statuses are false. There should be at least 1 true type")
-	} else if numStatusesAsTrue > 1 {
-		panic("More than 1 status is set to true")
-	}
-
-	return isAvailable, isUpgradeable, isProgressing, isDegraded, err
+	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
 }
 
 //func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
