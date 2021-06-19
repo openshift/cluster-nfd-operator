@@ -64,6 +64,12 @@ func getWatchNamespace() (string, error) {
 }
 
 func main() {
+	// metricsAddr is used by Prometheus to gather NFD's resource usage data. The bind
+	// address tells Prometheus which port to scrape this data's metrics from. The 
+	// metrics port defined by this flag must match the metrics port defined in the
+	// various manifests under ./manifests/[MAJOR].[MINOR]/manifests, where [MAJOR]
+	// corresponds to the OCP major version, and [MINOR] corresponds to the OCP minor
+	// version.
 	var metricsAddr string
 
         // enableLeaderElection should be set to 'disable' by default If we enable leader
