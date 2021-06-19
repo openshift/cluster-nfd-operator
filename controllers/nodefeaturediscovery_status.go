@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
-	corev1 "k8s.io/api/core/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	ctrl "sigs.k8s.io/controller-runtime"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
+
 //	appsv1 "k8s.io/api/apps/v1"
 //	"errors"
 //	"fmt"
@@ -23,22 +24,27 @@ const (
 	conditionReasonNFDDegraded              = "NFDDegraded"
 	conditionFailedGettingNFDStatus         = "GettingNFDStatusFailed"
 	conditionKubeletFailed                  = "KubeletConfig failure"
-	conditionFailedGettingKubeletStatus     = "GettingKubeletStatusFailed"
-	conditionFailedGettingNFDCustomConfig   = "FailedGettingNFDCustomConfig"
-	conditionFailedGettingNFDOperand        = "FailedGettingNFDOperand"
-	conditionFailedGettingNFDInstance       = "FailedGettingNFDInstance"
-	conditionFailedGettingNFDWorkerConfig   = "FailedGettingNFDWorkerConfig"
-	conditionFailedGettingNFDServiceAccount = "FailedGettingNFDServiceAccount"
-	conditionFailedGettingNFDService        = "FailedGettingNFDService"
-	conditionFailedGettingNFDDaemonSet      = "FailedGettingNFDDaemonSet"
-	conditionFailedGettingNFDClusterRole    = "FailedGettingNFDClusterRole"
 
+	// Unknown error occurred
+	conditionFailedGettingKubeletStatus         = "GettingKubeletStatusFailed"
+	conditionFailedGettingNFDCustomConfig       = "FailedGettingNFDCustomConfig"
+	conditionFailedGettingNFDOperand            = "FailedGettingNFDOperand"
+	conditionFailedGettingNFDInstance           = "FailedGettingNFDInstance"
+	conditionFailedGettingNFDWorkerConfig       = "FailedGettingNFDWorkerConfig"
+	conditionFailedGettingNFDServiceAccount     = "FailedGettingNFDServiceAccount"
+	conditionFailedGettingNFDService            = "FailedGettingNFDService"
+	conditionFailedGettingNFDDaemonSet          = "FailedGettingNFDDaemonSet"
+	conditionFailedGettingNFDClusterRole        = "FailedGettingNFDClusterRole"
+	conditionFailedGettingNFDClusterRoleBinding = "FailedGettingNFDClusterRoleBinding"
+
+	// Resource degraded
+	conditionNFDWorkerConfigDegraded        = "NFDWorkerConfigResourceDegraded"
+	conditionNFDServiceAccountDegraded      = "NFDServiceAccountDegraded"
+	conditionNFDServiceDegraded             = "NFDServiceDegraded"
+	conditionNFDDaemonSetDegraded           = "NFDDaemonSetDegraded"
+	conditionNFDClusterRoleDegraded         = "NFDClusterRoleDegraded"
+	conditionNFDClusterRoleBindingDegraded  = "NFDClusterRoleBindingDegraded"
 )
-//	// Condition references
-//	conditionAvailable   = conditionsv1.ConditionAvailable
-//	conditionUpgradeable = conditionsv1.ConditionUpgradeable
-//	conditionDegraded    = conditionsv1.ConditionDegraded
-//	conditionProgressing = conditionsv1.ConditionProgressing
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
 // available, etc.)
@@ -295,18 +301,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 //	return false
 //}
 
-//func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-//
-//	// Attempt to get the service account
-//	sa, err := components.GetServiceAccount(nfd)
-//	if err != nil || sa == nil {
-//		messageString := fmt.Sprint(err)
-//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-//	}
-//
-//	return nil, nil
-//}
-
 //func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 //
 //	// Attempt to get the cluster role binding
@@ -336,10 +330,10 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 type resourceStatus struct {
 
 	// Is the resource available, upgradable, etc.?
-	isAvailable       bool
-	isUpgradeable     bool
-	isProgressing     bool
-	isDegraded        bool
+	isAvailable   bool
+	isUpgradeable bool
+	isProgressing bool
+	isDegraded    bool
 
 	// How many statuses are set to 'true'?
 	numActiveStatuses int
@@ -351,19 +345,19 @@ func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*gener
 
 	// Initialize object which will hold all the results
 	rstatus := resourceStatus{isAvailable: false,
-			isUpgradeable: false,
-			isProgressing: false,
-			isDegraded: false,
-			numActiveStatuses: 0,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        false,
+		numActiveStatuses: 0,
 	}
 
 	var ctype string
 	var cstatus string
 
 	// Get the resource status via index in the 'Condition' interface
-	for _,  c := range conditions {
+	for _, c := range conditions {
 
-		ctype   = c.Type
+		ctype = c.Type
 		cstatus = c.Status
 
 		// If available, check the status to make sure that it's
@@ -397,7 +391,7 @@ func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*gener
 
 	if rstatus.numActiveStatuses == 0 {
 		panic("Number of active condition statuses are 0")
-	} else if rstatus.numActiveStatuses > 1{
+	} else if rstatus.numActiveStatuses > 1 {
 		panic("Number of active condition statuses are >1. Only one active status is allowed.")
 	}
 
@@ -405,7 +399,7 @@ func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*gener
 }
 
 type genericResource struct {
-	Type  string
+	Type   string
 	Status string
 }
 
@@ -413,7 +407,7 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 
 	// Attempt to get the daemon set binding
 	ds, err := components.GetDaemonSet(nfd)
-	if err != nil  {
+	if err != nil {
 		return false, false, false, true, err
 	}
 
@@ -441,7 +435,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 	// Attempt to get the NFD Operator service
 	svc, err := components.GetService(nfd)
-	if err != nil  {
+	if err != nil {
 		return false, false, false, true, err
 	}
 
@@ -469,7 +463,7 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 
 	// Attempt to get the NFD Operator worker config
 	_, err := components.GetWorkerConfig(nfd)
-	if err != nil  {
+	if err != nil {
 		return false, false, false, true, err
 	}
 
@@ -478,13 +472,13 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 
 func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
 
-	// Attempt to get the daemon set binding
+	// Attempt to get the Cluster Role
 	cr, err := components.GetDaemonSet(nfd)
-	if err != nil  {
+	if err != nil {
 		return false, false, false, true, err
 	}
 
-	// Get the DaemonSet conditions as an array of DaemonSet structs
+	// Get the ClusterRole conditions as an array of DaemonSet structs
 	crConditions := cr.Status.Conditions
 
 	// Convert results to a list of genericResource objects so that
@@ -502,4 +496,26 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.Nod
 	// Return
 	rstatus := r.genericStatusGetter(crResourcesList)
 	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+
+	// Attempt to get the cluster role binding
+	_, err := components.GetClusterRoleBinding(nfd)
+	if err != nil {
+		return false, false, false, true, err
+	}
+
+	return true, false, false, false, err
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+
+	// Attempt to get the Service Account
+	_, err := components.GetServiceAccount(nfd)
+	if err != nil {
+		return false, false, false, true, err
+	}
+
+	return true, false, false, false, err
 }

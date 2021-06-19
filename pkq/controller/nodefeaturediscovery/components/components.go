@@ -28,22 +28,6 @@ const (
 	AssetsDir = "/assets"
 )
 
-//// Get the NFD operator's service account
-//func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.ServiceAccount, error) {
-//	if &nfd.Spec.ServiceAccount != nil {
-//		return &nfd.Spec.ServiceAccount, nil
-//	}
-//	return nil, errors.New("Could not find ServiceAccount")
-//}
-
-//// Get the NFD operator's cluster role binding
-//func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
-//	if &nfd.Spec.ClusterRoleBinding != nil {
-//		return &nfd.Spec.ClusterRoleBinding, nil
-//	}
-//	return nil, errors.New("Could not find ClusterRoleBinding")
-//}
-
 //// Get the NFD operator's pods
 //func GetPod(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Pod, error) {
 //	if &nfd.Spec.Pod != nil {
@@ -86,4 +70,22 @@ func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error
 		err = errors.New("Could not find NFD Operator ClusterRole")
 	}
 	return nfd.Spec.ClusterRole, err
+}
+
+// Get the NFD operator's cluster role binding
+func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
+	var err error = nil
+	if nfd.Spec.ClusterRoleBinding == nil {
+		err = errors.New("Could not find NFD Operator ClusterRole")
+	}
+	return nfd.Spec.ClusterRoleBinding, err
+}
+
+// Get the NFD operator's service account
+func GetServiceAccount(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.ServiceAccount, error) {
+	var err error = nil
+	if nfd.Spec.ServiceAccount == nil {
+		err = errors.New("Could not find NFD Operator ServiceAccount")
+	}
+	return nfd.Spec.ServiceAccount, err
 }

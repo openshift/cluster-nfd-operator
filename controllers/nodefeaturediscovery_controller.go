@@ -24,13 +24,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
+	criapierrors "k8s.io/cri-api/pkg/errors"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	criapierrors "k8s.io/cri-api/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -40,7 +40,6 @@ import (
 var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
 var nfd NFD
-
 
 // NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
 type NodeFeatureDiscoveryReconciler struct {
@@ -149,30 +148,68 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator Service
 	_, _, _, degraded, err := r.getServiceConditions(instance)
-	if degraded == true && err == nil {
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Service.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+	}
+	if degraded == true {
 		r.Log.Info("Failed getting NFD operator Service")
-		return r.updateDegradedCondition(instance, "testing", err)
+		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, nil)
 	}
 
 	// Check the status of the NFD Operator DaemonSet
 	_, _, _, degraded, err = r.getDaemonSetConditions(instance)
-	if degraded == true && err == nil {
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Daemon Set.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
+	}
+	if degraded == true {
 		r.Log.Info("Failed getting NFD operator DaemonSet")
-		return r.updateDegradedCondition(instance, "testing", err)
+		return r.updateDegradedCondition(instance, conditionNFDDaemonSetDegraded, nil)
 	}
 
-	// Check the status of the NFD cluster roles
+	// Check the status of the NFD Operator cluster roles
 	_, _, _, degraded, err = r.getClusterRoleConditions(instance)
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Cluster Role.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRole, err)
+	}
 	if degraded == true && err == nil {
 		r.Log.Info("Failed getting NFD operator Cluster Role")
-		return r.updateDegradedCondition(instance, "testing", err)
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, nil)
 	}
 
-	// Check the status of the NFD operator worker config map
+	// Check the status of the NFD Operator worker ConfigMap
 	_, _, _, degraded, err = r.getWorkerConfigConditions(instance)
-	if degraded == true && err == nil {
-		r.Log.Error(err, "Failed getting NFD Worker Config")
-		return r.updateDegradedCondition(instance, "testing", err)
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	}
+	if degraded == true {
+		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
+		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, nil)
+	}
+
+	// Check the status of the NFD Operator ClusterRoleBinding
+	_, _, _, degraded, err = r.getClusterRoleBindingConditions(instance)
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Cluster Role Binding.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRoleBinding, err)
+	}
+	if degraded == true {
+		r.Log.Error(err, "Failed getting NFD operator Cluster Role Binding")
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, nil)
+	}
+
+	// Check the status of the NFD Operator ServiceAccount
+	_, _, _, degraded, err = r.getServiceAccountConditions(instance)
+	if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+	}
+	if degraded == true {
+		r.Log.Error(err, "Failed getting NFD operator Service Account")
+		return r.updateDegradedCondition(instance, conditionNFDServiceAccountDegraded, nil)
 	}
 
 	conditions := r.getAvailableConditions()
