@@ -7,9 +7,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
+	corev1 "k8s.io/api/core/v1"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 //	appsv1 "k8s.io/api/apps/v1"
@@ -307,18 +307,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 //	return nil, nil
 //}
 
-//func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-//
-//	// Attempt to get the role
-//	cr, err := components.GetClusterRole(nfd)
-//	if err != nil || cr == nil {
-//		messageString := fmt.Sprint(err)
-//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-//	}
-//
-//	return nil, nil
-//}
-
 //func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
 //
 //	// Attempt to get the cluster role binding
@@ -446,10 +434,7 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 
 	// Return
 	rstatus := r.genericStatusGetter(dsResourcesList)
-
 	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
-
-
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
@@ -477,18 +462,44 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 	// Return
 	rstatus := r.genericStatusGetter(svccResourcesList)
-
 	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
 }
 
-//func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-//
-//	// Attempt to get the worker config
-//	wc, err := components.GetWorkerConfig(nfd)
-//	if err != nil || wc == nil {
-//		messageString := fmt.Sprint(err)
-//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-//	}
-//
-//	return nil, nil
-//}
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+
+	// Attempt to get the NFD Operator worker config
+	_, err := components.GetWorkerConfig(nfd)
+	if err != nil  {
+		return false, false, false, true, err
+	}
+
+	return true, false, false, false, err
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+
+	// Attempt to get the daemon set binding
+	cr, err := components.GetDaemonSet(nfd)
+	if err != nil  {
+		return false, false, false, true, err
+	}
+
+	// Get the DaemonSet conditions as an array of DaemonSet structs
+	crConditions := cr.Status.Conditions
+
+	// Convert results to a list of genericResource objects so that
+	// the results can be easily interpreted
+	var crResourcesList []*genericResource
+	for _, crc := range crConditions {
+
+		var crItem = new(genericResource)
+		crItem.Type = string(crc.Type)
+		crItem.Status = string(crc.Status)
+
+		crResourcesList = append(crResourcesList, crItem)
+	}
+
+	// Return
+	rstatus := r.genericStatusGetter(crResourcesList)
+	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
+}

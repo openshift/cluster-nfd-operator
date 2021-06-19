@@ -20,8 +20,8 @@ import (
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
-//	rbacv1 "k8s.io/api/rbac/v1"
 
 const (
 	// AssetsDir defines the directory with assets under the operator image
@@ -34,14 +34,6 @@ const (
 //		return &nfd.Spec.ServiceAccount, nil
 //	}
 //	return nil, errors.New("Could not find ServiceAccount")
-//}
-
-//// Get the NFD operator's cluster role
-//func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
-//	if &nfd.Spec.ClusterRole != nil {
-//		return &nfd.Spec.ClusterRole, nil
-//	}
-//	return nil, errors.New("Could not find ClusterRole")
 //}
 
 //// Get the NFD operator's cluster role binding
@@ -69,14 +61,6 @@ func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
 	return nfd.Spec.DaemonSet, err
 }
 
-//// Get the NFD operator's worker config
-//func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) {
-//	if &nfd.Spec.WorkerConfig != nil {
-//		return &nfd.Spec.WorkerConfig, nil
-//	}
-//	return nil, errors.New("Could not find Worker Config")
-//}
-
 // Get the NFD operator's service
 func GetService(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Service, error) {
 	var err error = nil
@@ -84,4 +68,22 @@ func GetService(nfd *nfdv1.NodeFeatureDiscovery) (*corev1.Service, error) {
 		err = errors.New("Could not find NFD Operator Service")
 	}
 	return nfd.Spec.Service, err
+}
+
+// Get the NFD operator's worker config
+func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) {
+	var err error = nil
+	if nfd.Spec.WorkerConfig == nil {
+		err = errors.New("Could not find NFD Operator Worker Config")
+	}
+	return nfd.Spec.WorkerConfig, err
+}
+
+// Get the NFD operator's cluster role
+func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
+	var err error = nil
+	if nfd.Spec.ClusterRole == nil {
+		err = errors.New("Could not find NFD Operator ClusterRole")
+	}
+	return nfd.Spec.ClusterRole, err
 }

@@ -26,13 +26,13 @@ import (
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
-	Operand            OperandSpec               `json:"operand"`
-	WorkerConfig       ConfigMap                 `json:"workerConfig"`
+	Operand            OperandSpec                `json:"operand"`
+	WorkerConfig       *ConfigMap                 `json:"workerConfig,omitempty"`
 	ServiceAccount     *corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
 	ClusterRole        *rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
 	ClusterRoleBinding *rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
 	Service            *corev1.Service            `json:"service,omitempty"`
-	DaemonSet          *appsv1.DaemonSet         `json:"daemonSet,omitempty"`
+	DaemonSet          *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
 	Pod                *corev1.Pod                `json:"pod,omitempty"`
 
 	// +optional
@@ -60,10 +60,18 @@ type OperandSpec struct {
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
+// +k8s:openapi-gen=true
+type ConfigMapStatus struct {
+	// Conditions represents the latest available observations of current state.
+	// +optional
+	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
+}
+
 // ConfigMap describes configuration options for the NFD worker
 type ConfigMap struct {
 	// BinaryData holds the NFD configuration file
-	ConfigData string `json:"configData"`
+	ConfigData string          `json:"configData"`
+	Status     ConfigMapStatus `json:"status,omitempty"`
 }
 
 // NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery

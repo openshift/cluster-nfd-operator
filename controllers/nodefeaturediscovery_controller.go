@@ -161,25 +161,19 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, "testing", err)
 	}
 
-	//// Check the status of the NFD cluster roles
-	//if isDegraded == false {
-	//	conditions, err = r.getClusterRoleConditions(instance)
-	//	isDegraded = r.resourceIsDegraded("ClusterRole", conditions)
-	//	if err != nil || isDegraded == false {
-	//		r.Log.Error(err, "Failed getting NFD operator cluster role")
-	//		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRole, err)
-	//	}
-	//}
-	//
-	//// Check the status of the NFD operator worker config map
-	//if isDegraded == false {
-	//	conditions, err = r.getWorkerConfigConditions(instance)
-	//	isDegraded = r.resourceIsDegraded("WorkerConfig", conditions)
-	//	if err != nil || isDegraded == false {
-	//		r.Log.Error(err, "Failed getting NFD Worker Config")
-	//		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
-	//	}
-	//}
+	// Check the status of the NFD cluster roles
+	_, _, _, degraded, err = r.getClusterRoleConditions(instance)
+	if degraded == true && err == nil {
+		r.Log.Info("Failed getting NFD operator Cluster Role")
+		return r.updateDegradedCondition(instance, "testing", err)
+	}
+
+	// Check the status of the NFD operator worker config map
+	_, _, _, degraded, err = r.getWorkerConfigConditions(instance)
+	if degraded == true && err == nil {
+		r.Log.Error(err, "Failed getting NFD Worker Config")
+		return r.updateDegradedCondition(instance, "testing", err)
+	}
 
 	conditions := r.getAvailableConditions()
 
