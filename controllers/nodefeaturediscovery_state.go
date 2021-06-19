@@ -21,12 +21,26 @@ import (
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
-// NFD holds the needed information to watch from the Controller
+// NFD holds the needed information to watch from the Controller. The
+// following descriptions elaborate on each field in this struct:
 type NFD struct {
+	// resources contains information about NFD's resources. For more
+	// information, see ./nodefeaturediscovery_resources.go
 	resources []Resources
+
+	// controls is a list that contains the status of an NFD resource
+	// as being Ready (=0) or NotReady (=1)
 	controls  []controlFunc
+
+	// rec represents the NFD reconciler struct used for reconciliation
 	rec       *NodeFeatureDiscoveryReconciler
+
+	// ins is the NodeFeatureDiscovery struct that contains the Schema
+	// for the nodefeaturediscoveries API
 	ins       *nfdv1.NodeFeatureDiscovery
+
+	// idx is the index that is used to step through the 'controls' list
+	// and is set to 0 upon calling 'init()'
 	idx       int
 }
 
