@@ -126,6 +126,26 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	return reconcile.Result{}, conditionErr
 }
 
+// updateDegradedCondition is used to mark a given resource as "degraded" so that
+// the reconciler can take steps to rectify the situation.
+func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
+	r.Log.Info("Entering progressing condition func")
+
+	// It is already assumed that the resource has been degraded, so the first
+	// step is to gather the correct list of conditions.
+	//r.Log.Info("Condition: %s", condition)
+	//r.Log.Info("conditionError: %s", conditionErr.Error())
+	var conditions []conditionsv1.Condition = r.getProgressingConditions(condition, conditionErr.Error())
+	r.Log.Info("Got progressing conditions")
+	if nfd == nil {
+		r.Log.Info("nfd is 'nil'")
+	}
+	if err := r.updateStatus(nfd, conditions); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, conditionErr
+}
+
 // getAvailableConditions returns a list of conditionsv1.Condition objects and marks
 // every condition as FALSE except for conditionsv1.ConditionAvailable so that the
 // reconciler can determine that the resource is available.
@@ -194,37 +214,37 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 	}
 }
 
-//// getProgressingConditions returns a list of conditionsv1.Condition objects and marks
-//// every condition as FALSE except for conditionsv1.ConditionProgressing so that the
-//// reconciler can determine that the resource is progressing.
-//func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
-//	now := time.Now()
-//
-//	return []conditionsv1.Condition{
-//		{
-//			Type:               conditionsv1.ConditionAvailable,
-//			Status:             corev1.ConditionFalse,
-//			LastTransitionTime: metav1.Time{Time: now},
-//		},
-//		{
-//			Type:               conditionsv1.ConditionUpgradeable,
-//			Status:             corev1.ConditionFalse,
-//			LastTransitionTime: metav1.Time{Time: now},
-//		},
-//		{
-//			Type:               conditionsv1.ConditionProgressing,
-//			Status:             corev1.ConditionTrue,
-//			LastTransitionTime: metav1.Time{Time: now},
-//			Reason:             reason,
-//			Message:            message,
-//		},
-//		{
-//			Type:               conditionsv1.ConditionDegraded,
-//			Status:             corev1.ConditionFalse,
-//			LastTransitionTime: metav1.Time{Time: now},
-//		},
-//	}
-//}
+// getProgressingConditions returns a list of conditionsv1.Condition objects and marks
+// every condition as FALSE except for conditionsv1.ConditionProgressing so that the
+// reconciler can determine that the resource is progressing.
+func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
+	now := time.Now()
+
+	return []conditionsv1.Condition{
+		{
+			Type:               conditionsv1.ConditionAvailable,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.Time{Time: now},
+		},
+		{
+			Type:               conditionsv1.ConditionUpgradeable,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.Time{Time: now},
+		},
+		{
+			Type:               conditionsv1.ConditionProgressing,
+			Status:             corev1.ConditionTrue,
+			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
+		},
+		{
+			Type:               conditionsv1.ConditionDegraded,
+			Status:             corev1.ConditionFalse,
+			LastTransitionTime: metav1.Time{Time: now},
+		},
+	}
+}
 
 //// getConditionOfResource gets the conditions of a specific resource
 //func (r *NodeFeatureDiscoveryReconciler) getConditionOfResource(resourceName string, conditions []conditionsv1.Condition) (bool, bool, bool, bool) {
@@ -403,12 +423,24 @@ type genericResource struct {
 	Status string
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
 
-	// Attempt to get the daemon set binding
+	// Initialize Resource Status to 'Progressing'
+	rstatus := resourceStatus{
+		isAvailable:   false,
+		isUpgradeable: false,
+		isProgressing: true,
+		isDegraded:    false,
+		numActiveStatuses: 1,
+	}
+
+	// Attempt to get the daemon set
 	ds, err := components.GetDaemonSet(nfd)
-	if err != nil {
-		return false, false, false, true, err
+
+	// If there is an error because the 'ds' pointer is nil, then
+	// the DaemonSet is progressing because it isn't ready yet.
+	if ds == nil {
+		return rstatus, err
 	}
 
 	// Get the DaemonSet conditions as an array of DaemonSet structs
@@ -427,16 +459,28 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 	}
 
 	// Return
-	rstatus := r.genericStatusGetter(dsResourcesList)
-	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
+	rstatus = r.genericStatusGetter(dsResourcesList)
+	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+
+	// Initialize Resource Status to 'Progressing'
+	rstatus := resourceStatus{
+		isAvailable:   false,
+		isUpgradeable: false,
+		isProgressing: true,
+		isDegraded:    false,
+		numActiveStatuses: 1,
+	}
 
 	// Attempt to get the NFD Operator service
 	svc, err := components.GetService(nfd)
-	if err != nil {
-		return false, false, false, true, err
+
+	// If there is an error because the 'svc' pointer is nil, then
+	// the service is progressing because it isn't ready yet.
+	if svc == nil {
+		return rstatus, err
 	}
 
 	// Get the Service conditions as an array of DaemonSet structs
@@ -455,27 +499,57 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 	}
 
 	// Return
-	rstatus := r.genericStatusGetter(svccResourcesList)
-	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
+	rstatus = r.genericStatusGetter(svccResourcesList)
+	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
 
-	// Attempt to get the NFD Operator worker config
-	_, err := components.GetWorkerConfig(nfd)
-	if err != nil {
-		return false, false, false, true, err
+	// Initialize Resource Status to 'Progressing'
+	rstatus := resourceStatus{isAvailable: false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
+		numActiveStatuses: 1,
 	}
 
-	return true, false, false, false, err
+	// Attempt to get the NFD Operator worker config
+	wc, err := components.GetWorkerConfig(nfd)
+
+	// If 'wc' is nil, then the resource hasn't been created yet
+	if wc == nil {
+		return rstatus, err
+	}
+
+	// If the NFD operator worker config was found found, then
+	// update rstatus so that the worker config resource is
+	// marked as 'Available'
+	if err == nil {
+		rstatus.isDegraded = false
+		rstatus.isAvailable = true
+	}
+
+	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+
+	// Initialize Resource Status to 'Progressing'
+	rstatus := resourceStatus{
+		isAvailable:   false,
+		isUpgradeable: false,
+		isProgressing: true,
+		isDegraded:    false,
+		numActiveStatuses: 1,
+	}
 
 	// Attempt to get the Cluster Role
 	cr, err := components.GetDaemonSet(nfd)
-	if err != nil {
-		return false, false, false, true, err
+
+	// If there is an error because the 'cr' pointer is nil, then
+	// the ClusterRole is progressing because it isn't ready yet.
+	if cr == nil {
+		return rstatus, err
 	}
 
 	// Get the ClusterRole conditions as an array of DaemonSet structs
@@ -494,28 +568,60 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.Nod
 	}
 
 	// Return
-	rstatus := r.genericStatusGetter(crResourcesList)
-	return rstatus.isAvailable, rstatus.isUpgradeable, rstatus.isProgressing, rstatus.isDegraded, err
+	rstatus = r.genericStatusGetter(crResourcesList)
+	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+
+	// Initialize Resource Status to 'Degraded'
+	rstatus := resourceStatus{
+		isAvailable:   false,
+		isUpgradeable: false,
+		isProgressing: false,
+		isDegraded:    true,
+		numActiveStatuses: 1,
+	}
 
 	// Attempt to get the cluster role binding
-	_, err := components.GetClusterRoleBinding(nfd)
-	if err != nil {
-		return false, false, false, true, err
+	crb, err := components.GetClusterRoleBinding(nfd)
+	if crb == nil {
+		rstatus.isProgressing = true
+		rstatus.isDegraded = false
+	} else if err != nil {
+		return rstatus, err
 	}
 
-	return true, false, false, false, err
+	// Set the resource to available
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
+
+	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) (bool, bool, bool, bool, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
 
-	// Attempt to get the Service Account
-	_, err := components.GetServiceAccount(nfd)
-	if err != nil {
-		return false, false, false, true, err
+	// Initialize Resource Status to 'Degraded'
+	rstatus := resourceStatus{
+		isAvailable:   false,
+		isUpgradeable: false,
+		isProgressing: false,
+		isDegraded:    true,
+		numActiveStatuses: 1,
 	}
 
-	return true, false, false, false, err
+	// Attempt to get the Service Account
+	sa, err := components.GetServiceAccount(nfd)
+	if sa == nil {
+		rstatus.isProgressing = true
+		rstatus.isDegraded = false
+	} else if err != nil {
+		return rstatus, err
+	}
+
+	// Set the resource to available
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
+
+	return rstatus, err
 }
