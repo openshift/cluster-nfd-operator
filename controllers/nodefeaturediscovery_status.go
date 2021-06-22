@@ -406,6 +406,9 @@ func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*gener
 				rstatus.isDegraded = true
 				rstatus.numActiveStatuses++
 			}
+		} else {
+			r.Log.Info("Invalid status")
+			panic("Invalid resource status")
 		}
 	}
 
@@ -460,7 +463,7 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 
 	// Return
 	rstatus = r.genericStatusGetter(dsResourcesList)
-	return rstatus, err
+	return rstatus, nil
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
@@ -500,7 +503,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 	// Return
 	rstatus = r.genericStatusGetter(svccResourcesList)
-	return rstatus, err
+	return rstatus, nil
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
@@ -569,7 +572,7 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.Nod
 
 	// Return
 	rstatus = r.genericStatusGetter(crResourcesList)
-	return rstatus, err
+	return rstatus, nil
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
@@ -596,7 +599,7 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nf
 	rstatus.isAvailable = true
 	rstatus.isDegraded = false
 
-	return rstatus, err
+	return rstatus, nil
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
@@ -623,5 +626,5 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 	rstatus.isAvailable = true
 	rstatus.isDegraded = false
 
-	return rstatus, err
+	return rstatus, nil
 }
