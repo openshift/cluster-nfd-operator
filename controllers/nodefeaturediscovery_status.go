@@ -113,9 +113,11 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 
 	// It is already assumed that the resource has been degraded, so the first
 	// step is to gather the correct list of conditions.
-	//r.Log.Info("Condition: %s", condition)
-	//r.Log.Info("conditionError: %s", conditionErr.Error())
-	var conditions []conditionsv1.Condition = r.getDegradedConditions(condition, conditionErr.Error())
+	var conditionErrMsg string = "Degraded"
+	if conditionErr != nil {
+		conditionErrMsg = conditionErr.Error()
+	}
+	conditions := r.getDegradedConditions(condition, conditionErrMsg)
 	r.Log.Info("Got degraded conditions")
 	if nfd == nil {
 		r.Log.Info("nfd is 'nil'")
@@ -432,16 +434,16 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(nfd *nfdv1.NodeF
 	rstatus := resourceStatus{
 		isAvailable:   false,
 		isUpgradeable: false,
-		isProgressing: true,
-		isDegraded:    false,
+		isProgressing: false,
+		isDegraded:    true,
 		numActiveStatuses: 1,
 	}
 
 	// Attempt to get the daemon set
 	ds, err := components.GetDaemonSet(nfd)
 
-	// If there is an error because the 'ds' pointer is nil, then
-	// the DaemonSet is progressing because it isn't ready yet.
+	// If there is an error finding the DaemonSet, then the status
+	// is either "Progressing" or "Degraded"
 	if ds == nil {
 		return rstatus, err
 	}

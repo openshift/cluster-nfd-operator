@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/go-logr/logr"
 	security "github.com/openshift/api/security/v1"
@@ -33,6 +34,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
@@ -56,7 +59,23 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// we want to initate reconcile loop only on spec change of the object
 	p := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return validateUpdateEvent(&e)
+			if validateUpdateEvent(&e) {
+				return false
+			}
+			return true
+		},
+	}
+
+	dsPredicates := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			if !validateUpdateEvent(&e) {
+				return false
+			}
+
+			dsOld := e.ObjectOld.(*appsv1.DaemonSet)
+			dsNew := e.ObjectNew.(*appsv1.DaemonSet)
+
+			return !reflect.DeepEqual(dsOld.Status.Conditions, dsNew.Status.Conditions)
 		},
 	}
 
@@ -68,6 +87,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Owns(&corev1.Pod{}, builder.WithPredicates(p)).
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
 		Owns(&security.SecurityContextConstraints{}).
+		Watches(&source.Kind{Type: &appsv1.DaemonSet{}}, &handler.EnqueueRequestForObject{}, builder.WithPredicates(dsPredicates)).
 		Complete(r)
 }
 
@@ -145,6 +165,16 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// apply components
 	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
+	result, err := applyComponents()
+
+	// If the components could not be applied, then check for degraded conditions
+	if err != nil {
+		conditions := r.getDegradedConditions("testing", err.Error())
+		if err := r.updateStatus(instance, conditions); err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, err
+	}
 
 	// Check the status of the NFD Operator Service
 	rstatus, err := r.getServiceConditions(instance)
@@ -154,7 +184,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Service")
-		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, nil)
+		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Service")
@@ -184,7 +214,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Cluster Role")
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, nil)
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
@@ -199,7 +229,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
-		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, nil)
+		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
@@ -214,7 +244,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Error(err, "Failed getting NFD operator Cluster Role Binding")
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, nil)
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Cluster Role Binding.")
@@ -229,7 +259,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Error(err, "Failed getting NFD operator Service Account")
-		return r.updateDegradedCondition(instance, conditionNFDServiceAccountDegraded, nil)
+		return r.updateDegradedCondition(instance, conditionNFDServiceAccountDegraded, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
@@ -242,18 +272,18 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// Update the status of the resource on the CRD
 	r.updateStatus(instance, conditions)
 
-	//var result *reconcile.Result
-	//if err := r.updateStatus(instance, conditions); err != nil {
-	//	if &result != nil {
-	//		return *result, nil
-	//	}
-	//	return reconcile.Result{}, err
-	//}
+	if err := r.updateStatus(instance, conditions); err != nil {
+		if &result != nil {
+			return result, nil
+		}
+		return reconcile.Result{}, err
+	}
 
-	//if result != nil {
-	//	return *result, nil
-	//}
-	return applyComponents()
+	if &result != nil {
+		return result, nil
+	}
+
+	return ctrl.Result{}, nil
 }
 
 func applyComponents() (reconcile.Result, error) {
