@@ -568,9 +568,9 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the Service Account
-	sa, err := components.GetRole(nfd)
-	if sa == nil {
+	// Attempt to get the Role
+	role, err := components.GetRole(nfd)
+	if role == nil {
 		return rstatus, err
 	}
 
@@ -592,9 +592,9 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the cluster role binding
-	crb, err := components.GetRoleBinding(nfd)
-	if crb == nil {
+	// Attempt to get the role binding
+	roleb, err := components.GetRoleBinding(nfd)
+	if roleb == nil {
 		rstatus.isProgressing = true
 		rstatus.isDegraded = false
 	} else if err != nil {
