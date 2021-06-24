@@ -26,14 +26,14 @@ import (
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
-	Operand            OperandSpec                `json:"operand"`
-	WorkerConfig       *ConfigMap                 `json:"workerConfig,omitempty"`
-	ServiceAccount     *corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
-	ClusterRole        *rbacv1.ClusterRole        `json:"clusterRole,omitempty"`
-	ClusterRoleBinding *rbacv1.ClusterRoleBinding `json:"clusterRoleBinding,omitempty"`
-	Service            *corev1.Service            `json:"service,omitempty"`
-	DaemonSet          *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
-	Pod                *corev1.Pod                `json:"pod,omitempty"`
+	Operand         OperandSpec                `json:"operand"`
+	WorkerConfig    *ConfigMap                 `json:"workerConfig,omitempty"`
+	ServiceAccount  *corev1.ServiceAccount     `json:"serviceAccount,omitempty"`
+	Role            *rbacv1.Role               `json:"role,omitempty"`
+	RoleBinding     *rbacv1.RoleBinding        `json:"roleBinding,omitempty"`
+	Service         *corev1.Service            `json:"service,omitempty"`
+	DaemonSet       *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
+	Pod             *corev1.Pod                `json:"pod,omitempty"`
 
 	// +optional
 	Instance string `json:"instance"`

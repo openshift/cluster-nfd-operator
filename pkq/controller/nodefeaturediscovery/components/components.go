@@ -29,12 +29,12 @@ const (
 
 
 	// Error messages
-	errorCouldNotFindDaemonSet          = "Could not find NFD Operator DaemonSet"
-	errorCouldNotFindService            = "Could not find NFD Operator Service"
-	errorCouldNotFindWorkerConfig       = "Could not find NFD Operator Worker Config"
-	errorCouldNotFindClusterRole        = "Could not find NFD Operator Cluster Role"
-	errorCouldNotFindClusterRoleBinding = "Could not find NFD Operator Cluster Role Binding"
-	errorCouldNotFindServiceAccount     = "Could not find NFD Operator Service Account"
+	errorCouldNotFindDaemonSet       = "Could not find NFD Operator DaemonSet"
+	errorCouldNotFindService         = "Could not find NFD Operator Service"
+	errorCouldNotFindWorkerConfig    = "Could not find NFD Operator Worker Config"
+	errorCouldNotFindRole            = "Could not find NFD Operator Role"
+	errorCouldNotFindRoleBinding     = "Could not find NFD Operator Role Binding"
+	errorCouldNotFindServiceAccount  = "Could not find NFD Operator Service Account"
 )
 
 //// Get the NFD operator's pods
@@ -72,22 +72,22 @@ func GetWorkerConfig(nfd *nfdv1.NodeFeatureDiscovery) (*nfdv1.ConfigMap, error) 
 	return nfd.Spec.WorkerConfig, err
 }
 
-// Get the NFD operator's cluster role
-func GetClusterRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRole, error) {
+// Get the NFD operator's role
+func GetRole(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.Role, error) {
 	var err error = nil
-	if nfd.Spec.ClusterRole == nil {
-		err = errors.New(errorCouldNotFindClusterRole)
+	if nfd.Spec.Role == nil {
+		err = errors.New(errorCouldNotFindRole)
 	}
-	return nfd.Spec.ClusterRole, err
+	return nfd.Spec.Role, err
 }
 
-// Get the NFD operator's cluster role binding
-func GetClusterRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.ClusterRoleBinding, error) {
+// Get the NFD operator's role binding
+func GetRoleBinding(nfd *nfdv1.NodeFeatureDiscovery) (*rbacv1.RoleBinding, error) {
 	var err error = nil
-	if nfd.Spec.ClusterRoleBinding == nil {
-		err = errors.New(errorCouldNotFindClusterRoleBinding)
+	if nfd.Spec.RoleBinding == nil {
+		err = errors.New(errorCouldNotFindRoleBinding)
 	}
-	return nfd.Spec.ClusterRoleBinding, err
+	return nfd.Spec.RoleBinding, err
 }
 
 // Get the NFD operator's service account

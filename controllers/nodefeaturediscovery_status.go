@@ -26,24 +26,24 @@ const (
 	conditionKubeletFailed                  = "KubeletConfig failure"
 
 	// Unknown error occurred
-	conditionFailedGettingKubeletStatus         = "GettingKubeletStatusFailed"
-	conditionFailedGettingNFDCustomConfig       = "FailedGettingNFDCustomConfig"
-	conditionFailedGettingNFDOperand            = "FailedGettingNFDOperand"
-	conditionFailedGettingNFDInstance           = "FailedGettingNFDInstance"
-	conditionFailedGettingNFDWorkerConfig       = "FailedGettingNFDWorkerConfig"
-	conditionFailedGettingNFDServiceAccount     = "FailedGettingNFDServiceAccount"
-	conditionFailedGettingNFDService            = "FailedGettingNFDService"
-	conditionFailedGettingNFDDaemonSet          = "FailedGettingNFDDaemonSet"
-	conditionFailedGettingNFDClusterRole        = "FailedGettingNFDClusterRole"
-	conditionFailedGettingNFDClusterRoleBinding = "FailedGettingNFDClusterRoleBinding"
+	conditionFailedGettingKubeletStatus     = "GettingKubeletStatusFailed"
+	conditionFailedGettingNFDCustomConfig   = "FailedGettingNFDCustomConfig"
+	conditionFailedGettingNFDOperand        = "FailedGettingNFDOperand"
+	conditionFailedGettingNFDInstance       = "FailedGettingNFDInstance"
+	conditionFailedGettingNFDWorkerConfig   = "FailedGettingNFDWorkerConfig"
+	conditionFailedGettingNFDServiceAccount = "FailedGettingNFDServiceAccount"
+	conditionFailedGettingNFDService        = "FailedGettingNFDService"
+	conditionFailedGettingNFDDaemonSet      = "FailedGettingNFDDaemonSet"
+	conditionFailedGettingNFDRole           = "FailedGettingNFDRole"
+	conditionFailedGettingNFDRoleBinding    = "FailedGettingNFDRoleBinding"
 
 	// Resource degraded
-	conditionNFDWorkerConfigDegraded        = "NFDWorkerConfigResourceDegraded"
-	conditionNFDServiceAccountDegraded      = "NFDServiceAccountDegraded"
-	conditionNFDServiceDegraded             = "NFDServiceDegraded"
-	conditionNFDDaemonSetDegraded           = "NFDDaemonSetDegraded"
-	conditionNFDClusterRoleDegraded         = "NFDClusterRoleDegraded"
-	conditionNFDClusterRoleBindingDegraded  = "NFDClusterRoleBindingDegraded"
+	conditionNFDWorkerConfigDegraded   = "NFDWorkerConfigResourceDegraded"
+	conditionNFDServiceAccountDegraded = "NFDServiceAccountDegraded"
+	conditionNFDServiceDegraded        = "NFDServiceDegraded"
+	conditionNFDDaemonSetDegraded      = "NFDDaemonSetDegraded"
+	conditionNFDRoleDegraded           = "NFDRoleDegraded"
+	conditionNFDRoleBindingDegraded    = "NFDRoleBindingDegraded"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -106,6 +106,24 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 	return r.Status().Update(context.TODO(), nfdCopy)
 }
 
+// updateAvailableCondition is used to mark a given resource as "available" so that
+// the reconciler can take steps to rectify the situation.
+func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.NodeFeatureDiscovery) (ctrl.Result, error) {
+	r.Log.Info("Entering degraded condition func")
+
+	// It is already assumed that the resource has been degraded, so the first
+	// step is to gather the correct list of conditions.
+	conditions := r.getAvailableConditions()
+	r.Log.Info("Got available conditions")
+	if nfd == nil {
+		r.Log.Info("nfd is 'nil'")
+	}
+	if err := r.updateStatus(nfd, conditions); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, nil
+}
+
 // updateDegradedCondition is used to mark a given resource as "degraded" so that
 // the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
@@ -128,16 +146,18 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	return reconcile.Result{}, conditionErr
 }
 
-// updateDegradedCondition is used to mark a given resource as "degraded" so that
-// the reconciler can take steps to rectify the situation.
+// updateProgressingCondition is used to mark a given resource as "progressing" so
+// that the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
 	r.Log.Info("Entering progressing condition func")
 
-	// It is already assumed that the resource has been degraded, so the first
+	// It is already assumed that the resource is "progressing," so the first
 	// step is to gather the correct list of conditions.
-	//r.Log.Info("Condition: %s", condition)
-	//r.Log.Info("conditionError: %s", conditionErr.Error())
-	var conditions []conditionsv1.Condition = r.getProgressingConditions(condition, conditionErr.Error())
+	var conditionErrMsg string = "Progressing"
+	if conditionErr != nil {
+		conditionErrMsg = conditionErr.Error()
+	}
+	conditions := r.getProgressingConditions(condition, conditionErrMsg)
 	r.Log.Info("Got progressing conditions")
 	if nfd == nil {
 		r.Log.Info("nfd is 'nil'")
@@ -537,47 +557,31 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 	return rstatus, err
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
 
-	// Initialize Resource Status to 'Progressing'
+	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
 		isAvailable:   false,
 		isUpgradeable: false,
-		isProgressing: true,
-		isDegraded:    false,
+		isProgressing: false,
+		isDegraded:    true,
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the Cluster Role
-	cr, err := components.GetDaemonSet(nfd)
-
-	// If there is an error because the 'cr' pointer is nil, then
-	// the ClusterRole is progressing because it isn't ready yet.
-	if cr == nil {
+	// Attempt to get the Service Account
+	sa, err := components.GetRole(nfd)
+	if sa == nil {
 		return rstatus, err
 	}
 
-	// Get the ClusterRole conditions as an array of DaemonSet structs
-	crConditions := cr.Status.Conditions
+	// Set the resource to available
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
 
-	// Convert results to a list of genericResource objects so that
-	// the results can be easily interpreted
-	var crResourcesList []*genericResource
-	for _, crc := range crConditions {
-
-		var crItem = new(genericResource)
-		crItem.Type = string(crc.Type)
-		crItem.Status = string(crc.Status)
-
-		crResourcesList = append(crResourcesList, crItem)
-	}
-
-	// Return
-	rstatus = r.genericStatusGetter(crResourcesList)
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -589,7 +593,7 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nf
 	}
 
 	// Attempt to get the cluster role binding
-	crb, err := components.GetClusterRoleBinding(nfd)
+	crb, err := components.GetRoleBinding(nfd)
 	if crb == nil {
 		rstatus.isProgressing = true
 		rstatus.isDegraded = false
