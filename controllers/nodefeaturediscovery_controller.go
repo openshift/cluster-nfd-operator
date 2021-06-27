@@ -166,7 +166,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	rstatus, err := r.getServiceConditions(instance)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator service is progressing.")
-		return r.updateProgressingCondition(instance, "is progressing", nil)
+		return r.updateProgressingCondition(instance, "Service is progressing", nil)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Service")
@@ -177,15 +177,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
 
-	// Check the status of the NFD Operator DaemonSet
-	rstatus, err = r.getDaemonSetConditions(instance)
+	// Check the status of the NFD Operator Worker DaemonSet
+	rstatus, err = r.getWorkerDaemonSetConditions(instance)
 	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator DaemonSet is progressing.")
-		return r.updateProgressingCondition(instance, conditionNFDServiceDegraded, nil)
-
-	} else if rstatus.isAvailable {
-		r.Log.Info("NFD DaemonSet is now Available")
-		return r.updateAvailableCondition(instance)
+		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
+		return r.updateProgressingCondition(instance, "Worker DaemonSet is progressing", nil)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator DaemonSet")

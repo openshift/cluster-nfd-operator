@@ -29,7 +29,8 @@ const (
 
 
 	// Error messages
-	errorCouldNotFindDaemonSet       = "Could not find NFD Operator DaemonSet"
+	errorCouldNotFindWorkerDaemonSet = "Could not find NFD Operator Worker DaemonSet"
+	errorCouldNotFindMasterDaemonSet = "Could not find NFD Operator Master DaemonSet"
 	errorCouldNotFindService         = "Could not find NFD Operator Service"
 	errorCouldNotFindWorkerConfig    = "Could not find NFD Operator Worker Config"
 	errorCouldNotFindRole            = "Could not find NFD Operator Role"
@@ -45,13 +46,22 @@ const (
 //	return nil, errors.New("Could not find Pod")
 //}
 
-// Get the NFD operator's daemon set
-func GetDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
+// Get the NFD operator's worker daemon set
+func GetWorkerDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
 	var err error = nil
-	if nfd.Spec.DaemonSet == nil {
-		err = errors.New(errorCouldNotFindDaemonSet)
+	if nfd.Spec.WorkerDaemonSet == nil {
+		err = errors.New(errorCouldNotFindWorkerDaemonSet)
 	}
-	return nfd.Spec.DaemonSet, err
+	return nfd.Spec.WorkerDaemonSet, err
+}
+
+// Get the NFD operator's master daemon set
+func GetMasterDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
+	var err error = nil
+	if nfd.Spec.MasterDaemonSet == nil {
+		err = errors.New(errorCouldNotFindMasterDaemonSet)
+	}
+	return nfd.Spec.MasterDaemonSet, err
 }
 
 // Get the NFD operator's service

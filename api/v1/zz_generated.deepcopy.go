@@ -154,8 +154,13 @@ func (in *NodeFeatureDiscoverySpec) DeepCopyInto(out *NodeFeatureDiscoverySpec) 
 		*out = new(corev1.Service)
 		(*in).DeepCopyInto(*out)
 	}
-	if in.DaemonSet != nil {
-		in, out := &in.DaemonSet, &out.DaemonSet
+	if in.WorkerDaemonSet != nil {
+		in, out := &in.WorkerDaemonSet, &out.WorkerDaemonSet
+		*out = new(appsv1.DaemonSet)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.MasterDaemonSet != nil {
+		in, out := &in.MasterDaemonSet, &out.MasterDaemonSet
 		*out = new(appsv1.DaemonSet)
 		(*in).DeepCopyInto(*out)
 	}

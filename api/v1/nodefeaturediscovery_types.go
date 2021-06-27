@@ -32,7 +32,8 @@ type NodeFeatureDiscoverySpec struct {
 	Role            *rbacv1.Role               `json:"role,omitempty"`
 	RoleBinding     *rbacv1.RoleBinding        `json:"roleBinding,omitempty"`
 	Service         *corev1.Service            `json:"service,omitempty"`
-	DaemonSet       *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
+	WorkerDaemonSet *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
+	MasterDaemonSet *appsv1.DaemonSet          `json:"daemonSet,omitempty"`
 	Pod             *corev1.Pod                `json:"pod,omitempty"`
 
 	// +optional
