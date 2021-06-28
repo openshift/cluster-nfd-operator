@@ -32,6 +32,7 @@ metadata:
     containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.9
     description: This software enables node feature discovery for OpenShift. It detects hardware features available on each node in an OpenShift cluster, and advertises those features using node labels.
     olm.skipRange: '>=4.6.0 <4.9.0'
+    operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
