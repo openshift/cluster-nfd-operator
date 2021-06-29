@@ -17,3 +17,4 @@ patches:
       path: /metadata/annotations
       value:
         operators.openshift.io/infrastructure-features: '["disconnected"]'
+        
