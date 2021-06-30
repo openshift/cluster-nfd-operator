@@ -27,7 +27,6 @@ const (
 	// AssetsDir defines the directory with assets under the operator image
 	AssetsDir = "/assets"
 
-
 	// Error messages
 	errorCouldNotFindWorkerDaemonSet = "Could not find NFD Operator Worker DaemonSet"
 	errorCouldNotFindMasterDaemonSet = "Could not find NFD Operator Master DaemonSet"
@@ -47,12 +46,22 @@ const (
 //}
 
 // Get the NFD operator's worker daemon set
-func GetWorkerDaemonSet(nfd *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
+func GetWorkerDaemonSet(instance *nfdv1.NodeFeatureDiscovery) (*appsv1.DaemonSet, error) {
+
+	// Initialize the error to 'nil' so that it's easy to keep track
+	// of the error messages
 	var err error = nil
-	if nfd.Spec.WorkerDaemonSet == nil {
+
+	// Index the Worker DaemonSet since it will be referenced often
+	// in this function
+	var ds = instance.Spec.WorkerDaemonSet
+
+	// If the Worker DaemonSet object is empty, try to find it in
+	// the 'NFD' object
+	if ds == nil {
 		err = errors.New(errorCouldNotFindWorkerDaemonSet)
 	}
-	return nfd.Spec.WorkerDaemonSet, err
+	return ds, err
 }
 
 // Get the NFD operator's master daemon set

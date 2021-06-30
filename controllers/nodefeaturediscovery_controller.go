@@ -67,7 +67,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		For(&nfdv1.NodeFeatureDiscovery{}).
 		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
 		Owns(&corev1.Service{}, builder.WithPredicates(p)).
-//service acct, rolebinding, role, service, daemonset
+		//service acct, rolebinding, role, service, daemonset
 		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
 		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
@@ -162,6 +162,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	///XXX TODO: Reorder these and add "updateAvailableConditions" for each
 
+	/*
 	// Check the status of the NFD Operator Service
 	rstatus, err := r.getServiceConditions(instance)
 	if rstatus.isProgressing == true {
@@ -176,22 +177,24 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		r.Log.Info("Unknown error when trying to verify NFD Operator Service")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
+	*/
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err = r.getWorkerDaemonSetConditions(instance)
+	rstatus, err := r.getWorkerDaemonSetConditions(instance, nfd)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
 		return r.updateProgressingCondition(instance, "Worker DaemonSet is progressing", nil)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator DaemonSet")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Daemon Set.")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDDaemonSet, err)
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 	}
 
+	/*
 	// Check the status of the NFD Operator cluster roles
 	rstatus, err = r.getRoleConditions(instance)
 	if rstatus.isProgressing == true {
@@ -251,6 +254,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
+	*/
 
 	// Get available conditions
 	conditions := r.getAvailableConditions()

@@ -6,13 +6,22 @@ import (
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
-	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components/daemonset"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	appsv1 "k8s.io/api/apps/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+//"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components/daemonset"
+
+// nodeType is either 'worker' or 'master'
+type nodeType int
+
+const (
+	worker nodeType = 0
+	master nodeType = 1
 )
 
 //	appsv1 "k8s.io/api/apps/v1"
@@ -21,11 +30,11 @@ import (
 
 const (
 	// Condition failed/degraded messages
-	conditionReasonValidationFailed          = "ValidationFailed"
-	conditionReasonComponentsCreationFailed  = "ComponentCreationFailed"
-	conditionReasonNFDDegraded               = "NFDDegraded"
-	conditionFailedGettingNFDStatus          = "GettingNFDStatusFailed"
-	conditionKubeletFailed                   = "KubeletConfig failure"
+	conditionReasonValidationFailed         = "ValidationFailed"
+	conditionReasonComponentsCreationFailed = "ComponentCreationFailed"
+	conditionReasonNFDDegraded              = "NFDDegraded"
+	conditionFailedGettingNFDStatus         = "GettingNFDStatusFailed"
+	conditionKubeletFailed                  = "KubeletConfig failure"
 
 	// Unknown error occurred
 	conditionFailedGettingKubeletStatus      = "GettingKubeletStatusFailed"
@@ -41,13 +50,13 @@ const (
 	conditionFailedGettingNFDRoleBinding     = "FailedGettingNFDRoleBinding"
 
 	// Resource degraded
-	conditionNFDWorkerConfigDegraded         = "NFDWorkerConfigResourceDegraded"
-	conditionNFDServiceAccountDegraded       = "NFDServiceAccountDegraded"
-	conditionNFDServiceDegraded              = "NFDServiceDegraded"
-	conditionNFDWorkerDaemonSetDegraded      = "NFDWorkerDaemonSetDegraded"
-	conditionNFDMasterDaemonSetDegraded      = "NFDMasterDaemonSetDegraded"
-	conditionNFDRoleDegraded                 = "NFDRoleDegraded"
-	conditionNFDRoleBindingDegraded          = "NFDRoleBindingDegraded"
+	conditionNFDWorkerConfigDegraded    = "NFDWorkerConfigResourceDegraded"
+	conditionNFDServiceAccountDegraded  = "NFDServiceAccountDegraded"
+	conditionNFDServiceDegraded         = "NFDServiceDegraded"
+	conditionNFDWorkerDaemonSetDegraded = "NFDWorkerDaemonSetDegraded"
+	conditionNFDMasterDaemonSetDegraded = "NFDMasterDaemonSetDegraded"
+	conditionNFDRoleDegraded            = "NFDRoleDegraded"
+	conditionNFDRoleBindingDegraded     = "NFDRoleBindingDegraded"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -388,6 +397,9 @@ func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*gener
 		ctype = c.Type
 		cstatus = c.Status
 
+		log.Info("ctype", "ctype", ctype)
+		log.Info("cstatus", "cstatus", cstatus)
+
 		// If available, check the status to make sure that it's
 		// set to 'True'
 		if ctype == "Available" {
@@ -437,36 +449,65 @@ type genericResource struct {
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
-func (r* NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, "worker", n)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, worker, n)
 }
+
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
-func (r* NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, "master", n)
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, master, n)
 }
 
-func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, nodeType string, n NFD) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, node nodeType, n NFD) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
-		isAvailable:   false,
-		isUpgradeable: false,
-		isProgressing: false,
-		isDegraded:    true,
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
 
 	var ds *appsv1.DaemonSet
 	var err error
 	// Attempt to get the daemon set
-	if nodeType == "worker" {
-		daemonset.Set("worker", nfd, n)
+	if node == worker {
+		// Attempt to get the worker DaemonSet. If it cannot be
+		// found, then apply it to the 'nfd' obj
 		ds, err = components.GetWorkerDaemonSet(nfd)
-	} else if nodeType == "master" {
-		daemonset.Set("master", nfd, n)
+		if ds == nil {
+
+			// Try again, but this time by indexing the
+			// 'resourcesMap'
+			ds, err := GetExistingDaemonSet(n)
+
+			// Now set the daemonset (which can be 'nil')
+			nfd.Spec.WorkerDaemonSet = ds
+
+			if err != nil {
+				return rstatus, err
+			}
+		}
+	} else if node == master {
+		// Attempt to get the master DaemonSet. If it cannot be
+		// found, then apply it to the 'nfd' obj
 		ds, err = components.GetMasterDaemonSet(nfd)
+		if ds == nil {
+
+			// Try again, but this time by indexing the
+			// 'resourcesMap'
+			ds, err := GetExistingDaemonSet(n)
+
+			// Now set the daemonset (which can be 'nil')
+			nfd.Spec.MasterDaemonSet = ds
+
+			if err != nil {
+				return rstatus, err
+			}
+		}
 	} else {
 		return rstatus, err
 	}
@@ -480,6 +521,9 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	// Get the DaemonSet conditions as an array of DaemonSet structs
 	dsConditions := ds.Status.Conditions
 
+	log.Info("dsStatus", "contents: ", ds.Status)
+	log.Info("dsConditions", "contents: ", dsConditions)
+
 	// Convert results to a list of genericResource objects so that
 	// the results can be easily interpreted
 	var dsResourcesList []*genericResource
@@ -492,6 +536,8 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 		dsResourcesList = append(dsResourcesList, dsItem)
 	}
 
+	log.Info("dsResourcesList", "len: ", len(dsResourcesList))
+
 	// Return
 	rstatus = r.genericStatusGetter(dsResourcesList)
 	return rstatus, nil
@@ -501,10 +547,10 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{
-		isAvailable:   false,
-		isUpgradeable: false,
-		isProgressing: false,
-		isDegraded:    true,
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
 
@@ -570,10 +616,10 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
-		isAvailable:   false,
-		isUpgradeable: false,
-		isProgressing: false,
-		isDegraded:    true,
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
 
@@ -594,10 +640,10 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
-		isAvailable:   false,
-		isUpgradeable: false,
-		isProgressing: false,
-		isDegraded:    true,
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
 
@@ -621,10 +667,10 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
-		isAvailable:   false,
-		isUpgradeable: false,
-		isProgressing: false,
-		isDegraded:    true,
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
 
