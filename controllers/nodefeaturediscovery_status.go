@@ -138,7 +138,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
-	return reconcile.Result{}, conditionErr
+	return reconcile.Result{}, nil
 }
 
 // updateProgressingCondition is used to mark a given resource as "progressing" so
@@ -478,14 +478,18 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 		// Attempt to get the worker DaemonSet. If it cannot be
 		// found, then apply it to the 'nfd' obj
 		ds, err = components.GetWorkerDaemonSet(nfd)
+		log.Info("worker ds, reference", "worker daemonset: ", err)
 		if ds == nil {
 
 			// Try again, but this time by indexing the
 			// 'resourcesMap'
 			ds, err := GetExistingDaemonSet(n)
+			log.Info("worker ds new", "worker daemonset: ", err)
 
 			// Now set the daemonset (which can be 'nil')
 			nfd.Spec.WorkerDaemonSet = ds
+
+			log.Info("nfd.Spec.WorkerDaemonSet", "ds: ", nfd.Spec.WorkerDaemonSet)
 
 			if err != nil {
 				return rstatus, err
