@@ -161,26 +161,15 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	///XXX TODO: Reorder these and add "updateAvailableConditions" for each
-
-	/*
 	// Check the status of the NFD Operator Service
-	rstatus, err := r.getServiceConditions(instance)
-	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator service is progressing.")
-		return r.updateProgressingCondition(instance, "Service is progressing", nil)
-
-	} else if rstatus.isDegraded == true {
+	rstatus, err := r.getServiceConditions(instance, ctx)
+	if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Service")
-		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Service")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+		return r.updateDegradedCondition(instance, err.Error(), err)
 	}
-	*/
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err := r.getWorkerDaemonSetConditions(instance, ctx, req)
+	rstatus, err = r.getWorkerDaemonSetConditions(instance, ctx)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
 		return r.updateProgressingCondition(instance, "NFDOperatorWorkerDaemonSetIsProgressing", err)
@@ -192,10 +181,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Daemon Set.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
-	}
-
-	if rstatus.isAvailable == true {
-		r.Log.Info("NFD operator daemonset is available")
 	}
 
 	/*

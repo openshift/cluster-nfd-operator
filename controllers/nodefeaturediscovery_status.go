@@ -485,18 +485,18 @@ type genericResource struct {
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, req, worker)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, worker)
 }
 
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, req, master)
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, master)
 }
 
-func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, node nodeType) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -583,7 +583,7 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{
@@ -594,33 +594,21 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the NFD Operator service
-	svc, err := components.GetService(nfd)
+	// Get the existing Service from the reconciler
+	svc := &corev1.Service{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-master"}, svc)
 
-	// If there is an error because the 'svc' pointer is nil, then
-	// the service is progressing because it isn't ready yet.
-	if svc == nil {
-		return rstatus, err
+	// If the Service could not be obtained, then it is degraded
+	if err != nil {
+		return rstatus, errors.New(conditionNFDServiceDegraded)
 	}
 
-	// Get the Service conditions as an array of Service structs
-	svcConditions := svc.Status.Conditions
+	// If we could get the Service, then it is not empty and it exists
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
 
-	// Convert results to a list of genericResource objects so that
-	// the results can be easily interpreted
-	var svccResourcesList []*genericResource
-	for _, svcc := range svcConditions {
-
-		var svcItem = new(genericResource)
-		svcItem.Type = string(svcc.Type)
-		svcItem.Status = string(svcc.Status)
-
-		svccResourcesList = append(svccResourcesList, svcItem)
-	}
-
-	// Return
-	rstatus = r.genericStatusGetter(svccResourcesList)
 	return rstatus, nil
+
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
