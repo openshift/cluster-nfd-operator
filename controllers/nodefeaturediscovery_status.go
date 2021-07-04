@@ -61,13 +61,18 @@ const (
 	conditionNFDRoleDegraded            = "NFDRoleDegraded"
 	conditionNFDRoleBindingDegraded     = "NFDRoleBindingDegraded"
 
-	// Unknown errors
-	conditionNFDWorkerDaemonSetUnknownError    = "NFDWorkerDaemonSetCorrupted"
-	conditionNFDMasterDaemonSetUnknownError    = "NFDMasterDaemonSetCorrupted"
+	// Unknown errors. (These occur when the error is unknown.)
+	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
+	errorNFDMasterDaemonSetUnknown = "NFDMasterDaemonSetCorrupted"
 
-	// Unavailable node errors
-	conditionNFDWorkerDaemonSetUnavailableNode = "NFDWorkerDaemonSetUnavailableNode"
-	conditionNFDMasterDaemonSetUnavailableNode = "NFDMasterDaemonSetUnavailableNode"
+	// Unavailable node errors. (These are triggered when one or
+	// more nodes are unavailable.)
+	errorNFDWorkerDaemonSetUnavailableNode = "NFDWorkerDaemonSetUnavailableNode"
+	errorNFDMasterDaemonSetUnavailableNode = "NFDMasterDaemonSetUnavailableNode"
+
+	// Invalid node type. (Denotes that the node should be either 
+	// 'worker' or 'master')
+	errorInvalidNodeType = "InvalidNodeTypeSelected"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -490,17 +495,17 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	} else if node == master {
 		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-master"}, ds)
 	} else {
-		panic("InvalidNodeTypeSelected")
+		err = errors.New(errorInvalidNodeType)
 	}
 
 	if err != nil {
-		panic("Could not get DaemonSet from reconciler") //temp error. will fix later.
+		return rstatus, err
 	}
-
-	log.Info("ds.obj", "ds: ", ds)
 
 	// Index the DaemonSet status. (Note: there is no "Conditions" array here.)
 	dsStatus := ds.Status
+
+	log.Info("ds.Status", "status", dsStatus)
 
 	// Index the relevant values from here
 	numberReady            := dsStatus.NumberReady
@@ -512,19 +517,19 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	// then we have a problem because we should at least see 1 pod per node
 	if numberDesired == 0 {
 		if node == worker {
-			return rstatus, errors.New(conditionNFDWorkerDaemonSetUnknownError)
+			return rstatus, errors.New(errorNFDWorkerDaemonSetUnknown)
 		}
-		return rstatus, errors.New(conditionNFDMasterDaemonSetUnknownError)
+		return rstatus, errors.New(errorNFDMasterDaemonSetUnknown)
 	}
 	if numberUnavailable > 0 {
 		if node == worker {
-			return rstatus, errors.New(conditionNFDWorkerDaemonSetUnavailableNode)
+			return rstatus, errors.New(errorNFDWorkerDaemonSetUnavailableNode)
 		}
-		return rstatus, errors.New(conditionNFDMasterDaemonSetUnavailableNode)
+		return rstatus, errors.New(errorNFDMasterDaemonSetUnavailableNode)
 	}
 
 	// If there are none scheduled, then we have a problem because we should
-	// at least see 1 pod per node
+	// at least see 1 pod per node, even after the scheduling happens.
 	if currentNumberScheduled == 0 {
 		if node == worker {
 			return rstatus, errors.New(conditionNFDWorkerDaemonSetDegraded)
