@@ -198,22 +198,20 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
 		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
 	}
+	*/
 
 	// Check the status of the NFD Operator worker ConfigMap
-	rstatus, err = r.getWorkerConfigConditions(instance)
-	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator worker config is progressing.")
-		return r.updateProgressingCondition(instance, conditionNFDWorkerConfigDegraded, nil)
-
-	} else if rstatus.isDegraded == true {
+	rstatus, err = r.getWorkerConfigConditions(instance, ctx)
+	if rstatus.isDegraded == true {
 		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
-		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, err)
+		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
 	}
 
+	/*
 	// Check the status of the NFD Operator role binding
 	rstatus, err = r.getRoleBindingConditions(instance)
 	if rstatus.isProgressing == true {

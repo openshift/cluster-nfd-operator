@@ -25,6 +25,8 @@ const (
 	worker nodeType = 0
 	master nodeType = 1
 	nfdNamespace    = "openshift-nfd"
+	workerName      = "nfd-worker"
+	masterName      = "nfd-master"
 )
 
 //	appsv1 "k8s.io/api/apps/v1"
@@ -511,9 +513,9 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	ds := &appsv1.DaemonSet{}
 	var err error = nil
 	if node == worker {
-		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-worker"}, ds)
+		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, ds)
 	} else if node == master {
-		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-master"}, ds)
+		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, ds)
 	} else {
 		err = errors.New(errorInvalidNodeType)
 	}
@@ -596,7 +598,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 	// Get the existing Service from the reconciler
 	svc := &corev1.Service{}
-	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-master"}, svc)
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, svc)
 
 	// If the Service could not be obtained, then it is degraded
 	if err != nil {
@@ -611,7 +613,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{isAvailable: false,
@@ -620,24 +622,20 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
-
-	// Attempt to get the NFD Operator worker config
-	wc, err := components.GetWorkerConfig(nfd)
+	// Get the existing ConfigMap from the reconciler
+	wc := &nfdv1.ConfigMap{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, wc)
 
 	// If 'wc' is nil, then the resource hasn't been created yet
-	if wc == nil {
-		return rstatus, err
+	if err != nil {
+		return rstatus, errors.New(conditionNFDWorkerConfigDegraded)
 	}
 
-	// If the NFD operator worker config was found found, then
-	// update rstatus so that the worker config resource is
-	// marked as 'Available'
-	if err == nil {
-		rstatus.isDegraded = false
-		rstatus.isAvailable = true
-	}
+	// If we could get the WorkerConfig, then it is not empty and it exists
+	rstatus.isDegraded = false
+	rstatus.isAvailable = true
 
-	return rstatus, err
+	return rstatus, nil
 }
 
 func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
@@ -650,6 +648,9 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
+	// Get the existing Service from the reconciler
+	//svc := &corev1.Service{}
+	//err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, svc)
 
 	// Attempt to get the Role
 	role, err := components.GetRole(nfd)
