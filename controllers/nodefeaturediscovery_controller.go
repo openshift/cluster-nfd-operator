@@ -180,18 +180,22 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	*/
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err := r.getWorkerDaemonSetConditions(instance, ctx, req, worker)
+	rstatus, err := r.getWorkerDaemonSetConditions(instance, ctx, req)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
-		return r.updateProgressingCondition(instance, "Worker DaemonSet is progressing", nil)
+		return r.updateProgressingCondition(instance, "NFDOperatorWorkerDaemonSetIsProgressing", err)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator DaemonSet")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Daemon Set.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+	}
+
+	if rstatus.isAvailable == true {
+		r.Log.Info("NFD operator daemonset is available")
 	}
 
 	/*
@@ -261,6 +265,8 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Update the status of the resource on the CRD
 	r.updateStatus(instance, conditions)
+
+	//return r.updateAvailableCondition(instance)
 
 	if err := r.updateStatus(instance, conditions); err != nil {
 		if &result != nil {

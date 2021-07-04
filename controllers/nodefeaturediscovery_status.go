@@ -73,6 +73,10 @@ const (
 	// Invalid node type. (Denotes that the node should be either 
 	// 'worker' or 'master')
 	errorInvalidNodeType = "InvalidNodeTypeSelected"
+
+	// More nodes are listed as "ready" than selected
+	errorTooManyNFDWorkerDaemonSetReadyNodes = "NFDWorkerDaemonSetHasMoreNodesThanScheduled"
+	errorTooManyNFDMasterDaemonSetReadyNodes = "NFDMasterDaemonSetHasMoreNodesThanScheduled"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -154,7 +158,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
-	return reconcile.Result{}, nil
+	return reconcile.Result{}, conditionErr
 }
 
 // updateProgressingCondition is used to mark a given resource as "progressing" so
@@ -177,6 +181,22 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, conditionErr
+}
+
+// updateAvailableCondition is used to mark a given resource as "progressing" so
+// that the reconciler can take steps to rectify the situation.
+func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.NodeFeatureDiscovery) (ctrl.Result, error) {
+	r.Log.Info("Entering progressing condition func")
+
+	conditions := r.getAvailableConditions()
+	r.Log.Info("Got available conditions")
+	if nfd == nil {
+		r.Log.Info("nfd is 'nil'")
+	}
+	if err := r.updateStatus(nfd, conditions); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, errors.New("CouldNotUpdateAvailableConditions")
 }
 
 // getAvailableConditions returns a list of conditionsv1.Condition objects and marks
@@ -465,15 +485,15 @@ type genericResource struct {
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, req, node)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, req, worker)
 }
 
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, req, node)
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, req, master)
 }
 
 func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
@@ -535,6 +555,17 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 			return rstatus, errors.New(conditionNFDWorkerDaemonSetDegraded)
 		}
 		return rstatus, errors.New(conditionNFDMasterDaemonSetDegraded)
+	}
+
+	// Just check in case the number of "ready" nodes is greater than the
+	// number of scheduled ones (for whatever reason)
+	if numberReady > currentNumberScheduled {
+		rstatus.isDegraded = false
+		rstatus.numActiveStatuses = 0
+		if node == worker {
+			return rstatus, errors.New(errorTooManyNFDWorkerDaemonSetReadyNodes)
+		}
+		return rstatus, errors.New(errorTooManyNFDMasterDaemonSetReadyNodes)
 	}
 
 	// If we have less than the number of scheduled pods, then the DaemonSet
