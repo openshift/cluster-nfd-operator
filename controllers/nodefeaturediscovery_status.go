@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"time"
+	"errors"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
@@ -12,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components/daemonset"
@@ -22,6 +24,7 @@ type nodeType int
 const (
 	worker nodeType = 0
 	master nodeType = 1
+	nfdNamespace    = "openshift-nfd"
 )
 
 //	appsv1 "k8s.io/api/apps/v1"
@@ -36,7 +39,7 @@ const (
 	conditionFailedGettingNFDStatus         = "GettingNFDStatusFailed"
 	conditionKubeletFailed                  = "KubeletConfig failure"
 
-	// Unknown error occurred
+	// Resource is missing
 	conditionFailedGettingKubeletStatus      = "GettingKubeletStatusFailed"
 	conditionFailedGettingNFDCustomConfig    = "FailedGettingNFDCustomConfig"
 	conditionFailedGettingNFDOperand         = "FailedGettingNFDOperand"
@@ -57,6 +60,14 @@ const (
 	conditionNFDMasterDaemonSetDegraded = "NFDMasterDaemonSetDegraded"
 	conditionNFDRoleDegraded            = "NFDRoleDegraded"
 	conditionNFDRoleBindingDegraded     = "NFDRoleBindingDegraded"
+
+	// Unknown errors
+	conditionNFDWorkerDaemonSetUnknownError    = "NFDWorkerDaemonSetCorrupted"
+	conditionNFDMasterDaemonSetUnknownError    = "NFDMasterDaemonSetCorrupted"
+
+	// Unavailable node errors
+	conditionNFDWorkerDaemonSetUnavailableNode = "NFDWorkerDaemonSetUnavailableNode"
+	conditionNFDMasterDaemonSetUnavailableNode = "NFDMasterDaemonSetUnavailableNode"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -449,18 +460,18 @@ type genericResource struct {
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, worker, n)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, req, node)
 }
 
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, n NFD) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, master, n)
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(nfd, ctx, req, node)
 }
 
-func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, node nodeType, n NFD) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, req ctrl.Request, node nodeType) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -471,79 +482,68 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 		numActiveStatuses: 1,
 	}
 
-	var ds *appsv1.DaemonSet
-	var err error
-	// Attempt to get the daemon set
+	// Get the existing DaemonSet from the reconciler
+	ds := &appsv1.DaemonSet{}
+	var err error = nil
 	if node == worker {
-		// Attempt to get the worker DaemonSet. If it cannot be
-		// found, then apply it to the 'nfd' obj
-		ds, err = components.GetWorkerDaemonSet(nfd)
-		log.Info("worker ds, reference", "worker daemonset: ", err)
-		if ds == nil {
-
-			// Try again, but this time by indexing the
-			// 'resourcesMap'
-			ds, err := GetExistingDaemonSet(n)
-			log.Info("worker ds new", "worker daemonset: ", err)
-
-			// Now set the daemonset (which can be 'nil')
-			nfd.Spec.WorkerDaemonSet = ds
-
-			log.Info("nfd.Spec.WorkerDaemonSet", "ds: ", nfd.Spec.WorkerDaemonSet)
-
-			if err != nil {
-				return rstatus, err
-			}
-		}
+		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-worker"}, ds)
 	} else if node == master {
-		// Attempt to get the master DaemonSet. If it cannot be
-		// found, then apply it to the 'nfd' obj
-		ds, err = components.GetMasterDaemonSet(nfd)
-		if ds == nil {
-
-			// Try again, but this time by indexing the
-			// 'resourcesMap'
-			ds, err := GetExistingDaemonSet(n)
-
-			// Now set the daemonset (which can be 'nil')
-			nfd.Spec.MasterDaemonSet = ds
-
-			if err != nil {
-				return rstatus, err
-			}
-		}
+		err = r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: "nfd-master"}, ds)
 	} else {
-		return rstatus, err
+		panic("InvalidNodeTypeSelected")
 	}
 
-	// If there is an error finding the DaemonSet, then the status
-	// is either "Progressing" or "Degraded"
-	if ds == nil {
-		return rstatus, err
+	if err != nil {
+		panic("Could not get DaemonSet from reconciler") //temp error. will fix later.
 	}
 
-	// Get the DaemonSet conditions as an array of DaemonSet structs
-	dsConditions := ds.Status.Conditions
+	log.Info("ds.obj", "ds: ", ds)
 
-	log.Info("dsStatus", "contents: ", ds.Status)
-	log.Info("dsConditions", "contents: ", dsConditions)
+	// Index the DaemonSet status. (Note: there is no "Conditions" array here.)
+	dsStatus := ds.Status
 
-	// Convert results to a list of genericResource objects so that
-	// the results can be easily interpreted
-	var dsResourcesList []*genericResource
-	for _, dsc := range dsConditions {
+	// Index the relevant values from here
+	numberReady            := dsStatus.NumberReady
+	currentNumberScheduled := dsStatus.CurrentNumberScheduled
+	numberDesired          := dsStatus.DesiredNumberScheduled
+	numberUnavailable      := dsStatus.NumberUnavailable
 
-		var dsItem = new(genericResource)
-		dsItem.Type = string(dsc.Type)
-		dsItem.Status = string(dsc.Status)
-
-		dsResourcesList = append(dsResourcesList, dsItem)
+	// If the number desired is zero or the number of unavailable nodes is zero,
+	// then we have a problem because we should at least see 1 pod per node
+	if numberDesired == 0 {
+		if node == worker {
+			return rstatus, errors.New(conditionNFDWorkerDaemonSetUnknownError)
+		}
+		return rstatus, errors.New(conditionNFDMasterDaemonSetUnknownError)
+	}
+	if numberUnavailable > 0 {
+		if node == worker {
+			return rstatus, errors.New(conditionNFDWorkerDaemonSetUnavailableNode)
+		}
+		return rstatus, errors.New(conditionNFDMasterDaemonSetUnavailableNode)
 	}
 
-	log.Info("dsResourcesList", "len: ", len(dsResourcesList))
+	// If there are none scheduled, then we have a problem because we should
+	// at least see 1 pod per node
+	if currentNumberScheduled == 0 {
+		if node == worker {
+			return rstatus, errors.New(conditionNFDWorkerDaemonSetDegraded)
+		}
+		return rstatus, errors.New(conditionNFDMasterDaemonSetDegraded)
+	}
 
-	// Return
-	rstatus = r.genericStatusGetter(dsResourcesList)
+	// If we have less than the number of scheduled pods, then the DaemonSet
+	// is in progress
+	if numberReady < currentNumberScheduled {
+		rstatus.isProgressing = true
+		rstatus.isDegraded = false
+		return rstatus, nil
+	}
+
+	// If all nodes are ready, then update the status to be "isAvailable"
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
+
 	return rstatus, nil
 }
 

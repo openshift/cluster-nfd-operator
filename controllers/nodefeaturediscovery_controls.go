@@ -30,6 +30,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
+//type nodeType int
+
+//const (
+//	worker nodeType = 0
+//	master nodeType = 1
+//)
+
 type controlFunc []func(n NFD) (ResourceStatus, error)
 
 // Status of the resource (0 or 1, for Ready/NotReady)
@@ -410,19 +417,27 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 
 // GetExistingDaemonSet gets the DaemonSet object from the 'n.resources'
 // attribute.
-func GetExistingDaemonSet(n NFD) (*appsv1.DaemonSet, error) {
+func GetExistingDaemonSet(n NFD, node nodeType) (*appsv1.DaemonSet, error) {
 
 	emptyDaemonSet := appsv1.DaemonSet{}
-
 	for _, resource := range n.resources {
+
+		// Get daemonset and the type (worker or master)
+		ds := resource.DaemonSet
 		if !reflect.DeepEqual(resource.DaemonSet, emptyDaemonSet) {
-			return &resource.DaemonSet, nil
+
+			// Determine if worker or master
+			dsName := ds.ObjectMeta.Name
+
+			if dsName == "nfd-worker" && node == worker {
+				return &resource.DaemonSet, nil
+			} else if dsName == "nfd-master" && node == master {
+				return &resource.DaemonSet, nil
+			}
 		}
 	}
 
-
 	return &emptyDaemonSet, errors.New("DaemonSetDoesNotExist")
-
 }
 
 // DaemonSet attempts to create a DaemonSet in a given Namespace. If

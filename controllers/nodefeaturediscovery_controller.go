@@ -180,7 +180,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	*/
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err := r.getWorkerDaemonSetConditions(instance, nfd)
+	rstatus, err := r.getWorkerDaemonSetConditions(instance, ctx, req, worker)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
 		return r.updateProgressingCondition(instance, "Worker DaemonSet is progressing", nil)
