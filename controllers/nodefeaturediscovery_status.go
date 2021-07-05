@@ -16,8 +16,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components/daemonset"
-
 // nodeType is either 'worker' or 'master'
 type nodeType int
 
@@ -28,10 +26,6 @@ const (
 	workerName      = "nfd-worker"
 	masterName      = "nfd-master"
 )
-
-//	appsv1 "k8s.io/api/apps/v1"
-//	"errors"
-//	"fmt"
 
 const (
 	// Condition failed/degraded messages
@@ -55,13 +49,15 @@ const (
 	conditionFailedGettingNFDRoleBinding     = "FailedGettingNFDRoleBinding"
 
 	// Resource degraded
-	conditionNFDWorkerConfigDegraded    = "NFDWorkerConfigResourceDegraded"
-	conditionNFDServiceAccountDegraded  = "NFDServiceAccountDegraded"
-	conditionNFDServiceDegraded         = "NFDServiceDegraded"
-	conditionNFDWorkerDaemonSetDegraded = "NFDWorkerDaemonSetDegraded"
-	conditionNFDMasterDaemonSetDegraded = "NFDMasterDaemonSetDegraded"
-	conditionNFDRoleDegraded            = "NFDRoleDegraded"
-	conditionNFDRoleBindingDegraded     = "NFDRoleBindingDegraded"
+	conditionNFDWorkerConfigDegraded        = "NFDWorkerConfigResourceDegraded"
+	conditionNFDServiceAccountDegraded      = "NFDServiceAccountDegraded"
+	conditionNFDServiceDegraded             = "NFDServiceDegraded"
+	conditionNFDWorkerDaemonSetDegraded     = "NFDWorkerDaemonSetDegraded"
+	conditionNFDMasterDaemonSetDegraded     = "NFDMasterDaemonSetDegraded"
+	conditionNFDRoleDegraded                = "NFDRoleDegraded"
+	conditionNFDRoleBindingDegraded         = "NFDRoleBindingDegraded"
+	conditionNFDClusterRoleDegraded         = "NFDClusterRoleDegraded"
+	conditionNFDClusterRoleBindingDegraded  = "NFDClusterRoleBindingDegraded"
 
 	// Unknown errors. (These occur when the error is unknown.)
 	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
@@ -301,104 +297,6 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 	}
 }
 
-//// getConditionOfResource gets the conditions of a specific resource
-//func (r *NodeFeatureDiscoveryReconciler) getConditionOfResource(resourceName string, conditions []conditionsv1.Condition) (bool, bool, bool, bool) {
-//
-//	// Set vars that determine if a status is 'true' or 'false
-//	var isAvailable    bool
-//	var isUpgradeable  bool
-//	var isProgressing  bool
-//	var isDegraded     bool
-//
-//	isAvailable   = false
-//	isUpgradeable = false
-//	isProgressing = false
-//	isDegraded    = false
-//
-//	// The next step captures the statuses, so use this variable to
-//	// keep track of the number of "true" results
-//	var numStatusesAsTrue int
-//	numStatusesAsTrue = 0
-//
-//	// Get the resource status via index in the 'Condition' interface
-//	for _, c := range conditions {
-//
-//		r.Log.Info("%q", c)
-//
-//		// If available, check the status to make sure that it's
-//		// set to 'True'
-//		if c.Type == "Available" {
-//			r.Log.Info("Available")
-//			availableStatus := c.Status
-//			if availableStatus == "True" {
-//				isAvailable = true
-//				numStatusesAsTrue++
-//			}
-//		} else if c.Type == "Upgradeable" {
-//			r.Log.Info("Upgradeable")
-//			upgradeableStatus := c.Status
-//			if upgradeableStatus == "True" {
-//				isUpgradeable = true
-//				numStatusesAsTrue++
-//			}
-//		} else if c.Type == "Progressing" {
-//			r.Log.Info("Progressing")
-//			progressingStatus := c.Status
-//			if progressingStatus == "True" {
-//				isProgressing = true
-//				numStatusesAsTrue++
-//			}
-//		} else if c.Type == "Degraded" {
-//			r.Log.Info("Degraded")
-//			degradedStatus := c.Status
-//			if degradedStatus == "True" {
-//				isDegraded = true
-//				numStatusesAsTrue++
-//			}
-//		}
-//	}
-//
-//	if numStatusesAsTrue == 0 {
-//		panic("All statuses are false. There should be at least 1 true type")
-//	} else if numStatusesAsTrue > 1 {
-//		panic("More than 1 status is set to true")
-//	}
-//
-//	return isAvailable, isUpgradeable, isProgressing, isDegraded
-//}
-
-//// resourceIsDegraded determines if a resource is degraded or not
-//func (r *NodeFeatureDiscoveryReconciler) resourceIsDegraded(resourceName string, conditions []conditionsv1.Condition) bool {
-//	_, _, _, isDegraded := r.getConditionOfResource(resourceName, conditions)
-//	if isDegraded == true {
-//		return true
-//	}
-//	return false
-//}
-
-//func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-//
-//	// Attempt to get the cluster role binding
-//	crb, err := components.GetClusterRoleBinding(nfd)
-//	if err != nil || crb == nil {
-//		messageString := fmt.Sprint(err)
-//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-//	}
-//
-//	return nil, nil
-//}
-
-//func (r *NodeFeatureDiscoveryReconciler) getPodConditions(nfd *nfdv1.NodeFeatureDiscovery) ([]conditionsv1.Condition, error) {
-//
-//	// Attempt to get the pod
-//	pod, err := components.GetPod(nfd)
-//	if err != nil || pod == nil {
-//		messageString := fmt.Sprint(err)
-//		return r.getDegradedConditions(conditionReasonNFDDegraded, messageString), errors.New(conditionReasonNFDDegraded)
-//	}
-//
-//	return nil, nil
-//}
 
 // The status of the resource (available, upgradeable, progressing, or
 // degraded).
@@ -692,7 +590,7 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -703,16 +601,70 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the Service Account from the reconciler
+	// Get the existing ClusterRole from the reconciler
+	clusterRole := &rbacv1.ClusterRole{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: "", Name: masterName}, clusterRole)
+
+	// If 'clusterRole' is nil, then it hasn't been (re)created yet
+	if err != nil {
+		return rstatus, errors.New(conditionNFDClusterRoleDegraded)
+	}
+
+	// Set the resource to available
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
+
+	return rstatus, nil
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+
+	// Initialize Resource Status to 'Degraded'
+	rstatus := resourceStatus{
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
+		numActiveStatuses: 1,
+	}
+
+	// Get the existing ClusterRoleBinding from the reconciler
+	clusterRoleBinding := &rbacv1.ClusterRoleBinding{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: "", Name: masterName}, clusterRoleBinding)
+
+	// If 'clusterRole' is nil, then it hasn't been (re)created yet
+	if err != nil {
+		return rstatus, errors.New(conditionNFDClusterRoleBindingDegraded)
+	}
+
+	// Set the resource to available
+	rstatus.isAvailable = true
+	rstatus.isDegraded = false
+
+	return rstatus, nil
+}
+
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+
+	// initialize resource status to 'degraded'
+	rstatus := resourceStatus{
+		isAvailable:       false,
+		isUpgradeable:     false,
+		isProgressing:     false,
+		isDegraded:        true,
+		numActiveStatuses: 1,
+	}
+
+	// Attempt to get the service account from the reconciler
 	sa := &corev1.ServiceAccount{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, sa)
 
-	// If 'rb' is nil, then it hasn't been (re)created yet
+	// if 'sa' is nil, then it hasn't been (re)created yet
 	if err != nil {
 		return rstatus, errors.New(conditionNFDServiceAccountDegraded)
 	}
 
-	// Set the resource to available
+	// set the resource to available
 	rstatus.isAvailable = true
 	rstatus.isDegraded = false
 

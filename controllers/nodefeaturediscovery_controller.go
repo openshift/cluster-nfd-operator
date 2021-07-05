@@ -172,6 +172,39 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
 
+	// Check the status of the NFD Operator role
+	rstatus, err = r.getRoleConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Info("Failed getting NFD operator Role")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator role.")
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
+	}
+
+	// Check the status of the NFD Operator cluster role
+	rstatus, err = r.getClusterRoleConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Info("Failed getting NFD operator Cluster Role")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
+	}
+
+	// Check the status of the NFD Operator cluster role binding
+	rstatus, err = r.getClusterRoleBindingConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Info("Failed getting NFD operator Cluster Role")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role binding.")
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
+	}
+
 	// Check the status of the NFD Operator role binding
 	rstatus, err = r.getRoleBindingConditions(instance, ctx)
 	if rstatus.isDegraded == true {
@@ -181,17 +214,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Role Binding.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
-	}
-
-	// Check the status of the NFD Operator role
-	rstatus, err = r.getRoleConditions(instance, ctx)
-	if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Role")
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
-		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
 	}
 
 	// Check the status of the NFD Operator Service
