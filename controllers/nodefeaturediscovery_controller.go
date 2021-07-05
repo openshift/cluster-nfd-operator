@@ -22,6 +22,7 @@ import (
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	criapierrors "k8s.io/cri-api/pkg/errors"
@@ -65,11 +66,11 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&nfdv1.NodeFeatureDiscovery{}).
-		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
+		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
+		Owns(&rbacv1.RoleBinding{}, builder.WithPredicates(p)).
+		Owns(&rbacv1.Role{}, builder.WithPredicates(p)).
 		Owns(&corev1.Service{}, builder.WithPredicates(p)).
-		//service acct, rolebinding, role, service, daemonset
-		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
-		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
+		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
 		Owns(&security.SecurityContextConstraints{}).
 		Complete(r)
@@ -160,12 +161,48 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return reconcile.Result{}, err
 	}
 
-	///XXX TODO: Reorder these and add "updateAvailableConditions" for each
+	// Check the status of the NFD Operator ServiceAccount
+	rstatus, err := r.getServiceAccountConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Error(err, "Failed getting NFD operator Service Account")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+	}
+
+	// Check the status of the NFD Operator role binding
+	rstatus, err = r.getRoleBindingConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Error(err, "Failed getting NFD operator Role Binding")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Role Binding.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
+	}
+
+	// Check the status of the NFD Operator role
+	rstatus, err = r.getRoleConditions(instance, ctx)
+	if rstatus.isDegraded == true {
+		r.Log.Info("Failed getting NFD operator Role")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
+	}
+
 	// Check the status of the NFD Operator Service
-	rstatus, err := r.getServiceConditions(instance, ctx)
+	rstatus, err = r.getServiceConditions(instance, ctx)
 	if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Service")
 		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator Service.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
@@ -184,22 +221,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	/*
-	// Check the status of the NFD Operator cluster roles
-	rstatus, err = r.getRoleConditions(instance)
-	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator cluster role is progressing.")
-		return r.updateProgressingCondition(instance, conditionNFDRoleDegraded, nil)
-
-	} else if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Role")
-		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
-		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
-	}
-	*/
-
 	// Check the status of the NFD Operator worker ConfigMap
 	rstatus, err = r.getWorkerConfigConditions(instance, ctx)
 	if rstatus.isDegraded == true {
@@ -209,37 +230,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
-	}
-
-	/*
-	// Check the status of the NFD Operator role binding
-	rstatus, err = r.getRoleBindingConditions(instance)
-	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator cluster role binding is progressing.")
-		//return r.updateProgressingCondition(instance, conditionNFDClusterRoleDegraded, nil)
-
-	} else if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD operator Role Binding")
-		return r.updateDegradedCondition(instance, conditionNFDRoleBindingDegraded, err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Role Binding.")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
-	}
-
-	// Check the status of the NFD Operator ServiceAccount
-	rstatus, err = r.getServiceAccountConditions(instance)
-	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator service account is progressing.")
-		return r.updateProgressingCondition(instance, conditionNFDServiceAccountDegraded, nil)
-
-	} else if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD operator Service Account")
-		return r.updateDegradedCondition(instance, conditionNFDServiceAccountDegraded, err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
 	*/
 

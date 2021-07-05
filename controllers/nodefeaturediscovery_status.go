@@ -6,10 +6,10 @@ import (
 	"errors"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	"github.com/openshift/cluster-nfd-operator/pkq/controller/nodefeaturediscovery/components"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -626,7 +626,7 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 	wc := &nfdv1.ConfigMap{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, wc)
 
-	// If 'wc' is nil, then the resource hasn't been created yet
+	// If 'wc' is nil, then the resource hasn't been (re)created yet
 	if err != nil {
 		return rstatus, errors.New(conditionNFDWorkerConfigDegraded)
 	}
@@ -638,7 +638,7 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -648,14 +648,14 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 		isDegraded:        true,
 		numActiveStatuses: 1,
 	}
-	// Get the existing Service from the reconciler
-	//svc := &corev1.Service{}
-	//err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, svc)
 
-	// Attempt to get the Role
-	role, err := components.GetRole(nfd)
-	if role == nil {
-		return rstatus, err
+	// Get the existing Role from the reconciler
+	role := &rbacv1.Role{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, role)
+
+	// If 'role' is nil, then it hasn't been (re)created yet
+	if err != nil {
+		return rstatus, errors.New(conditionNFDRoleDegraded)
 	}
 
 	// Set the resource to available
@@ -665,7 +665,7 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -676,13 +676,13 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the role binding
-	roleb, err := components.GetRoleBinding(nfd)
-	if roleb == nil {
-		rstatus.isProgressing = true
-		rstatus.isDegraded = false
-	} else if err != nil {
-		return rstatus, err
+	// Get the existing RoleBinding from the reconciler
+	rb := &rbacv1.RoleBinding{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, rb)
+
+	// If 'rb' is nil, then it hasn't been (re)created yet
+	if err != nil {
+		return rstatus, errors.New(conditionNFDRoleBindingDegraded)
 	}
 
 	// Set the resource to available
@@ -692,7 +692,7 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -703,13 +703,13 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.
 		numActiveStatuses: 1,
 	}
 
-	// Attempt to get the Service Account
-	sa, err := components.GetServiceAccount(nfd)
-	if sa == nil {
-		rstatus.isProgressing = true
-		rstatus.isDegraded = false
-	} else if err != nil {
-		return rstatus, err
+	// Attempt to get the Service Account from the reconciler
+	sa := &corev1.ServiceAccount{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: masterName}, sa)
+
+	// If 'rb' is nil, then it hasn't been (re)created yet
+	if err != nil {
+		return rstatus, errors.New(conditionNFDServiceAccountDegraded)
 	}
 
 	// Set the resource to available
