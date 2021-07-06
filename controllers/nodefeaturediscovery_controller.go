@@ -227,6 +227,17 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
 	}
 
+	// Check the status of the NFD Operator worker ConfigMap
+	rstatus, err = r.getWorkerConfigConditions(nfd)
+	if rstatus.isDegraded == true {
+		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	}
+
 	// Check the status of the NFD Operator Worker DaemonSet
 	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
@@ -240,17 +251,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	} else if err != nil {
 		r.Log.Info("Unknown error when trying to verify NFD Operator Daemon Set.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
-	}
-
-	// Check the status of the NFD Operator worker ConfigMap
-	rstatus, err = r.getWorkerConfigConditions(nfd)
-	if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
 	}
 
 	// Get available conditions

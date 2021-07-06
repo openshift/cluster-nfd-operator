@@ -312,76 +312,6 @@ type resourceStatus struct {
 	numActiveStatuses int
 }
 
-// genericStatusGetter is a genric function that interprets the condition
-// status of a given resource (e.g., DaemonSet, Service, etc.)
-func (r *NodeFeatureDiscoveryReconciler) genericStatusGetter(conditions []*genericResource) resourceStatus {
-
-	// Initialize object which will hold all the results
-	rstatus := resourceStatus{isAvailable: false,
-		isUpgradeable:     false,
-		isProgressing:     false,
-		isDegraded:        false,
-		numActiveStatuses: 0,
-	}
-
-	var ctype string
-	var cstatus string
-
-	// Get the resource status via index in the 'Condition' interface
-	for _, c := range conditions {
-
-		ctype = c.Type
-		cstatus = c.Status
-
-		log.Info("ctype", "ctype", ctype)
-		log.Info("cstatus", "cstatus", cstatus)
-
-		// If available, check the status to make sure that it's
-		// set to 'True'
-		if ctype == "Available" {
-			r.Log.Info("Available")
-			if cstatus == "True" {
-				rstatus.isAvailable = true
-				rstatus.numActiveStatuses++
-			}
-		} else if ctype == "Upgradeable" {
-			r.Log.Info("Upgradeable")
-			if cstatus == "True" {
-				rstatus.isUpgradeable = true
-				rstatus.numActiveStatuses++
-			}
-		} else if ctype == "Progressing" {
-			r.Log.Info("Progressing")
-			if cstatus == "True" {
-				rstatus.isProgressing = true
-				rstatus.numActiveStatuses++
-			}
-		} else if ctype == "Degraded" {
-			r.Log.Info("Degraded")
-			if cstatus == "True" {
-				rstatus.isDegraded = true
-				rstatus.numActiveStatuses++
-			}
-		} else {
-			r.Log.Info("Invalid status")
-			panic("Invalid resource status")
-		}
-	}
-
-	if rstatus.numActiveStatuses == 0 {
-		panic("Number of active condition statuses are 0")
-	} else if rstatus.numActiveStatuses > 1 {
-		panic("Number of active condition statuses are >1. Only one active status is allowed.")
-	}
-
-	return rstatus
-}
-
-type genericResource struct {
-	Type   string
-	Status string
-}
-
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
@@ -442,10 +372,12 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Co
 		return rstatus, errors.New(errorNFDMasterDaemonSetUnknown)
 	}
 	if numberUnavailable > 0 {
+		rstatus.isProgressing = true
+		rstatus.isDegraded = false
 		if node == worker {
-			return rstatus, errors.New(errorNFDWorkerDaemonSetUnavailableNode)
+			return rstatus, nil
 		}
-		return rstatus, errors.New(errorNFDMasterDaemonSetUnavailableNode)
+		return rstatus, nil
 	}
 
 	// If there are none scheduled, then we have a problem because we should
