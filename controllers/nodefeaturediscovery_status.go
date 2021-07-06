@@ -385,18 +385,18 @@ type genericResource struct {
 // getWorkerDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, worker)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx context.Context) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(ctx, worker)
 }
 
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(nfd, ctx, master)
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(ctx context.Context) (resourceStatus, error) {
+	return r.__getDaemonSetConditions(ctx, master)
 }
 
-func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context, node nodeType) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Context, node nodeType) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -483,7 +483,7 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{
@@ -511,7 +511,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(nfd *nfdv1.NodeFea
 
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{isAvailable: false,
@@ -536,7 +536,7 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(nfd *nfdv1.No
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -563,7 +563,7 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(nfd *nfdv1.NodeFeatur
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -590,7 +590,7 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -617,7 +617,7 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(nfd *nfdv1.Nod
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -644,7 +644,7 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(nfd *nf
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(nfd *nfdv1.NodeFeatureDiscovery, ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(ctx context.Context) (resourceStatus, error) {
 
 	// initialize resource status to 'degraded'
 	rstatus := resourceStatus{
