@@ -511,7 +511,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(ctx context.Contex
 
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(ctx context.Context) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(n NFD) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Progressing'
 	rstatus := resourceStatus{isAvailable: false,
@@ -521,11 +521,13 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(ctx context.C
 		numActiveStatuses: 1,
 	}
 	// Get the existing ConfigMap from the reconciler
-	wc := &nfdv1.ConfigMap{}
-	err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, wc)
+	//wc := &nfdv1.ConfigMap{}
+	//err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, wc)
+
+	wc := n.ins.Spec.WorkerConfig.ConfigData
 
 	// If 'wc' is nil, then the resource hasn't been (re)created yet
-	if err != nil {
+	if wc == "" {
 		return rstatus, errors.New(conditionNFDWorkerConfigDegraded)
 	}
 

@@ -242,9 +242,8 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 	}
 
-	/*
 	// Check the status of the NFD Operator worker ConfigMap
-	rstatus, err = r.getWorkerConfigConditions(ctx)
+	rstatus, err = r.getWorkerConfigConditions(nfd)
 	if rstatus.isDegraded == true {
 		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
 		return r.updateDegradedCondition(instance, err.Error(), err)
@@ -253,7 +252,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
 	}
-	*/
 
 	// Get available conditions
 	conditions := r.getAvailableConditions()
