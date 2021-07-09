@@ -75,6 +75,11 @@ const (
 	// More nodes are listed as "ready" than selected
 	errorTooManyNFDWorkerDaemonSetReadyNodes = "NFDWorkerDaemonSetHasMoreNodesThanScheduled"
 	errorTooManyNFDMasterDaemonSetReadyNodes = "NFDMasterDaemonSetHasMoreNodesThanScheduled"
+
+	// DaemonSet warnings (for "Progressing" conditions)
+	warningNumberOfReadyNodesIsLessThanScheduled = "warningNumberOfReadyNodesIsLessThanScheduled"
+	warningNFDWorkerDaemonSetProgressing         = "warningNFDWorkerDaemonSetProgressing"
+	warningNFDMasterDaemonSetProgressing         = "warningNFDMasterDaemonSetProgressing"
 )
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
@@ -375,9 +380,9 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Co
 		rstatus.isProgressing = true
 		rstatus.isDegraded = false
 		if node == worker {
-			return rstatus, nil
+			return rstatus, errors.New(warningNFDWorkerDaemonSetProgressing)
 		}
-		return rstatus, nil
+		return rstatus, errors.New(warningNFDMasterDaemonSetProgressing)
 	}
 
 	// If there are none scheduled, then we have a problem because we should
@@ -405,7 +410,7 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Co
 	if numberReady < currentNumberScheduled {
 		rstatus.isProgressing = true
 		rstatus.isDegraded = false
-		return rstatus, nil
+		return rstatus, errors.New(warningNumberOfReadyNodesIsLessThanScheduled)
 	}
 
 	// If all nodes are ready, then update the status to be "isAvailable"

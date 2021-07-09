@@ -242,7 +242,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
-		return r.updateProgressingCondition(instance, "NFDOperatorWorkerDaemonSetIsProgressing", err)
+		return r.updateProgressingCondition(instance, err.Error(), err)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Worker DaemonSet")
@@ -257,7 +257,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	rstatus, err = r.getMasterDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
 		r.Log.Info("NFD operator Master DaemonSet is progressing.")
-		return r.updateProgressingCondition(instance, "NFDOperatorMasterDaemonSetIsProgressing", err)
+		return r.updateProgressingCondition(instance, err.Error(), err)
 
 	} else if rstatus.isDegraded == true {
 		r.Log.Info("Failed getting NFD operator Master DaemonSet")
