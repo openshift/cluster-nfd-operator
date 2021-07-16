@@ -30,13 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-//type nodeType int
-
-//const (
-//	worker nodeType = 0
-//	master nodeType = 1
-//)
-
 type controlFunc []func(n NFD) (ResourceStatus, error)
 
 // Status of the resource (0 or 1, for Ready/NotReady)

@@ -86,25 +86,15 @@ const (
 // available, etc.)
 func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDiscovery, conditions []conditionsv1.Condition) error {
 
-	r.Log.Info("HERE IN 'updateStatus' func - INIT")
-
 	// The actual 'nfd' object should *not* be modified when trying to
 	// check the object's status. This variable is a dummy variable used
 	// to set temporary conditions.
 	nfdCopy := nfd.DeepCopy()
 
-	r.Log.Info("HERE IN 'updateStatus' func - COPIED NFD")
-
-	//nfdCopy.Status.Conditions = conditions
-
 	// If a set of conditions exists, then it should be added to the
 	// 'nfd' Copy.
 	if conditions != nil {
 		nfdCopy.Status.Conditions = conditions
-		r.Log.Info("HERE IN 'updateStatus' func - COPIED CONDITIONS TO NFD")
-	} else {
-		r.Log.Info("HERE IN 'updateStatus' func - DID NOT COPY CONDITIONS TO NFD")
-
 	}
 
 	// Next step is to check if we need to update the status
@@ -132,20 +122,15 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 	// of 'conditions' is not empty, it should not be counted as an update
 	// if it was already counted as an update before.
 	if !modified {
-		r.Log.Info("HERE IN 'updateStatus' func - STATUS WAS NOT MODIFIED")
 		return nil
 	}
-	r.Log.Info("HERE IN 'updateStatus' func - RETURNING STATUS UPDATE")
 
-	//klog.Infof("Updating the NFD status")
-	//klog.Infof("Conditions: %v", conditions)
 	return r.Status().Update(context.TODO(), nfdCopy)
 }
 
 // updateDegradedCondition is used to mark a given resource as "degraded" so that
 // the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
-	r.Log.Info("Entering degraded condition func")
 
 	// It is already assumed that the resource has been degraded, so the first
 	// step is to gather the correct list of conditions.
@@ -154,10 +139,6 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 		conditionErrMsg = conditionErr.Error()
 	}
 	conditions := r.getDegradedConditions(condition, conditionErrMsg)
-	r.Log.Info("Got degraded conditions")
-	if nfd == nil {
-		r.Log.Info("nfd is 'nil'")
-	}
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -167,7 +148,6 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 // updateProgressingCondition is used to mark a given resource as "progressing" so
 // that the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
-	r.Log.Info("Entering progressing condition func")
 
 	// It is already assumed that the resource is "progressing," so the first
 	// step is to gather the correct list of conditions.
@@ -176,10 +156,6 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 		conditionErrMsg = conditionErr.Error()
 	}
 	conditions := r.getProgressingConditions(condition, conditionErrMsg)
-	r.Log.Info("Got progressing conditions")
-	if nfd == nil {
-		r.Log.Info("nfd is 'nil'")
-	}
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -189,13 +165,8 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 // updateAvailableCondition is used to mark a given resource as "progressing" so
 // that the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.NodeFeatureDiscovery) (ctrl.Result, error) {
-	r.Log.Info("Entering progressing condition func")
 
 	conditions := r.getAvailableConditions()
-	r.Log.Info("Got available conditions")
-	if nfd == nil {
-		r.Log.Info("nfd is 'nil'")
-	}
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -321,17 +292,17 @@ type resourceStatus struct {
 // "getDaemonSetConditions" for ease of calling the
 // worker DaemonSet status
 func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx context.Context) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(ctx, worker)
+	return r.getDaemonSetConditions(ctx, worker)
 }
 
 // getMasterDaemonSetConditions is a wrapper around
 // "getDaemonSetConditions" for ease of calling the
 // master DaemonSet status
 func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(ctx context.Context) (resourceStatus, error) {
-	return r.__getDaemonSetConditions(ctx, master)
+	return r.getDaemonSetConditions(ctx, master)
 }
 
-func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Context, node nodeType) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Context, node nodeType) (resourceStatus, error) {
 
 	// Initialize Resource Status to 'Degraded'
 	rstatus := resourceStatus{
@@ -359,8 +330,6 @@ func (r *NodeFeatureDiscoveryReconciler) __getDaemonSetConditions(ctx context.Co
 
 	// Index the DaemonSet status. (Note: there is no "Conditions" array here.)
 	dsStatus := ds.Status
-
-	log.Info("ds.Status", "status", dsStatus)
 
 	// Index the relevant values from here
 	numberReady            := dsStatus.NumberReady
@@ -458,9 +427,6 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(n NFD) (resou
 		numActiveStatuses: 1,
 	}
 	// Get the existing ConfigMap from the reconciler
-	//wc := &nfdv1.ConfigMap{}
-	//err := r.Get(ctx, client.ObjectKey{Namespace: nfdNamespace, Name: workerName}, wc)
-
 	wc := n.ins.Spec.WorkerConfig.ConfigData
 
 	// If 'wc' is nil, then the resource hasn't been (re)created yet

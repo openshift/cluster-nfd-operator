@@ -154,7 +154,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// If the components could not be applied, then check for degraded conditions
 	if err != nil {
-		conditions := r.getDegradedConditions("testing", err.Error())
+		conditions := r.getDegradedConditions("Degraded", err.Error())
 		if err := r.updateStatus(instance, conditions); err != nil {
 			return reconcile.Result{}, err
 		}
@@ -164,107 +164,87 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// Check the status of the NFD Operator ServiceAccount
 	rstatus, err := r.getServiceAccountConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD operator Service Account")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Service Account.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
 	}
 
 	// Check the status of the NFD Operator role
 	rstatus, err = r.getRoleConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Role")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator role.")
 		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
 	}
 
 	// Check the status of the NFD Operator cluster role
 	rstatus, err = r.getClusterRoleConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Cluster Role")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role.")
 		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
 	}
 
 	// Check the status of the NFD Operator cluster role binding
 	rstatus, err = r.getClusterRoleBindingConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Cluster Role")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator cluster role binding.")
 		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
 	}
 
 	// Check the status of the NFD Operator role binding
 	rstatus, err = r.getRoleBindingConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD operator Role Binding")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Role Binding.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
 	}
 
 	// Check the status of the NFD Operator Service
 	rstatus, err = r.getServiceConditions(ctx)
 	if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Service")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Service.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
 	}
 
 	// Check the status of the NFD Operator worker ConfigMap
 	rstatus, err = r.getWorkerConfigConditions(nfd)
 	if rstatus.isDegraded == true {
-		r.Log.Error(err, "Failed getting NFD Operator worker Config Map")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator worker Config Map.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
 	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator Worker DaemonSet is progressing.")
 		return r.updateProgressingCondition(instance, err.Error(), err)
 
 	} else if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Worker DaemonSet")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Worker Daemon Set.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
 	rstatus, err = r.getMasterDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
-		r.Log.Info("NFD operator Master DaemonSet is progressing.")
 		return r.updateProgressingCondition(instance, err.Error(), err)
 
 	} else if rstatus.isDegraded == true {
-		r.Log.Info("Failed getting NFD operator Master DaemonSet")
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		r.Log.Info("Unknown error when trying to verify NFD Operator Master Daemon Set.")
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 	}
 
@@ -273,8 +253,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Update the status of the resource on the CRD
 	r.updateStatus(instance, conditions)
-
-	//return r.updateAvailableCondition(instance)
 
 	if err := r.updateStatus(instance, conditions); err != nil {
 		if &result != nil {
