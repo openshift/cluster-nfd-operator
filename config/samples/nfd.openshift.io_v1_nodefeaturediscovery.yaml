@@ -7,14 +7,14 @@ spec:
   instance: "" # instance is empty by default
   operand:
     namespace: openshift-nfd
-    image: quay.io/openshift/origin-node-feature-discovery:4.8
+    image: quay.io/openshift/origin-node-feature-discovery:4.9
     imagePullPolicy: Always
   workerConfig:
     configData: |
-      #core:
+      core:
       #  labelWhiteList:
       #  noPublish: false
-      #  sleepInterval: 60s
+        sleepInterval: 60s
       #  sources: [all]
       #  klog:
       #    addDirHeader: false
@@ -31,7 +31,7 @@ spec:
       #    logFile:
       #    logFileMaxSize: 1800
       #    skipLogHeaders: false
-      #sources:
+      sources:
       #  cpu:
       #    cpuid:
       ##     NOTE: whitelist has priority over blacklist
@@ -66,14 +66,14 @@ spec:
       #      - "NO_HZ"
       #      - "X86"
       #      - "DMI"
-      #  pci:
-      #    deviceClassWhitelist:
-      #      - "0200"
-      #      - "03"
-      #      - "12"
-      #    deviceLabelFields:
+        pci:
+          deviceClassWhitelist:
+            - "0200"
+            - "03"
+            - "12"
+          deviceLabelFields:
       #      - "class"
-      #      - "vendor"
+            - "vendor"
       #      - "device"
       #      - "subsystem_vendor"
       #      - "subsystem_device"

@@ -64,9 +64,25 @@ func getWatchNamespace() (string, error) {
 }
 
 func main() {
+	// metricsAddr is used by Prometheus to gather NFD's resource usage data. The bind
+	// address tells Prometheus which port to scrape this data's metrics from. The 
+	// metrics port defined by this flag must match the metrics port defined in the
+	// various manifests under ./manifests/[MAJOR].[MINOR]/manifests, where [MAJOR]
+	// corresponds to the OCP major version, and [MINOR] corresponds to the OCP minor
+	// version.
 	var metricsAddr string
+
+        // enableLeaderElection should be set to 'disable' by default If we enable leader
+        // election, then only one node can run the controller manager and we will not
+        // have NFD Operator running on all nodes.
 	var enableLeaderElection bool
+
+        // probeAddr is responsible for the health probe bind address, where the health
+        // probe is responsible for determining liveness, readiness, and configuration 
+        // of the operator pods. Note that the port which is being binded must match
+        // the bind port under './config' and './manifests'
 	var probeAddr string
+
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,

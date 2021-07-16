@@ -22,9 +22,10 @@ import (
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/cri-api/pkg/errors"
+	criapierrors "k8s.io/cri-api/pkg/errors"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -41,7 +42,23 @@ var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
 var nfd NFD
 
-// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
+// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
+// Below is a description of each field within this struct:
+//
+//	- client.Client reads and writes directly from/to the OCP API server.
+//	  This field needs to be added to the reconciler because it is
+//	  responsible for for fetching objects from the server, which NFD
+//	  needs to do in order to add its labels to each node in the cluster.
+//
+//	- Log is used to log the reconciliation. Every controllers needs this.
+//
+//	- Scheme is used by the kubebuilder library to set OwnerReferences.
+//	  Every controller needs this.
+//
+//	- Recorder defines interfaces for working with OCP event recorders. 
+//	  This field is needed by NFD in order for NFD to write events.
+//
+//	- AssetsDir defines the directory with assets under the operator image 
 type NodeFeatureDiscoveryReconciler struct {
 	client.Client
 	Log       logr.Logger
@@ -50,27 +67,37 @@ type NodeFeatureDiscoveryReconciler struct {
 	AssetsDir string
 }
 
-// SetupWithManager sets up the controller with the Manager.
+// SetupWithManager sets up the controller with the Manager in order to create
+// the controller. The Manager serves the purpose of initializing shared
+// dependencies (like caches and clients) from the 'client.Client' field in the
+// NodeFeatureDiscoveryReconciler struct.
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	// we want to initate reconcile loop only on spec change of the object
 	p := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return validateUpdateEvent(&e)
+			if validateUpdateEvent(&e) {
+				return false
+			}
+			return true
 		},
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&nfdv1.NodeFeatureDiscovery{}).
-		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
-		Owns(&corev1.Service{}, builder.WithPredicates(p)).
 		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
-		Owns(&corev1.Pod{}, builder.WithPredicates(p)).
+		Owns(&rbacv1.RoleBinding{}, builder.WithPredicates(p)).
+		Owns(&rbacv1.Role{}, builder.WithPredicates(p)).
+		Owns(&corev1.Service{}, builder.WithPredicates(p)).
+		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
 		Owns(&security.SecurityContextConstraints{}).
 		Complete(r)
 }
 
+// validateUpdateEvent validates whether or not NFD receives a spec change of
+// the input object -- which we use to validate NodeFeatureDiscoveryReconciler
+// objects.
 func validateUpdateEvent(e *event.UpdateEvent) bool {
 	if e.ObjectOld == nil {
 		klog.Error("Update event has no old runtime object to update")
@@ -130,7 +157,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// Error reading the object - requeue the request.
 	if err != nil {
 		// handle deletion of resource
-		if errors.IsNotFound(err) {
+		if criapierrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
@@ -144,8 +171,126 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// apply components
 	r.Log.Info("Ready to apply components")
-
 	nfd.init(r, instance)
+	result, err := applyComponents()
+
+	// If the components could not be applied, then check for degraded conditions
+	if err != nil {
+		conditions := r.getDegradedConditions("Degraded", err.Error())
+		if err := r.updateStatus(instance, conditions); err != nil {
+			return reconcile.Result{}, err
+		}
+		return reconcile.Result{}, err
+	}
+
+	// Check the status of the NFD Operator ServiceAccount
+	rstatus, err := r.getServiceAccountConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+	}
+
+	// Check the status of the NFD Operator role
+	rstatus, err = r.getRoleConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
+	}
+
+	// Check the status of the NFD Operator cluster role
+	rstatus, err = r.getClusterRoleConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
+	}
+
+	// Check the status of the NFD Operator cluster role binding
+	rstatus, err = r.getClusterRoleBindingConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
+	}
+
+	// Check the status of the NFD Operator role binding
+	rstatus, err = r.getRoleBindingConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
+	}
+
+	// Check the status of the NFD Operator Service
+	rstatus, err = r.getServiceConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+	}
+
+	// Check the status of the NFD Operator worker ConfigMap
+	rstatus, err = r.getWorkerConfigConditions(nfd)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	}
+
+	// Check the status of the NFD Operator Worker DaemonSet
+	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
+	if rstatus.isProgressing == true {
+		return r.updateProgressingCondition(instance, err.Error(), err)
+
+	} else if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+	}
+
+	// Check the status of the NFD Operator Worker DaemonSet
+	rstatus, err = r.getMasterDaemonSetConditions(ctx)
+	if rstatus.isProgressing == true {
+		return r.updateProgressingCondition(instance, err.Error(), err)
+
+	} else if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+	}
+
+	// Get available conditions
+	conditions := r.getAvailableConditions()
+
+	// Update the status of the resource on the CRD
+	r.updateStatus(instance, conditions)
+
+	if err := r.updateStatus(instance, conditions); err != nil {
+		if &result != nil {
+			return result, nil
+		}
+		return reconcile.Result{}, err
+	}
+
+	if &result != nil {
+		return result, nil
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func applyComponents() (reconcile.Result, error) {
 
 	for {
 		err := nfd.step()
@@ -156,6 +301,5 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 			break
 		}
 	}
-
 	return ctrl.Result{}, nil
 }
