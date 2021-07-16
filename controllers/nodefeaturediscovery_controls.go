@@ -32,11 +32,7 @@ import (
 
 type controlFunc []func(n NFD) (ResourceStatus, error)
 
-<<<<<<< HEAD
-// Status of the resource (0 or 1, for Ready/NotReady)
-=======
 // ResourceStatus defines the status of the resource (0 or 1, for Ready/NotReady)
->>>>>>> 11573db415de720f441205c054423040f9ca5352
 type ResourceStatus int
 
 // Ready/NotReady defines if a resource is ready.
@@ -78,11 +74,7 @@ func Namespace(n NFD) (ResourceStatus, error) {
 	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
 
 	// Look for the Namespace to see if it exists, and if so, check if
-<<<<<<< HEAD
-	// it's Ready/NotReady. If the Namespace does not exist, then
-=======
 	// it's Ready/NotReady. If the Namespace does not exist, then 
->>>>>>> 11573db415de720f441205c054423040f9ca5352
 	// attempt to create it
 	logger.Info("Looking for")
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
@@ -133,11 +125,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	}
 
 	// Look for the ServiceAccount to see if it exists, and if so, check if
-<<<<<<< HEAD
 	// it's Ready/NotReady. If the ServiceAccount does not exist, then
-=======
-	// it's Ready/NotReady. If the ServiceAccount does not exist, then 
->>>>>>> 11573db415de720f441205c054423040f9ca5352
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
@@ -176,11 +164,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	logger.Info("Looking for")
 
 	// Look for the ClusterRole to see if it exists, and if so, check if
-<<<<<<< HEAD
 	// it's Ready/NotReady. If the ClusterRole does not exist, then
-=======
-	// it's Ready/NotReady. If the ClusterRole does not exist, then 
->>>>>>> 11573db415de720f441205c054423040f9ca5352
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
@@ -424,34 +408,6 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	return Ready, nil
 }
 
-<<<<<<< HEAD
-// GetExistingDaemonSet gets the DaemonSet object from the 'n.resources'
-// attribute.
-func GetExistingDaemonSet(n NFD, node nodeType) (*appsv1.DaemonSet, error) {
-
-	emptyDaemonSet := appsv1.DaemonSet{}
-	for _, resource := range n.resources {
-
-		// Get daemonset and the type (worker or master)
-		ds := resource.DaemonSet
-		if !reflect.DeepEqual(resource.DaemonSet, emptyDaemonSet) {
-
-			// Determine if worker or master
-			dsName := ds.ObjectMeta.Name
-
-			if dsName == "nfd-worker" && node == worker {
-				return &resource.DaemonSet, nil
-			} else if dsName == "nfd-master" && node == master {
-				return &resource.DaemonSet, nil
-			}
-		}
-	}
-
-	return &emptyDaemonSet, errors.New("DaemonSetDoesNotExist")
-}
-
-=======
->>>>>>> 11573db415de720f441205c054423040f9ca5352
 // DaemonSet attempts to create a DaemonSet in a given Namespace. If
 // the DaemonSet already exists, then attempt to update it.
 func DaemonSet(n NFD) (ResourceStatus, error) {
