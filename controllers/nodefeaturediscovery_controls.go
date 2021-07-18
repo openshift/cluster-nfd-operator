@@ -17,9 +17,7 @@ package controllers
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"reflect"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
