@@ -23,7 +23,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -76,7 +76,7 @@ func Namespace(n NFD) (ResourceStatus, error) {
 	// attempt to create it
 	logger.Info("Looking for")
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating ")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -123,10 +123,10 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	}
 
 	// Look for the ServiceAccount to see if it exists, and if so, check if
-	// it's Ready/NotReady. If the ServiceAccount does not exist, then 
+	// it's Ready/NotReady. If the ServiceAccount does not exist, then
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating ")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -162,10 +162,10 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	logger.Info("Looking for")
 
 	// Look for the ClusterRole to see if it exists, and if so, check if
-	// it's Ready/NotReady. If the ClusterRole does not exist, then 
+	// it's Ready/NotReady. If the ClusterRole does not exist, then
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -214,7 +214,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	// check if it's Ready/NotReady. If the ClusterRoleBinding does not
 	// exist, then attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -268,7 +268,7 @@ func Role(n NFD) (ResourceStatus, error) {
 	// Look for the Role to see if it exists, and if so, check if it's
 	// Ready/NotReady. If the Role does not exist, then attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -324,7 +324,7 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 	// it's Ready/NotReady. If the RoleBinding does not exist, then attempt
 	// to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -384,7 +384,7 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	// Ready/NotReady. If the ConfigMap does not exist, then attempt to create
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -463,7 +463,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	// Ready/NotReady. If the DaemonSet does not exist, then attempt to
 	// create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -518,7 +518,7 @@ func Service(n NFD) (ResourceStatus, error) {
 	// Ready/NotReady. If the Service does not exist, then attempt to create
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
@@ -577,7 +577,7 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	// Ready/NotReady. If the scc does not exist, then attempt to create
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
-	if err != nil && errors.IsNotFound(err) {
+	if err != nil && apierrors.IsNotFound(err) {
 		logger.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
