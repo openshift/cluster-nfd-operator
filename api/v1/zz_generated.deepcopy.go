@@ -108,6 +108,16 @@ func (in *NodeFeatureDiscoverySpec) DeepCopyInto(out *NodeFeatureDiscoverySpec) 
 		*out = new(ConfigMap)
 		**out = **in
 	}
+	if in.ExtraLabelNs != nil {
+		in, out := &in.ExtraLabelNs, &out.ExtraLabelNs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.ResourceLabels != nil {
+		in, out := &in.ResourceLabels, &out.ResourceLabels
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	out.CustomConfig = in.CustomConfig
 }
 

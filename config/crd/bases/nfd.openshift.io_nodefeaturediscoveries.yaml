@@ -38,9 +38,8 @@ spec:
               Discovery
             properties:
               customConfig:
-                description: ConfigMap describes configuration options for the NFD
-                  worker
-                nullable: true
+                description: WorkerConfig describes configuration options for the
+                  NFD worker.
                 properties:
                   configData:
                     description: BinaryData holds the NFD configuration file
@@ -48,8 +47,22 @@ spec:
                 required:
                 - configData
                 type: object
+              extraLabelNs:
+                description: ExtraLabelNs defines the list of of allowed extra label
+                  namespaces By default, only allow labels in the default `feature.node.kubernetes.io`
+                  label namespace
+                items:
+                  type: string
+                nullable: true
+                type: array
               instance:
                 description: Run NFD in multiple deployment mode https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
+                nullable: true
+                type: string
+              labelWhiteList:
+                description: LabelWhiteList defines a regular expression for filtering
+                  feature labels based on their name. Each label must match against
+                  the given reqular expression in order to be published.
                 nullable: true
                 type: string
               operand:
@@ -70,7 +83,18 @@ spec:
                       and nfd-worker pods [defaults to openshift-nfd]
                     nullable: true
                     type: string
+                  servicePort:
+                    description: ServicePort specifies the TCP port that nfd-master
+                      listens for incoming requests.
+                    type: integer
                 type: object
+              resourceLabels:
+                description: ResourceLabels defines the list of features to be advertised
+                  as extended resources instead of labels.
+                items:
+                  type: string
+                nullable: true
+                type: array
               workerConfig:
                 description: ConfigMap describes configuration options for the NFD
                   worker
