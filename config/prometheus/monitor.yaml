@@ -1,4 +1,3 @@
-
 # Prometheus Monitor Service (Metrics)
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -6,12 +5,48 @@ metadata:
   labels:
     control-plane: controller-manager
   name: controller-manager-metrics-monitor
-  namespace: node-feature-discovery-operator
+  namespace: openshift-nfd
 spec:
   endpoints:
-    - path: /metrics
+    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      path: /metrics
       port: https
+      scheme: https
+      interval: 30s
+      tlsConfig:
+        caFile: /etc/prometheus/configmaps/serving-certs-ca-bundle/service-ca.crt
+        serverName: nfd-controller-manager-metrics-service.openshift-nfd.svc
   selector:
     matchLabels:
       control-plane: controller-manager
-
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: prometheus-k8s
+  namespace: openshift-nfd
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - pods
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: prometheus-k8s
+  namespace: openshift-nfd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: prometheus-k8s
+subjects:
+  - kind: ServiceAccount
+    name: prometheus-k8s
+    namespace: openshift-monitoring

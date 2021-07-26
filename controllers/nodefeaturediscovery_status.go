@@ -2,29 +2,30 @@ package controllers
 
 import (
 	"context"
-	"time"
 	"errors"
+	"time"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // nodeType is either 'worker' or 'master'
 type nodeType int
 
 const (
-	worker nodeType = 0
-	master nodeType = 1
-	nfdNamespace    = "openshift-nfd"
-	workerName      = "nfd-worker"
-	masterName      = "nfd-master"
+	worker       nodeType = 0
+	master       nodeType = 1
+	nfdNamespace          = "openshift-nfd"
+	workerName            = "nfd-worker"
+	masterName            = "nfd-master"
 )
 
 const (
@@ -49,15 +50,15 @@ const (
 	conditionFailedGettingNFDRoleBinding     = "FailedGettingNFDRoleBinding"
 
 	// Resource degraded
-	conditionNFDWorkerConfigDegraded        = "NFDWorkerConfigResourceDegraded"
-	conditionNFDServiceAccountDegraded      = "NFDServiceAccountDegraded"
-	conditionNFDServiceDegraded             = "NFDServiceDegraded"
-	conditionNFDWorkerDaemonSetDegraded     = "NFDWorkerDaemonSetDegraded"
-	conditionNFDMasterDaemonSetDegraded     = "NFDMasterDaemonSetDegraded"
-	conditionNFDRoleDegraded                = "NFDRoleDegraded"
-	conditionNFDRoleBindingDegraded         = "NFDRoleBindingDegraded"
-	conditionNFDClusterRoleDegraded         = "NFDClusterRoleDegraded"
-	conditionNFDClusterRoleBindingDegraded  = "NFDClusterRoleBindingDegraded"
+	conditionNFDWorkerConfigDegraded       = "NFDWorkerConfigResourceDegraded"
+	conditionNFDServiceAccountDegraded     = "NFDServiceAccountDegraded"
+	conditionNFDServiceDegraded            = "NFDServiceDegraded"
+	conditionNFDWorkerDaemonSetDegraded    = "NFDWorkerDaemonSetDegraded"
+	conditionNFDMasterDaemonSetDegraded    = "NFDMasterDaemonSetDegraded"
+	conditionNFDRoleDegraded               = "NFDRoleDegraded"
+	conditionNFDRoleBindingDegraded        = "NFDRoleBindingDegraded"
+	conditionNFDClusterRoleDegraded        = "NFDClusterRoleDegraded"
+	conditionNFDClusterRoleBindingDegraded = "NFDClusterRoleBindingDegraded"
 
 	// Unknown errors. (These occur when the error is unknown.)
 	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
@@ -68,7 +69,7 @@ const (
 	errorNFDWorkerDaemonSetUnavailableNode = "NFDWorkerDaemonSetUnavailableNode"
 	errorNFDMasterDaemonSetUnavailableNode = "NFDMasterDaemonSetUnavailableNode"
 
-	// Invalid node type. (Denotes that the node should be either 
+	// Invalid node type. (Denotes that the node should be either
 	// 'worker' or 'master')
 	errorInvalidNodeType = "InvalidNodeTypeSelected"
 
@@ -132,6 +133,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 // the reconciler can take steps to rectify the situation.
 func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.NodeFeatureDiscovery, condition string, conditionErr error) (ctrl.Result, error) {
 
+	nfdMetrics.Degraded(true)
 	// It is already assumed that the resource has been degraded, so the first
 	// step is to gather the correct list of conditions.
 	var conditionErrMsg string = "Degraded"
@@ -142,6 +144,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
+
 	return reconcile.Result{}, conditionErr
 }
 
@@ -178,6 +181,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.Nod
 // reconciler can determine that the resource is available.
 func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []conditionsv1.Condition {
 	now := time.Now()
+	nfdMetrics.Degraded(false)
 	return []conditionsv1.Condition{
 		{
 			Type:               conditionsv1.ConditionAvailable,
@@ -246,7 +250,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 // reconciler can determine that the resource is progressing.
 func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
 	now := time.Now()
-
 	return []conditionsv1.Condition{
 		{
 			Type:               conditionsv1.ConditionAvailable,
@@ -272,7 +275,6 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 		},
 	}
 }
-
 
 // The status of the resource (available, upgradeable, progressing, or
 // degraded).
@@ -332,10 +334,10 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	dsStatus := ds.Status
 
 	// Index the relevant values from here
-	numberReady            := dsStatus.NumberReady
+	numberReady := dsStatus.NumberReady
 	currentNumberScheduled := dsStatus.CurrentNumberScheduled
-	numberDesired          := dsStatus.DesiredNumberScheduled
-	numberUnavailable      := dsStatus.NumberUnavailable
+	numberDesired := dsStatus.DesiredNumberScheduled
+	numberUnavailable := dsStatus.NumberUnavailable
 
 	// If the number desired is zero or the number of unavailable nodes is zero,
 	// then we have a problem because we should at least see 1 pod per node
@@ -566,6 +568,7 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(ctx context
 
 	// if 'sa' is nil, then it hasn't been (re)created yet
 	if err != nil {
+		nfdMetrics.Degraded(true)
 		return rstatus, errors.New(conditionNFDServiceAccountDegraded)
 	}
 

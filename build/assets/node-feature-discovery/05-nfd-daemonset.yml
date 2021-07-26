@@ -4,7 +4,7 @@ metadata:
   labels:
     app: node-feature-discovery
   name: node-feature-discovery
-  namespace: openshift-cluster-nfd-operator
+  namespace: openshift-nfd
 spec:
   selector:
     matchLabels:
