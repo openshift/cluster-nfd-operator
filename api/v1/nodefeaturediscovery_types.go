@@ -16,6 +16,8 @@ limitations under the License.
 package v1
 
 import (
+	"os"
+
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,10 +26,18 @@ import (
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
-	Operand         OperandSpec            `json:"operand"`
-	WorkerConfig    *ConfigMap             `json:"workerConfig,omitempty"`
+	// +optional
+	Operand      OperandSpec `json:"operand"`
+	WorkerConfig *ConfigMap  `json:"workerConfig,omitempty"`
+
+	// Run NFD in multiple deployment mode
+	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
+	//
+	// +nullable
 	// +optional
 	Instance string `json:"instance"`
+
+	// +nullable
 	// +optional
 	CustomConfig ConfigMap `json:"customConfig"`
 }
@@ -36,18 +46,25 @@ type NodeFeatureDiscoverySpec struct {
 type OperandSpec struct {
 	// Namespace defines the namespace to deploy nfd-master
 	// and nfd-worker pods
-	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\.\-\/]+
+	// [defaults to openshift-nfd]
+	//
+	// +nullable
+	// +optional
 	Namespace string `json:"namespace,omitempty"`
 
 	// Image defines the image to pull for the
 	// NFD operand
-	// [defaults to quay.io/openshift/origin-node-feature-discovery]
+	//
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	// +nullable
+	// +optional
 	Image string `json:"image,omitempty"`
 
 	// ImagePullPolicy defines Image pull policy for the
 	// NFD operand image [defaults to Always]
-	// +kubebuilder:validation:Optional
+	//
+	// +nullable
+	// +optional
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
@@ -69,6 +86,7 @@ type ConfigMap struct {
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoveryStatus struct {
 	// Conditions represents the latest available observations of current state.
+	//
 	// +optional
 	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
 }
@@ -76,12 +94,14 @@ type NodeFeatureDiscoveryStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=nodefeaturediscoveries,scope=Namespaced
-
-// NodeFeatureDiscovery is the Schema for the nodefeaturediscoveries API
+//
+// An Node Feature Discovery cluster instance
+// +operator-sdk:csv:customresourcedefinitions:displayName="NodeFeatureDiscovery"
 type NodeFeatureDiscovery struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
+	// Specification of the desired behavior of the Node Feature Discovery
 	Spec   NodeFeatureDiscoverySpec   `json:"spec,omitempty"`
 	Status NodeFeatureDiscoveryStatus `json:"status,omitempty"`
 }
@@ -102,7 +122,13 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-	return o.Image
+
+	if o.Image != "" {
+		return o.Image
+	}
+
+	image := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	return image
 }
 
 // ImagePolicy returns a valid corev1.PullPolicy from the string in the CR
