@@ -70,5 +70,5 @@ func NodeFeatureDiscoveryImage() string {
 		return nodeFeatureDiscoveryImage
 	}
 
-	return nodeFeautreDiscoveryImageDefault
+	return nodeFeatureDiscoveryImageDefault
 }
