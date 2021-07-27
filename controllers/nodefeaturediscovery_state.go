@@ -30,18 +30,18 @@ type NFD struct {
 
 	// controls is a list that contains the status of an NFD resource
 	// as being Ready (=0) or NotReady (=1)
-	controls  []controlFunc
+	controls []controlFunc
 
 	// rec represents the NFD reconciler struct used for reconciliation
-	rec       *NodeFeatureDiscoveryReconciler
+	rec *NodeFeatureDiscoveryReconciler
 
 	// ins is the NodeFeatureDiscovery struct that contains the Schema
 	// for the nodefeaturediscoveries API
-	ins       *nfdv1.NodeFeatureDiscovery
+	ins *nfdv1.NodeFeatureDiscovery
 
 	// idx is the index that is used to step through the 'controls' list
 	// and is set to 0 upon calling 'init()'
-	idx       int
+	idx int
 }
 
 // addState takes a given path and finds resources in that path,
@@ -79,7 +79,7 @@ func (n *NFD) step() error {
 	// status of the relevant resource. If no error occurs and
 	// the resource is defined as being "NotReady," then return
 	// an error saying it's not ready. Otherwise, return the
-	// status as being ready, then increment the index for 
+	// status as being ready, then increment the index for
 	// n.controls so that we can parse the next resource.
 	for _, fs := range n.controls[n.idx] {
 		stat, err := fs(*n)

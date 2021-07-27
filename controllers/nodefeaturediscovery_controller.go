@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
 
 var log = logf.Log.WithName("controller_nodefeaturediscovery")
@@ -55,10 +56,10 @@ var nfd NFD
 //	- Scheme is used by the kubebuilder library to set OwnerReferences.
 //	  Every controller needs this.
 //
-//	- Recorder defines interfaces for working with OCP event recorders. 
+//	- Recorder defines interfaces for working with OCP event recorders.
 //	  This field is needed by NFD in order for NFD to write events.
 //
-//	- AssetsDir defines the directory with assets under the operator image 
+//	- AssetsDir defines the directory with assets under the operator image
 type NodeFeatureDiscoveryReconciler struct {
 	client.Client
 	Log       logr.Logger
@@ -169,6 +170,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	// Register NFD instance metrics
+	if instance.Spec.Instance != "" {
+		nfdMetrics.RegisterInstance(instance.Spec.Instance, instance.Spec.Operand.Namespace)
+	}
+
 	// apply components
 	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
@@ -176,6 +182,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// If the components could not be applied, then check for degraded conditions
 	if err != nil {
+		nfdMetrics.Degraded(true)
 		conditions := r.getDegradedConditions("Degraded", err.Error())
 		if err := r.updateStatus(instance, conditions); err != nil {
 			return reconcile.Result{}, err
@@ -250,7 +257,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
 	if rstatus.isProgressing == true {
 		return r.updateProgressingCondition(instance, err.Error(), err)
-
 	} else if rstatus.isDegraded == true {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
@@ -287,6 +293,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return *result, nil
 	}
 
+	// All objects are healthy during reconcile loop
 	return ctrl.Result{}, nil
 }
 

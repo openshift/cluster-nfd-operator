@@ -113,7 +113,7 @@ func getAssetsFrom(path string) []assetsFromFile {
 		}
 
 		// If the reading goes smoothly, then append
-		// the buffer (the file's contents) to the 
+		// the buffer (the file's contents) to the
 		// list of manifests
 		manifests = append(manifests, buffer)
 	}

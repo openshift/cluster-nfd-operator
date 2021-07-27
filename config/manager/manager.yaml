@@ -3,6 +3,7 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
+    openshift.io/cluster-monitoring: "true"
   name: openshift-nfd
 ---
 apiVersion: apps/v1
@@ -39,6 +40,8 @@ spec:
           image: controller:latest
           imagePullPolicy: Always
           env:
+            - name: SSL_CERT_DIR
+              value: "/etc/pki/tls/certs"
             - name: WATCH_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -51,6 +54,9 @@ spec:
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
               value: "quay.io/openshift/origin-node-feature-discovery:4.9"
+          ports:
+            - name: metrics
+              containerPort: 8080
           livenessProbe:
             httpGet:
               path: /healthz
@@ -64,4 +70,3 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
       terminationGracePeriodSeconds: 10
-

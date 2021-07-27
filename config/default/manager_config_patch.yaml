@@ -8,14 +8,16 @@ spec:
     spec:
       containers:
       - name: manager
-        args:
-        - "--config=controller_manager_config.yaml"
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         volumeMounts:
-        - name: manager-config
-          mountPath: /controller_manager_config.yaml
-          subPath: controller_manager_config.yaml
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
       volumes:
-      - name: manager-config
-        configMap:
-          name: manager-config
-
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert

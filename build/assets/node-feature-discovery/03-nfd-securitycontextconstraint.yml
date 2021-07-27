@@ -34,7 +34,7 @@ seLinuxContext:
 supplementalGroups:
   type: RunAsAny
 users:
-- system:serviceaccount:openshift-cluster-nfd-operator:node-feature-discovery
+- system:serviceaccount:openshift-nfd:node-feature-discovery
 volumes:
 - configMap
 - downwardAPI
