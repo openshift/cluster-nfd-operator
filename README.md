@@ -1,6 +1,6 @@
 # Node Feature Discovery Operator
- The Cluster Node Feature Discovery operator manages detection of hardware features and configuration in a Openshift cluster. The operator orchestrates all resources needed to run the NFD DaemonSet 
- 
+ The Cluster Node Feature Discovery operator manages detection of hardware features and configuration in a Openshift cluster. The operator orchestrates all resources needed to run the NFD DaemonSet
+
 ## Upstream Project
 
 [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery) – a Kubernetes add-on for detecting hardware features and system configuration.
@@ -9,7 +9,7 @@ The [Node Feature Discovery](https://kubernetes-sigs.github.io/node-feature-disc
 
 ## Getting started with the Node Feature Discovery Operator
 
-> Prerequisite: a running OpenShift cluster 4.6+ 
+> Prerequisite: a running OpenShift cluster 4.6+
 
 Get the source code
 

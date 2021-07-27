@@ -44,6 +44,37 @@ spec:
                   configData:
                     description: BinaryData holds the NFD configuration file
                     type: string
+                  status:
+                    properties:
+                      conditions:
+                        description: Conditions represents the latest available observations
+                          of current state.
+                        items:
+                          description: Condition represents the state of the operator's
+                            reconciliation functionality.
+                          properties:
+                            lastHeartbeatTime:
+                              format: date-time
+                              type: string
+                            lastTransitionTime:
+                              format: date-time
+                              type: string
+                            message:
+                              type: string
+                            reason:
+                              type: string
+                            status:
+                              type: string
+                            type:
+                              description: ConditionType is the state of the operator's
+                                reconciliation functionality.
+                              type: string
+                          required:
+                          - status
+                          - type
+                          type: object
+                        type: array
+                    type: object
                 required:
                 - configData
                 type: object
@@ -74,6 +105,37 @@ spec:
                   configData:
                     description: BinaryData holds the NFD configuration file
                     type: string
+                  status:
+                    properties:
+                      conditions:
+                        description: Conditions represents the latest available observations
+                          of current state.
+                        items:
+                          description: Condition represents the state of the operator's
+                            reconciliation functionality.
+                          properties:
+                            lastHeartbeatTime:
+                              format: date-time
+                              type: string
+                            lastTransitionTime:
+                              format: date-time
+                              type: string
+                            message:
+                              type: string
+                            reason:
+                              type: string
+                            status:
+                              type: string
+                            type:
+                              description: ConditionType is the state of the operator's
+                                reconciliation functionality.
+                              type: string
+                          required:
+                          - status
+                          - type
+                          type: object
+                        type: array
+                    type: object
                 required:
                 - configData
                 type: object

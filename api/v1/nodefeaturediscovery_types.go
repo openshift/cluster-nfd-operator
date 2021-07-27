@@ -24,8 +24,8 @@ import (
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
-	Operand         OperandSpec            `json:"operand"`
-	WorkerConfig    *ConfigMap             `json:"workerConfig,omitempty"`
+	Operand      OperandSpec `json:"operand"`
+	WorkerConfig *ConfigMap  `json:"workerConfig,omitempty"`
 	// +optional
 	Instance string `json:"instance"`
 	// +optional
