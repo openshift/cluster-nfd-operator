@@ -273,7 +273,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err)
 	}
 
 	// Get available conditions
@@ -283,30 +283,30 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	r.updateStatus(instance, conditions)
 
 	if err := r.updateStatus(instance, conditions); err != nil {
-		if &result != nil {
-			return result, nil
+		if result != nil {
+			return *result, nil
 		}
 		return reconcile.Result{}, err
 	}
 
-	if &result != nil {
-		return result, nil
+	if result != nil {
+		return *result, nil
 	}
 
 	// All objects are healthy during reconcile loop
 	return ctrl.Result{}, nil
 }
 
-func applyComponents() (reconcile.Result, error) {
+func applyComponents() (*reconcile.Result, error) {
 
 	for {
 		err := nfd.step()
 		if err != nil {
-			return reconcile.Result{}, err
+			return &reconcile.Result{}, err
 		}
 		if nfd.last() {
 			break
 		}
 	}
-	return ctrl.Result{}, nil
+	return &ctrl.Result{}, nil
 }

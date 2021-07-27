@@ -125,7 +125,6 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 	if !modified {
 		return nil
 	}
-
 	return r.Status().Update(context.TODO(), nfdCopy)
 }
 
@@ -145,7 +144,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{}, conditionErr
+	return reconcile.Result{Requeue: true}, nil
 }
 
 // updateProgressingCondition is used to mark a given resource as "progressing" so
@@ -162,7 +161,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 	if err := r.updateStatus(nfd, conditions); err != nil {
 		return reconcile.Result{}, err
 	}
-	return reconcile.Result{}, conditionErr
+	return reconcile.Result{Requeue: true}, nil
 }
 
 // updateAvailableCondition is used to mark a given resource as "progressing" so
