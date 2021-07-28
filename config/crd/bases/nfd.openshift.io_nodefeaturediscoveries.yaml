@@ -4,7 +4,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
+    controller-gen.kubebuilder.io/version: v0.6.1
   creationTimestamp: null
   name: nodefeaturediscoveries.nfd.openshift.io
 spec:
@@ -19,8 +19,7 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: NodeFeatureDiscovery is the Schema for the nodefeaturediscoveries
-          API
+        description: An Node Feature Discovery cluster instance
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -35,11 +34,13 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
+            description: Specification of the desired behavior of the Node Feature
+              Discovery
             properties:
               customConfig:
                 description: ConfigMap describes configuration options for the NFD
                   worker
+                nullable: true
                 properties:
                   configData:
                     description: BinaryData holds the NFD configuration file
@@ -79,23 +80,26 @@ spec:
                 - configData
                 type: object
               instance:
+                description: Run NFD in multiple deployment mode https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
+                nullable: true
                 type: string
               operand:
                 description: OperandSpec describes configuration options for the operand
                 properties:
                   image:
                     description: Image defines the image to pull for the NFD operand
-                      [defaults to quay.io/openshift/origin-node-feature-discovery]
+                    nullable: true
                     pattern: '[a-zA-Z0-9\-]+'
                     type: string
                   imagePullPolicy:
                     description: ImagePullPolicy defines Image pull policy for the
                       NFD operand image [defaults to Always]
+                    nullable: true
                     type: string
                   namespace:
                     description: Namespace defines the namespace to deploy nfd-master
-                      and nfd-worker pods
-                    pattern: '[a-zA-Z0-9\.\-\/]+'
+                      and nfd-worker pods [defaults to openshift-nfd]
+                    nullable: true
                     type: string
                 type: object
               workerConfig:
@@ -139,9 +143,6 @@ spec:
                 required:
                 - configData
                 type: object
-            required:
-            - operand
-            - workerConfig
             type: object
           status:
             description: NodeFeatureDiscoveryStatus defines the observed state of
