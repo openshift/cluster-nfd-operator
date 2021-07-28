@@ -427,6 +427,18 @@ spec:
           - update
           - use
           - watch
+        - apiGroups:
+          - authentication.k8s.io
+          resources:
+          - tokenreviews
+          verbs:
+          - create
+        - apiGroups:
+          - authorization.k8s.io
+          resources:
+          - subjectaccessreviews
+          verbs:
+          - create
         serviceAccountName: nfd-operator
       deployments:
       - name: nfd-controller-manager
@@ -447,19 +459,34 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=10
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+                - --tls-cert-file=/etc/secrets/tls.crt
+                - --tls-private-key-file=/etc/secrets/tls.key
+                - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
                   name: https
-                resources: {}
+                resources:
+                  limits:
+                    cpu: 500m
+                    memory: 128Mi
+                  requests:
+                    cpu: 250m
+                    memory: 64Mi
+                securityContext:
+                  readOnlyRootFilesystem: true
+                volumeMounts:
+                - mountPath: /etc/secrets
+                  name: node-feature-discovery-operator-tls
               - args:
-                - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
                 command:
                 - /node-feature-discovery-operator
                 env:
+                - name: SSL_CERT_DIR
+                  value: /etc/pki/tls/certs
                 - name: WATCH_NAMESPACE
                   valueFrom:
                     fieldRef:
@@ -481,6 +508,9 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
+                ports:
+                - containerPort: 8080
+                  name: metrics
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -496,6 +526,87 @@ spec:
                   readOnlyRootFilesystem: true
               serviceAccountName: nfd-operator
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: node-feature-discovery-operator-tls
+                secret:
+                  secretName: node-feature-discovery-operator-tls
+      permissions:
+      - rules:
+        - apiGroups:
+          - ""
+          - coordination.k8s.io
+          resources:
+          - configmaps
+          - leases
+          verbs:
+          - get
+          - list
+          - watch
+          - create
+          - update
+          - patch
+          - delete
+        - apiGroups:
+          - ""
+          resources:
+          - events
+          verbs:
+          - create
+          - patch
+        - apiGroups:
+          - rbac.authorization.k8s.io
+          resources:
+          - roles
+          - rolebindings
+          - clusterroles
+          - clusterrolebindings
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - pods
+          - services
+          - endpoints
+          - persistentvolumeclaims
+          - events
+          - configmaps
+          - secrets
+          - serviceaccounts
+          - nodes
+          verbs:
+          - '*'
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - apps
+          resources:
+          - deployments
+          - daemonsets
+          - replicasets
+          - statefulsets
+          verbs:
+          - '*'
+        - apiGroups:
+          - monitoring.coreos.com
+          resources:
+          - servicemonitors
+          verbs:
+          - get
+          - create
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - '*'
+          verbs:
+          - '*'
+        serviceAccountName: nfd-operator
     strategy: deployment
   installModes:
   - supported: true

@@ -72,7 +72,7 @@ func Namespace(n NFD) (ResourceStatus, error) {
 	logger := log.WithValues("Namespace", obj.Name, "Namespace", "Cluster")
 
 	// Look for the Namespace to see if it exists, and if so, check if
-	// it's Ready/NotReady. If the Namespace does not exist, then 
+	// it's Ready/NotReady. If the Namespace does not exist, then
 	// attempt to create it
 	logger.Info("Looking for")
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
