@@ -35,6 +35,9 @@ metadata:
     operators.openshift.io/infrastructure-features: '["disconnected"]'
     operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
+    provider: Red Hat
+    repository: https://github.com/openshift/cluster-nfd-operator
+    support: Red Hat
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
