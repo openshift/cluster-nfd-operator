@@ -69,18 +69,10 @@ type OperandSpec struct {
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 }
 
-// +k8s:openapi-gen=true
-type ConfigMapStatus struct {
-	// Conditions represents the latest available observations of current state.
-	// +optional
-	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
-}
-
 // ConfigMap describes configuration options for the NFD worker
 type ConfigMap struct {
 	// BinaryData holds the NFD configuration file
-	ConfigData string          `json:"configData"`
-	Status     ConfigMapStatus `json:"status,omitempty"`
+	ConfigData string `json:"configData"`
 }
 
 // NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery
@@ -123,7 +115,6 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-
 	if o.Image != "" {
 		return o.Image
 	}
