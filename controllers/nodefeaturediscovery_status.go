@@ -14,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 // nodeType is either 'worker' or 'master'
@@ -141,10 +140,10 @@ func (r *NodeFeatureDiscoveryReconciler) updateDegradedCondition(nfd *nfdv1.Node
 	}
 	conditions := r.getDegradedConditions(condition, conditionErrMsg)
 	if err := r.updateStatus(nfd, conditions); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
 
-	return reconcile.Result{Requeue: true}, nil
+	return ctrl.Result{}, nil
 }
 
 // updateProgressingCondition is used to mark a given resource as "progressing" so
@@ -159,9 +158,9 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 	}
 	conditions := r.getProgressingConditions(condition, conditionErrMsg)
 	if err := r.updateStatus(nfd, conditions); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
-	return reconcile.Result{Requeue: true}, nil
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // updateAvailableCondition is used to mark a given resource as "progressing" so
@@ -170,9 +169,9 @@ func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.Nod
 
 	conditions := r.getAvailableConditions()
 	if err := r.updateStatus(nfd, conditions); err != nil {
-		return reconcile.Result{}, err
+		return ctrl.Result{}, err
 	}
-	return reconcile.Result{}, errors.New("CouldNotUpdateAvailableConditions")
+	return ctrl.Result{}, errors.New("CouldNotUpdateAvailableConditions")
 }
 
 // getAvailableConditions returns a list of conditionsv1.Condition objects and marks
