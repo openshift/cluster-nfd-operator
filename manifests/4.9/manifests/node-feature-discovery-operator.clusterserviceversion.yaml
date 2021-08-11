@@ -43,7 +43,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: node-feature-discovery-operator.v4.9.0
+  name: nfd.v4.9.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
