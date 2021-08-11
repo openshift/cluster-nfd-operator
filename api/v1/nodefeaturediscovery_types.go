@@ -16,6 +16,8 @@ limitations under the License.
 package v1
 
 import (
+	"os"
+
 	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +26,7 @@ import (
 // NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
+	// +optional
 	Operand      OperandSpec `json:"operand"`
 	WorkerConfig ConfigMap   `json:"workerConfig"`
 
@@ -95,7 +98,12 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-	return o.Image
+	if o.Image != "" {
+		return o.Image
+	}
+
+	image := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	return image
 }
 
 // ImagePolicy returns a valid corev1.PullPolicy from the string in the CR
