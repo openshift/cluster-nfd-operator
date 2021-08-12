@@ -34,6 +34,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
@@ -77,10 +78,22 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// we want to initate reconcile loop only on spec change of the object
 	p := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			if validateUpdateEvent(&e) {
+
+			// First, determine if there are any NFD Operator resource
+			// updates. If not, return false so that the reconciler
+			// knows not to attempt an update on a resource that
+			// doesn't need an update.
+			if !validateUpdateEvent(&e) {
 				return false
 			}
-			return true
+
+			// If there were updates, make sure that the old and new
+			// versions of the resource are indeed different. Otherwise,
+			// we don't have a 'true' update. (i.e., We don't want to
+			// call the reconciler again since the resource wasn't
+			// actually changed.)
+			return e.ObjectNew.GetGeneration() != e.ObjectOld.GetGeneration() ||
+				!apiequality.Semantic.DeepEqual(e.ObjectNew.GetLabels(), e.ObjectOld.GetLabels())
 		},
 	}
 
@@ -96,9 +109,8 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Complete(r)
 }
 
-// validateUpdateEvent validates whether or not NFD receives a spec change of
-// the input object -- which we use to validate NodeFeatureDiscoveryReconciler
-// objects.
+// validateUpdateEvent validates whether or not an NFD Operator resource has
+// an update.
 func validateUpdateEvent(e *event.UpdateEvent) bool {
 	if e.ObjectOld == nil {
 		klog.Error("Update event has no old runtime object to update")
