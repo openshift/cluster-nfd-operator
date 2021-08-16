@@ -31,15 +31,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
-
-var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
 var nfd NFD
 
@@ -149,10 +146,9 @@ func validateUpdateEvent(e *event.UpdateEvent) bool {
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = r.Log.WithValues("nodefeaturediscovery", req.NamespacedName)
 
 	// Fetch the NodeFeatureDiscovery instance
-	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
+	klog.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	// Error reading the object - requeue the request.
@@ -162,11 +158,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			r.Log.Info("resource has been deleted", "req", req.Name, "got", instance.Name)
+			klog.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
 			return ctrl.Result{Requeue: false}, nil
 		}
 
-		r.Log.Error(err, "requeueing event since there was an error reading object")
+		klog.Error(err, "requeueing event since there was an error reading object")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -176,7 +172,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// apply components
-	r.Log.Info("Ready to apply components")
+	klog.Info("Ready to apply components")
 	nfd.init(r, instance)
 	result, err := applyComponents()
 

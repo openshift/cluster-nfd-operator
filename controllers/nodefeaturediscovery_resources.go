@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 	"k8s.io/kubectl/pkg/scheme"
+	"k8s.io/klog"
 )
 
 // assetsFromFile is a list where each item in the list contains the
@@ -191,7 +192,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			ctrl = append(ctrl, SecurityContextConstraints)
 
 		default:
-			log.Info("Unknown Resource: ", "Kind", kind)
+			klog.Infof("Unknown Resource: ", "Kind", kind)
 		}
 
 	}
