@@ -16,22 +16,23 @@ limitations under the License.
 package controllers
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"context"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/klog"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // assetsFromFile is a list where each item in the list contains the
@@ -194,7 +195,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			ctrl = append(ctrl, SecurityContextConstraints)
 
 		default:
-			log.Info("Unknown Resource: ", "Kind", kind)
+			klog.Infof("Unknown Resource: ", "Kind", kind)
 		}
 
 	}
