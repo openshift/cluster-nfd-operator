@@ -18,7 +18,6 @@ package controllers
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -40,6 +39,23 @@ import (
 
 var nfd NFD
 
+// NodeFeatureDiscoveryLogger is a dummy logger struct that is used with
+// the NodeFeatureDiscoveryReconciler to initiate a logger.
+type NodeFeatureDiscoveryLogger struct {
+}
+
+func (log *NodeFeatureDiscoveryLogger) Info(args ...interface{}) {
+	klog.Info(args)
+}
+
+func (log *NodeFeatureDiscoveryLogger) Infof(format string, args ...interface{}) {
+	klog.Infof(format, args)
+}
+
+func (log *NodeFeatureDiscoveryLogger) Error(args ...interface{}) {
+	klog.Error(args)
+}
+
 // NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
 // Below is a description of each field within this struct:
 //
@@ -59,7 +75,7 @@ var nfd NFD
 //	- AssetsDir defines the directory with assets under the operator image
 type NodeFeatureDiscoveryReconciler struct {
 	client.Client
-	Log       logr.Logger
+	Log       NodeFeatureDiscoveryLogger
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 	AssetsDir string
@@ -148,7 +164,7 @@ func validateUpdateEvent(e *event.UpdateEvent) bool {
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the NodeFeatureDiscovery instance
-	klog.Info("Fetch the NodeFeatureDiscovery instance")
+	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	// Error reading the object - requeue the request.
@@ -158,11 +174,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			klog.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
+			r.Log.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
 			return ctrl.Result{Requeue: false}, nil
 		}
 
-		klog.Error(err, "requeueing event since there was an error reading object")
+		r.Log.Error(err, "requeueing event since there was an error reading object")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -172,7 +188,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// apply components
-	klog.Info("Ready to apply components")
+	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
 	result, err := applyComponents()
 

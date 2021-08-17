@@ -26,8 +26,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"k8s.io/klog"
 )
+
+var r NodeFeatureDiscoveryReconciler
 
 type controlFunc []func(n NFD) (ResourceStatus, error)
 
@@ -74,13 +75,13 @@ func Namespace(n NFD) (ResourceStatus, error) {
 	// Look for the Namespace to see if it exists, and if so, check if
 	// it's Ready/NotReady. If the Namespace does not exist, then
 	// attempt to create it
-	klog.Info("Looking for Namespace '", obj.Name, "'")
+	r.Log.Info("Looking for Namespace '", obj.Name, "'")
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating ")
+		r.Log.Info("Not found, creating ")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -88,7 +89,7 @@ func Namespace(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	klog.Info("Found, skipping update")
+	r.Log.Info("Found, skipping update")
 
 	return Ready, nil
 }
@@ -110,7 +111,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 
 	// found states if the ServiceAccount was found
 	found := &corev1.ServiceAccount{}
-	klog.Info("Looking for ServiceAccount '", obj.Name, "' in Namespace '", obj.Namespace, "'")
+	r.Log.Info("Looking for ServiceAccount '", obj.Name, "' in Namespace '", obj.Namespace, "'")
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -125,10 +126,10 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating ")
+		r.Log.Info("Not found, creating ")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -136,7 +137,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	klog.Info("Found, skipping update")
+	r.Log.Info("Found, skipping update")
 
 	return Ready, nil
 }
@@ -155,17 +156,17 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 
 	// found states if the ClusterRole was found
 	found := &rbacv1.ClusterRole{}
-	klog.Info("Looking for ClusterRole '", obj.Name, "'")
+	r.Log.Info("Looking for ClusterRole '", obj.Name, "'")
 
 	// Look for the ClusterRole to see if it exists, and if so, check if
 	// it's Ready/NotReady. If the ClusterRole does not exist, then
 	// attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -174,7 +175,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the ClusterRole, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -203,17 +204,17 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	// Namespace
 	obj.Subjects[0].Namespace = n.ins.GetNamespace()
 
-	klog.Info("Looking for ClusterRoleBinding '", obj.Name, "'")
+	r.Log.Info("Looking for ClusterRoleBinding '", obj.Name, "'")
 
 	// Look for the ClusterRoleBinding to see if it exists, and if so,
 	// check if it's Ready/NotReady. If the ClusterRoleBinding does not
 	// exist, then attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -222,7 +223,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the ClusterRoleBinding, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -248,7 +249,7 @@ func Role(n NFD) (ResourceStatus, error) {
 
 	// found states if the Role was found
 	found := &rbacv1.Role{}
-	klog.Info("Looking for Role '", obj.Name, "' in Namespace '", obj.Namespace, "'")
+	r.Log.Info("Looking for Role '", obj.Name, "' in Namespace '", obj.Namespace, "'")
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -262,10 +263,10 @@ func Role(n NFD) (ResourceStatus, error) {
 	// Ready/NotReady. If the Role does not exist, then attempt to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -274,7 +275,7 @@ func Role(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the Role, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -301,7 +302,7 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 
 	// found states if the RoleBinding was found
 	found := &rbacv1.RoleBinding{}
-	klog.Info("Looking for RoleBinding", obj.Name, "in Namespace", obj.Namespace)
+	r.Log.Info("Looking for RoleBinding", obj.Name, "in Namespace", obj.Namespace)
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -316,10 +317,10 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 	// to create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -328,7 +329,7 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the RoleBinding, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -359,7 +360,7 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 
 	// found states if the ConfigMap was found
 	found := &corev1.ConfigMap{}
-	klog.Info("Looking for ConfigMap '", obj.Name, "' in Namespace '", obj.Namespace, "'")
+	r.Log.Info("Looking for ConfigMap '", obj.Name, "' in Namespace '", obj.Namespace, "'")
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -374,10 +375,10 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -386,7 +387,7 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the ConfigMap, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -436,7 +437,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 
 	// found states if the ConfigMap was found
 	found := &appsv1.DaemonSet{}
-	klog.Info("Looking for DaemonSet '", obj.Name, "' in Namespace '", obj.Namespace, "'")
+	r.Log.Info("Looking for DaemonSet '", obj.Name, "' in Namespace '", obj.Namespace, "'")
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -451,10 +452,10 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	// create it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -463,7 +464,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	}
 
 	// If we found the DaemonSet, let's attempt to update it
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 	err = n.rec.Client.Update(context.TODO(), &obj)
 	if err != nil {
 		return NotReady, err
@@ -489,7 +490,7 @@ func Service(n NFD) (ResourceStatus, error) {
 
 	// found states if the DaemonSet was found
 	found := &corev1.Service{}
-	klog.Info("Looking for Service '", obj.Name, "' in Namespace '", obj.Namespace, "'")
+	r.Log.Info("Looking for Service '", obj.Name, "' in Namespace '", obj.Namespace, "'")
 
 	// SetControllerReference sets the owner as a Controller OwnerReference
 	// and is used for garbage collection of the controlled object. It is
@@ -504,10 +505,10 @@ func Service(n NFD) (ResourceStatus, error) {
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create")
+			r.Log.Info("Couldn't create")
 			return NotReady, err
 		}
 		return Ready, nil
@@ -515,7 +516,7 @@ func Service(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 
 	// Copy the Service object
 	required := obj.DeepCopy()
@@ -554,17 +555,17 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 
 	// found states if the scc was found
 	found := &secv1.SecurityContextConstraints{}
-	klog.Info("Looking for SecurityContextConstraints '", obj.Name, "' in Namespace 'default'")
+	r.Log.Info("Looking for SecurityContextConstraints '", obj.Name, "' in Namespace 'default'")
 
 	// Look for the scc to see if it exists, and if so, check if it's
 	// Ready/NotReady. If the scc does not exist, then attempt to create
 	// it
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
-		klog.Info("Not found, creating")
+		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
-			klog.Info("Couldn't create", "Error", err)
+			r.Log.Info("Couldn't create", "Error", err)
 			return NotReady, err
 		}
 		return Ready, nil
@@ -572,7 +573,7 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
-	klog.Info("Found, updating")
+	r.Log.Info("Found, updating")
 
 	// If we found the scc, let's attempt to update it with the resource
 	// version we found
