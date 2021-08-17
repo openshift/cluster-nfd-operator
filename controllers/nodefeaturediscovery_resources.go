@@ -30,7 +30,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
-	"k8s.io/klog"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -195,7 +194,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			ctrl = append(ctrl, SecurityContextConstraints)
 
 		default:
-			klog.Infof("Unknown Resource: ", "Kind", kind)
+			r.Log.Infof("Unknown Resource: ", "Kind", kind)
 		}
 
 	}

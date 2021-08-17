@@ -18,14 +18,14 @@ package controllers
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	apiequality "k8s.io/apimachinery/pkg/api/equality"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
@@ -42,6 +41,23 @@ import (
 var nfd NFD
 
 const finalizer = "foreground-deletion"
+
+// NodeFeatureDiscoveryLogger is a dummy logger struct that is used with
+// the NodeFeatureDiscoveryReconciler to initiate a logger.
+type NodeFeatureDiscoveryLogger struct {
+}
+
+func (log *NodeFeatureDiscoveryLogger) Info(args ...interface{}) {
+	klog.Info(args)
+}
+
+func (log *NodeFeatureDiscoveryLogger) Infof(format string, args ...interface{}) {
+	klog.Infof(format, args)
+}
+
+func (log *NodeFeatureDiscoveryLogger) Error(args ...interface{}) {
+	klog.Error(args)
+}
 
 // NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
 // Below is a description of each field within this struct:
@@ -62,7 +78,7 @@ const finalizer = "foreground-deletion"
 //	- AssetsDir defines the directory with assets under the operator image
 type NodeFeatureDiscoveryReconciler struct {
 	client.Client
-	Log       logr.Logger
+	Log       NodeFeatureDiscoveryLogger
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
 	AssetsDir string
@@ -94,13 +110,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldDsObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newDsObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newDsObject.GetGeneration() == oldDsObject.GetGeneration(){
+			if newDsObject.GetGeneration() == oldDsObject.GetGeneration() {
 				return false
 			}
 
@@ -142,13 +158,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldSaObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newSaObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newSaObject.GetGeneration() == oldSaObject.GetGeneration(){
+			if newSaObject.GetGeneration() == oldSaObject.GetGeneration() {
 				return false
 			}
 
@@ -190,13 +206,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldSvcObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newSvcObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newSvcObject.GetGeneration() == oldSvcObject.GetGeneration(){
+			if newSvcObject.GetGeneration() == oldSvcObject.GetGeneration() {
 				return false
 			}
 
@@ -238,13 +254,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldRbObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newRbObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newRbObject.GetGeneration() == oldRbObject.GetGeneration(){
+			if newRbObject.GetGeneration() == oldRbObject.GetGeneration() {
 				return false
 			}
 
@@ -286,13 +302,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldRObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newRObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newRObject.GetGeneration() == oldRObject.GetGeneration(){
+			if newRObject.GetGeneration() == oldRObject.GetGeneration() {
 				return false
 			}
 
@@ -335,13 +351,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldCmObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newCmObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newCmObject.GetGeneration() == oldCmObject.GetGeneration(){
+			if newCmObject.GetGeneration() == oldCmObject.GetGeneration() {
 				return false
 			}
 
@@ -384,13 +400,13 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// has been made.
 			oldDeletionTimestamp := oldSccObject.GetDeletionTimestamp()
 			newDeletionTimestamp := newSccObject.GetDeletionTimestamp()
-			if (oldDeletionTimestamp == newDeletionTimestamp) {
+			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
 
 			// If everything else is the same, then no update has been made
 			// either.
-			if newSccObject.GetGeneration() == oldSccObject.GetGeneration(){
+			if newSccObject.GetGeneration() == oldSccObject.GetGeneration() {
 				return false
 			}
 
@@ -517,7 +533,7 @@ func validateUpdateEvent(e *event.UpdateEvent) bool {
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
 	// Fetch the NodeFeatureDiscovery instance
-	klog.Info("Fetch the NodeFeatureDiscovery instance")
+	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
 	err := r.Get(ctx, req.NamespacedName, instance)
 	// Error reading the object - requeue the request.
@@ -528,11 +544,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
-			klog.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
+			r.Log.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
 			return ctrl.Result{Requeue: false}, nil
 		}
 
-		klog.Error(err, "requeueing event since there was an error reading object")
+		r.Log.Error(err, "requeueing event since there was an error reading object")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -554,7 +570,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// apply components
-	klog.Info("Ready to apply components")
+	r.Log.Info("Ready to apply components")
 	nfd.init(r, instance)
 	result, err := applyComponents()
 
