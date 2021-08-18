@@ -28,20 +28,17 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
-//	"sigs.k8s.io/controller-runtime/pkg/handler"
-//	"sigs.k8s.io/controller-runtime/pkg/source"
-//	"sigs.k8s.io/controller-runtime/pkg/builder"
 
 var log = logf.Log.WithName("controller_nodefeaturediscovery")
 
