@@ -27,8 +27,6 @@ github.com/form3tech-oss/jwt-go
 github.com/fsnotify/fsnotify
 # github.com/go-logr/logr v0.3.0
 github.com/go-logr/logr
-# github.com/go-logr/zapr v0.2.0
-github.com/go-logr/zapr
 # github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
@@ -442,10 +440,8 @@ k8s.io/client-go/util/workqueue
 # k8s.io/component-base v0.20.4
 k8s.io/component-base/config
 k8s.io/component-base/config/v1alpha1
-# k8s.io/klog v1.0.0
-## explicit
-k8s.io/klog
 # k8s.io/klog/v2 v2.4.0
+## explicit
 k8s.io/klog/v2
 # k8s.io/kube-openapi v0.0.0-20201113171705-d219536bb9fd
 k8s.io/kube-openapi/pkg/util/proto

@@ -21,7 +21,7 @@ import (
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	securityscheme "github.com/openshift/client-go/security/clientset/versioned/scheme"
 
