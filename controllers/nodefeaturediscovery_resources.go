@@ -311,26 +311,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, na
 	return r.Delete(context.TODO(), ds)
 }
 
-/*
-// deleteWorkerConfig deletes the NFD Operator's worker ConfigMap
-func (r *NodeFeatureDiscoveryReconciler) deleteWorkerConfig(n NFD) error {
-
-	// Attempt to get the existing ConfigMap from the reconciler
-	wc := n.ins.Spec.WorkerConfig
-
-	// Get the config data so we can see if it's empty
-	cd := wc.ConfigData
-
-	// If 'cd' is empty, then the resource does not exist, so it cannot
-	// be deleted
-	if cd == "" {
-		return nil
-	}
-
-	return r.Delete(context.TODO(), wc)
-}
-*/
-
 // deleteService deletes the NFD Operator's Service
 func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
 
