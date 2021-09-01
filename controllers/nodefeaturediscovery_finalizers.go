@@ -19,13 +19,12 @@ import (
 	"context"
 	"time"
 
-	"k8s.io/apimachinery/pkg/util/wait"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
-//"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 var (
 	RetryInterval = time.Second * 5
@@ -39,7 +38,7 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 	// a warning letting users know the deletion failed, and
 	// then call the reconciler once more to see if the error
 	// can be corrected.
-	log.Info("Attempting to delete NFD operator components")
+	r.Log.Info("Attempting to delete NFD operator components")
 	if err := r.deleteComponents(ctx); err != nil {
 		r.Log.Error(err, "Failed to delete one or more components")
 		return ctrl.Result{}, err
@@ -48,32 +47,31 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 	// Check if all components are deleted. If they're not,
 	// then call the reconciler but wait 10 seconds before
 	// checking again.
-	log.Info("Deletion appears to have succeeded, but running a secondary check to ensure resources are cleaned up")
+	r.Log.Info("Deletion appears to have succeeded, but running a secondary check to ensure resources are cleaned up")
 	if r.doComponentsExist(ctx) == true {
-		log.Info("Some components still exist. Requeueing deletion request.")
+		r.Log.Info("Some components still exist. Requeueing deletion request.")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// If all components are deleted, then remove the finalizer
-	log.Info("Secondary check passed. Removing finalizer if it exists.")
+	r.Log.Info("Secondary check passed. Removing finalizer if it exists.")
 	if r.hasFinalizer(instance, finalizer) == true {
 		r.removeFinalizer(instance, finalizer)
 		if err := r.Update(ctx, instance); err != nil {
 			if k8serrors.IsNotFound(err) {
 				return ctrl.Result{Requeue: false}, nil
 			}
-			log.Info("Finalizer was found, but removing it was unsuccessful. Requeueing deletion request.")
+			r.Log.Info("Finalizer was found, but removing it was unsuccessful. Requeueing deletion request.")
 			return ctrl.Result{}, nil
 		}
 
-		log.Info("Finalizer was found and successfully removed.")
+		r.Log.Info("Finalizer was found and successfully removed.")
 		return ctrl.Result{Requeue: false}, nil
 	}
 
-	log.Info("Finalizer does not exist, but resource deletion succesful.")
+	r.Log.Info("Finalizer does not exist, but resource deletion succesful.")
 	return ctrl.Result{Requeue: false}, nil
 }
-
 
 // addFinalizer adds a finalizer to the NFD Operator instance
 func (r *NodeFeatureDiscoveryReconciler) addFinalizer(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, finalizer string) (ctrl.Result, error) {
@@ -148,12 +146,12 @@ func (r *NodeFeatureDiscoveryReconciler) removeFinalizer(instance *nfdv1.NodeFea
 func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) error {
 
 	// Attempt to delete worker DaemonSet
-	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteDaemonSet(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "worker DaemonSet")
 		}
-		log.Info("Worker DaemonSet resource has been deleted.")
+		r.Log.Info("Worker DaemonSet resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -161,12 +159,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete master DaemonSet
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteDaemonSet(ctx, nfdNamespace, masterName)
 		if err != nil {
 			return false, interpretError(err, "master DaemonSet")
 		}
-		log.Info("Master DaemonSet resource has been deleted.")
+		r.Log.Info("Master DaemonSet resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -174,12 +172,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the Service
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteService(ctx, nfdNamespace, masterName)
 		if err != nil {
 			return false, interpretError(err, "Service")
 		}
-		log.Info("Service resource has been deleted.")
+		r.Log.Info("Service resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -187,12 +185,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the Role
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteRole(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "Role")
 		}
-		log.Info("Role resource has been deleted.")
+		r.Log.Info("Role resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -200,12 +198,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the ClusterRole
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteClusterRole(ctx, nfdNamespace, masterName)
 		if err != nil {
 			return false, interpretError(err, "ClusterRole")
 		}
-		log.Info("ClusterRole resource has been deleted.")
+		r.Log.Info("ClusterRole resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -213,12 +211,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the RoleBinding
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteRoleBinding(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "RoleBinding")
 		}
-		log.Info("RoleBinding resource has been deleted.")
+		r.Log.Info("RoleBinding resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -226,12 +224,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the ClusterRoleBinding
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteClusterRoleBinding(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "ClusterRoleBinding")
 		}
-		log.Info("ClusterRoleBinding resource has been deleted.")
+		r.Log.Info("ClusterRoleBinding resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -239,12 +237,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the Worker ServiceAccount
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteServiceAccount(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "worker ServiceAccount")
 		}
-		log.Info("Worker ServiceAccount resource has been deleted.")
+		r.Log.Info("Worker ServiceAccount resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -252,12 +250,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the Master ServiceAccount
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteServiceAccount(ctx, nfdNamespace, masterName)
 		if err != nil {
 			return false, interpretError(err, "master ServiceAccount")
 		}
-		log.Info("Master ServiceAccount resource has been deleted.")
+		r.Log.Info("Master ServiceAccount resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -265,12 +263,12 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 	}
 
 	// Attempt to delete the SecurityContextConstraints
-	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error){
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteSecurityContextConstraints(ctx, nfdNamespace, workerName)
 		if err != nil {
 			return false, interpretError(err, "SecurityContextConstraints")
 		}
-		log.Info("SecurityContextConstraints resource has been deleted.")
+		r.Log.Info("SecurityContextConstraints resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -342,8 +340,8 @@ func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context) 
 // (successfully) deleted
 func interpretError(err error, resourceName string) error {
 
-	if k8serrors.IsNotFound(err){
-		log.Info("Resource ", resourceName, " has been deleted.")
+	if k8serrors.IsNotFound(err) {
+		r.Log.Info("Resource ", resourceName, " has been deleted.")
 		return nil
 	}
 	return err

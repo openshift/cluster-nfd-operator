@@ -21,7 +21,7 @@ import (
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	securityscheme "github.com/openshift/client-go/security/clientset/versioned/scheme"
 
@@ -126,7 +126,6 @@ func main() {
 
 	if err = (&controllers.NodeFeatureDiscoveryReconciler{
 		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("NodeFeatureDiscovery"),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
