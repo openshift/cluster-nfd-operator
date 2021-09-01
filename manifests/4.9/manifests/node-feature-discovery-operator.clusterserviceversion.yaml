@@ -37,6 +37,7 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
     repository: https://github.com/openshift/cluster-nfd-operator
+    olm.skipRange: ">=4.6.0 <4.9.0"
     support: Red Hat
   labels:
     operatorframework.io/arch.amd64: supported
