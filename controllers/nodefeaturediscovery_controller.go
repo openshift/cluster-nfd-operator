@@ -131,10 +131,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the DaemonSet object has been created already.
 			_, ok := e.Object.(*appsv1.DaemonSet)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -179,10 +176,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the ServiceAccount object has been created already.
 			_, ok := e.Object.(*corev1.ServiceAccount)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -227,10 +221,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the Service object has been created already.
 			_, ok := e.Object.(*corev1.Service)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -275,10 +266,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the RoleBinding object has been created already.
 			_, ok := e.Object.(*rbacv1.RoleBinding)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -323,10 +311,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the Role object has been created already.
 			_, ok := e.Object.(*rbacv1.Role)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -372,10 +357,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 
 			// Check if the ConfigMap object has been created already.
 			_, ok := e.Object.(*corev1.ConfigMap)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -422,10 +404,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// Check if the SecurityContextConstraints object has been
 			// created already.
 			_, ok := e.Object.(*security.SecurityContextConstraints)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -460,10 +439,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			// Check if the NodeFeatureDiscovery instance has been created
 			// already.
 			_, ok := e.Object.(*nfdv1.NodeFeatureDiscovery)
-			if !ok {
-				return false
-			}
-			return true
+			return ok
 		},
 	}
 
@@ -477,21 +453,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(cmPredicateFuncs)).
 		Owns(&security.SecurityContextConstraints{}, builder.WithPredicates(sccPredicateFuncs)).
 		Complete(r)
-}
-
-// validateUpdateEvent validates whether or not an NFD Operator resource has
-// an update.
-func validateUpdateEvent(e *event.UpdateEvent) bool {
-	if e.ObjectOld == nil {
-		klog.Error("Update event has no old runtime object to update")
-		return false
-	}
-	if e.ObjectNew == nil {
-		klog.Error("Update event has no new runtime object for update")
-		return false
-	}
-
-	return true
 }
 
 // +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
@@ -586,7 +547,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator worker ServiceAccount
 	rstatus, err := r.getWorkerServiceAccountConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -595,7 +556,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator master ServiceAccount
 	rstatus, err = r.getMasterServiceAccountConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -604,7 +565,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator role
 	rstatus, err = r.getRoleConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -613,7 +574,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator cluster role
 	rstatus, err = r.getClusterRoleConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -622,7 +583,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator cluster role binding
 	rstatus, err = r.getClusterRoleBindingConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -631,7 +592,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator role binding
 	rstatus, err = r.getRoleBindingConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
@@ -640,41 +601,36 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Check the status of the NFD Operator Service
 	rstatus, err = r.getServiceConditions(ctx)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
-
 	} else if err != nil {
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
 	}
 
 	// Check the status of the NFD Operator worker ConfigMap
 	rstatus, err = r.getWorkerConfigConditions(nfd)
-	if rstatus.isDegraded == true {
+	if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
-
 	} else if err != nil {
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
 	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
-	if rstatus.isProgressing == true {
+	if rstatus.isProgressing {
 		return r.updateProgressingCondition(instance, err.Error(), err)
-	} else if rstatus.isDegraded == true {
+	} else if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
-
 	} else if err != nil {
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
 	rstatus, err = r.getMasterDaemonSetConditions(ctx)
-	if rstatus.isProgressing == true {
+	if rstatus.isProgressing {
 		return r.updateProgressingCondition(instance, err.Error(), err)
-
-	} else if rstatus.isDegraded == true {
+	} else if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, err.Error(), err)
-
 	} else if err != nil {
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err)
 	}
@@ -683,8 +639,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	conditions := r.getAvailableConditions()
 
 	// Update the status of the resource on the CRD
-	r.updateStatus(instance, conditions)
-
 	if err := r.updateStatus(instance, conditions); err != nil {
 		if result != nil {
 			return *result, nil
