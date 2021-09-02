@@ -584,13 +584,22 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return reconcile.Result{}, err
 	}
 
-	// Check the status of the NFD Operator ServiceAccount
-	rstatus, err := r.getServiceAccountConditions(ctx)
+	// Check the status of the NFD Operator worker ServiceAccount
+	rstatus, err := r.getWorkerServiceAccountConditions(ctx)
 	if rstatus.isDegraded == true {
 		return r.updateDegradedCondition(instance, err.Error(), err)
 
 	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDServiceAccount, err)
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerServiceAccount, err)
+	}
+
+	// Check the status of the NFD Operator master ServiceAccount
+	rstatus, err = r.getMasterServiceAccountConditions(ctx)
+	if rstatus.isDegraded == true {
+		return r.updateDegradedCondition(instance, err.Error(), err)
+
+	} else if err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterServiceAccount, err)
 	}
 
 	// Check the status of the NFD Operator role
