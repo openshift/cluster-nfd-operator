@@ -325,7 +325,7 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	} else if node == master {
 		dsName = masterName
 	} else {
-		err = errors.New(errorInvalidNodeType)
+		return rstatus, errors.New(errorInvalidNodeType)
 	}
 
 	// Get the current DaemonSet from the reconciler
