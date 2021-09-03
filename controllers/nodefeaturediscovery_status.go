@@ -56,11 +56,6 @@ const (
 	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
 	errorNFDMasterDaemonSetUnknown = "NFDMasterDaemonSetCorrupted"
 
-	// Unavailable node errors. (These are triggered when one or
-	// more nodes are unavailable.)
-	errorNFDWorkerDaemonSetUnavailableNode = "NFDWorkerDaemonSetUnavailableNode"
-	errorNFDMasterDaemonSetUnavailableNode = "NFDMasterDaemonSetUnavailableNode"
-
 	// Invalid node type. (Denotes that the node should be either
 	// 'worker' or 'master')
 	errorInvalidNodeType = "InvalidNodeTypeSelected"
@@ -154,17 +149,6 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 		return reconcile.Result{}, err
 	}
 	return reconcile.Result{Requeue: true}, nil
-}
-
-// updateAvailableCondition is used to mark a given resource as "progressing" so
-// that the reconciler can take steps to rectify the situation.
-func (r *NodeFeatureDiscoveryReconciler) updateAvailableCondition(nfd *nfdv1.NodeFeatureDiscovery) (ctrl.Result, error) {
-
-	conditions := r.getAvailableConditions()
-	if err := r.updateStatus(nfd, conditions); err != nil {
-		return reconcile.Result{}, err
-	}
-	return reconcile.Result{}, errors.New("CouldNotUpdateAvailableConditions")
 }
 
 // getAvailableConditions returns a list of conditionsv1.Condition objects and marks
@@ -341,15 +325,14 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	} else if node == master {
 		dsName = masterName
 	} else {
-		err = errors.New(errorInvalidNodeType)
-	}
-
-	if err != nil {
-		return rstatus, err
+		return rstatus, errors.New(errorInvalidNodeType)
 	}
 
 	// Get the current DaemonSet from the reconciler
 	ds, err := r.getDaemonSet(ctx, nfdNamespace, dsName)
+	if err != nil {
+		return rstatus, err
+	}
 
 	// Index the DaemonSet status. (Note: there is no "Conditions" array here.)
 	dsStatus := ds.Status

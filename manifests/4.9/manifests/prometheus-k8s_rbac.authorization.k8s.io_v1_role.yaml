@@ -1,15 +1,16 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
-  name: nfd-master
+  creationTimestamp: null
+  name: prometheus-k8s
 rules:
 - apiGroups:
   - ""
   resources:
+  - services
+  - endpoints
   - pods
-  - nodes
-  - nodes/status
   verbs:
   - get
-  - patch
-  - update
+  - list
+  - watch

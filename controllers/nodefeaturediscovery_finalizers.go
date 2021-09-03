@@ -48,14 +48,14 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 	// then call the reconciler but wait 10 seconds before
 	// checking again.
 	r.Log.Info("Deletion appears to have succeeded, but running a secondary check to ensure resources are cleaned up")
-	if r.doComponentsExist(ctx) == true {
+	if r.doComponentsExist(ctx) {
 		r.Log.Info("Some components still exist. Requeueing deletion request.")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
 	// If all components are deleted, then remove the finalizer
 	r.Log.Info("Secondary check passed. Removing finalizer if it exists.")
-	if r.hasFinalizer(instance, finalizer) == true {
+	if r.hasFinalizer(instance, finalizer) {
 		r.removeFinalizer(instance, finalizer)
 		if err := r.Update(ctx, instance); err != nil {
 			if k8serrors.IsNotFound(err) {

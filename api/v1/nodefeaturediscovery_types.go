@@ -37,7 +37,27 @@ type NodeFeatureDiscoverySpec struct {
 	// +optional
 	Instance string `json:"instance"`
 
+	// ExtraLabelNs defines the list of of allowed extra label namespaces
+	// By default, only allow labels in the default `feature.node.kubernetes.io` label namespace
 	// +nullable
+	// +kubebuilder:validation:Optional
+	ExtraLabelNs []string `json:"extraLabelNs,omitempty"`
+
+	// ResourceLabels defines the list of features
+	// to be advertised as extended resources instead of labels.
+	// +nullable
+	// +kubebuilder:validation:Optional
+	ResourceLabels []string `json:"resourceLabels,omitempty"`
+
+	// LabelWhiteList defines a regular expression
+	// for filtering feature labels based on their name.
+	// Each label must match against the given reqular expression in order to be published.
+	// +nullable
+	// +kubebuilder:validation:Optional
+	LabelWhiteList string `json:"labelWhiteList,omitempty"`
+
+	// WorkerConfig describes configuration options for the NFD
+	// worker.
 	// +optional
 	CustomConfig ConfigMap `json:"customConfig"`
 }
@@ -66,6 +86,11 @@ type OperandSpec struct {
 	// +nullable
 	// +optional
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
+
+	// ServicePort specifies the TCP port that nfd-master
+	// listens for incoming requests.
+	// +kubebuilder:validation:Optional
+	ServicePort int `json:"servicePort"`
 }
 
 // ConfigMap describes configuration options for the NFD worker

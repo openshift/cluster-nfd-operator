@@ -34,3 +34,14 @@ patchesJSON6902:
         - use
         resourceNames:
         - nfd-worker
+    - op: add
+      path: /rules/1
+      value:
+        apiGroups:
+        - ""
+        resources:
+        - nodes/status
+        verbs:
+        - get
+        - patch
+        - update

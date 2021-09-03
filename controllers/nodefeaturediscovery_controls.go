@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -25,6 +26,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -39,6 +41,8 @@ type ResourceStatus int
 const (
 	Ready    ResourceStatus = 0
 	NotReady ResourceStatus = 1
+
+	defaultServicePort int = 12000
 )
 
 // String returns the status of the resource as being Ready,
@@ -415,20 +419,34 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 		obj.Spec.Template.Spec.Containers[0].ImagePullPolicy = n.ins.Spec.Operand.ImagePolicy(n.ins.Spec.Operand.ImagePullPolicy)
 	}
 
-	// check if running as instance
-	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
-	if n.ins.Spec.Instance != "" && obj.ObjectMeta.Name == "nfd-master" {
-		instanceFlag := fmt.Sprintf("--instance=%s", n.ins.Spec.Instance)
-		var found bool
-		for _, c := range obj.Spec.Template.Spec.Containers[0].Command {
-			if c == instanceFlag {
-				// all set!
-				found = true
-			}
+	// update nfd-master service port
+	if obj.ObjectMeta.Name == "nfd-master" {
+		var args []string
+		port := defaultServicePort
+		if n.ins.Spec.Operand.ServicePort != 0 {
+			port = n.ins.Spec.Operand.ServicePort
 		}
-		if !found {
-			obj.Spec.Template.Spec.Containers[0].Command = append(obj.Spec.Template.Spec.Containers[0].Command, instanceFlag)
+		args = append(args, fmt.Sprintf("--port=%d", port))
+
+		// check if running as instance
+		// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
+		if n.ins.Spec.Instance != "" {
+			args = append(args, fmt.Sprintf("--instance=%s", n.ins.Spec.Instance))
 		}
+
+		if len(n.ins.Spec.ExtraLabelNs) != 0 {
+			args = append(args, fmt.Sprintf("--extra-label-ns=%s", strings.Join(n.ins.Spec.ExtraLabelNs, ",")))
+		}
+
+		if len(n.ins.Spec.ResourceLabels) != 0 {
+			args = append(args, fmt.Sprintf("--resource-labels=%s", strings.Join(n.ins.Spec.ResourceLabels, ",")))
+		}
+
+		if strings.TrimSpace(n.ins.Spec.LabelWhiteList) != "" {
+			args = append(args, fmt.Sprintf("--label-whitelist=%s", n.ins.Spec.LabelWhiteList))
+		}
+
+		obj.Spec.Template.Spec.Containers[0].Args = args
 	}
 
 	// The Namespace should already be defined, so let's set the namespace
@@ -487,6 +505,15 @@ func Service(n NFD) (ResourceStatus, error) {
 	// The Namespace should already be defined, so let's set the
 	// namespace to the namespace defined in the ConfigMap object
 	obj.SetNamespace(n.ins.GetNamespace())
+
+	// update ports
+	if n.ins.Spec.Operand.ServicePort != 0 {
+		obj.Spec.Ports[0].Port = int32(n.ins.Spec.Operand.ServicePort)
+		obj.Spec.Ports[0].TargetPort = intstr.FromInt(n.ins.Spec.Operand.ServicePort)
+	} else {
+		obj.Spec.Ports[0].Port = int32(defaultServicePort)
+		obj.Spec.Ports[0].TargetPort = intstr.FromInt(defaultServicePort)
+	}
 
 	// found states if the DaemonSet was found
 	found := &corev1.Service{}
