@@ -73,6 +73,14 @@ spec:
           verbs:
           - use
         - apiGroups:
+          - ""
+          resources:
+          - nodes/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
           - apps
           resources:
           - daemonsets
