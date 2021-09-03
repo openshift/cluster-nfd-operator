@@ -67,7 +67,6 @@ PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 all: build
 
 # Run tests
-# Run tests
 test:
 	@echo "TODO UNIT TEST"
 
