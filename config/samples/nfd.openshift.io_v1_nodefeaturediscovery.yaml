@@ -32,7 +32,7 @@ spec:
       #    v: 0
       #    vmodule:
       ##   NOTE: the following options are not dynamically run-time 
-      ##          Configurable and require a nfd-worker restart to take effect
+      ##          configurable and require a nfd-worker restart to take effect
       ##          after being changed
       #    logDir:
       #    logFile:
