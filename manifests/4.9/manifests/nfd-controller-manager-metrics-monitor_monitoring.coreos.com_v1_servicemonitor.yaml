@@ -4,7 +4,6 @@ metadata:
   labels:
     role: alert-rules
   name: controller-manager-alerts-monitor
-  namespace: openshift-nfd
 spec:
   groups:
   - name: node-feature-discovery-operator.rules
