@@ -16,7 +16,7 @@ metadata:
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
             "operand": {
-              "image": "quay.io/openshift/origin-node-feature-discovery:4.9",
+              "image": "quay.io/openshift/origin-node-feature-discovery:4.10",
               "imagePullPolicy": "Always",
               "namespace": "openshift-nfd",
               "servicePort": 12000
@@ -29,7 +29,7 @@ metadata:
       ]
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
-    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.9
+    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.10
     description: "The NFD operator creates and maintains the Node Feature Discovery (NFD) on Kubernetes. It detects hardware features available on each  node in a Kubernetes cluster, and advertises those features using node labels.\n\nNFD consists of two software components:\n    \n## NFD-Master\n\nNFD-Master is the daemon responsible for communication towards the Kubernetes\nAPI. That is, it receives labeling requests from the worker and modifies node\nobjects accordingly.\n\n## NFD-Worker\n\nNFD-Worker is a daemon responsible for feature detection. It then communicates\nthe information to nfd-master which does the actual node labeling.  One\ninstance of nfd-worker is supposed to be running on each node of the cluster,\n\n### Feature discovery\n\nFeature discovery is divided into domain-specific feature sources:\n\n- CPU\n- IOMMU\n- Kernel\n- Memory\n- Network\n- PCI\n- Storage\n- System\n- USB\n- Custom (rule-based custom features)\n- Local (hooks for user-specific features)\n\nEach feature source is responsible for detecting a set of features which. in\nturn, are turned into node feature labels.  Feature labels are prefixed with\n`feature.node.kubernetes.io/` and also contain the name of the feature source.\nNon-standard user-specific feature labels can be created with the local and\ncustom feature sources.\n"
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
@@ -38,14 +38,14 @@ metadata:
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
     repository: https://github.com/openshift/cluster-nfd-operator
-    olm.skipRange: ">=4.6.0 <4.9.0"
+    olm.skipRange: ">=4.7.0 <4.10.0"
     support: Red Hat
   labels:
     operatorframework.io/arch.amd64: supported
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: nfd.v4.9.0
+  name: nfd.v4.10.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -508,8 +508,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:4.9
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.9
+                  value: quay.io/openshift/origin-node-feature-discovery:4.10
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.10
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -642,4 +642,4 @@ spec:
   provider:
     name: Red Hat
     url: https://github.com/openshift/cluster-nfd-operator
-  version: 4.9.0
+  version: 4.10.0
