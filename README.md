@@ -27,7 +27,7 @@ make image push deploy
 Create a NodeFeatureDiscovery instance
 
 ```bash
-oc apply -f config/samples/nfd.kubernetes.io_v1_nodefeaturediscovery.yaml
+oc apply -f config/samples/nfd.openshift.io_v1_nodefeaturediscovery.yaml
 ```
 
 ## Verify
