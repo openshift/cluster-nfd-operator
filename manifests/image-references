@@ -13,4 +13,4 @@ spec:
   - name: kube-rbac-proxy
     from:
       kind: DockerImage
-      name: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
+      name: registry.redhat.io/openshift4/ose-kube-rbac-proxy
