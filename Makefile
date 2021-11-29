@@ -6,7 +6,7 @@ NAMESPACE      ?= openshift-nfd
 PULLPOLICY     ?= IfNotPresent
 TEMPLATE_CMD    = sed 's+REPLACE_IMAGE+$(IMAGE)+g; s+REPLACE_NAMESPACE+$(NAMESPACE)+g; s+IfNotPresent+$(PULLPOLICY)+'
 
-DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0200_service_account.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
+DEPLOY_OBJECTS  = manifests/0100_namespace.yaml manifests/0300_cluster_role.yaml manifests/0400_cluster_role_binding.yaml manifests/0600_operator.yaml
 DEPLOY_CRDS     = manifests/0500_crd.yaml
 DEPLOY_CRS      = manifests/0700_cr.yaml
 
@@ -37,8 +37,6 @@ build:
 
 test-e2e: 
 	@$(TEMPLATE_CMD) manifests/0100_namespace.yaml > manifests/operator-init.yaml
-	echo -e "\n---\n" >> manifests/operator-init.yaml
-	@$(TEMPLATE_CMD) manifests/0200_service_account.yaml >> manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
 	@$(TEMPLATE_CMD) manifests/0300_cluster_role.yaml >> manifests/operator-init.yaml
 	echo -e "\n---\n" >> manifests/operator-init.yaml
