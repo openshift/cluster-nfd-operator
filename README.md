@@ -37,7 +37,7 @@ on the NodeFeatureDiscovery CR instance,
 after a moment you should be able to see
 
 ```bash
-$ oc -n node-feature-discovery-operator get ds,deploy
+$ oc -n openshift-nfd get ds,deploy
 NAME                        DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
 daemonset.apps/nfd-worker   3         3         3       3            3           <none>          5s
 NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
