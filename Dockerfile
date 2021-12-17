@@ -19,4 +19,5 @@ RUN useradd cluster-nfd-operator
 USER cluster-nfd-operator
 
 ENTRYPOINT ["/node-feature-discovery-operator"]
-LABEL io.k8s.display-name="node-feature-discovery-operator"
+LABEL io.k8s.display-name="node-feature-discovery-operator" \
+      io.k8s.description="This is the image for the Node Feature Discovery Operator."
