@@ -57,7 +57,6 @@ type Resources struct {
 
 // Add3dpartyResourcesToScheme Adds 3rd party resources To the operator
 func Add3dpartyResourcesToScheme(scheme *runtime.Scheme) error {
-
 	if err := secv1.AddToScheme(scheme); err != nil {
 		return err
 	}
@@ -67,7 +66,6 @@ func Add3dpartyResourcesToScheme(scheme *runtime.Scheme) error {
 // filePathWalkDir takes a path as an input and finds all files
 // in that path, but not directories
 func filePathWalkDir(root string) ([]string, error) {
-
 	// files contains the list of files found in the path
 	// 'root'
 	var files []string
@@ -88,7 +86,6 @@ func filePathWalkDir(root string) ([]string, error) {
 // file names in that path, then returns a list of the manifests
 // it found in that path.
 func getAssetsFrom(path string) []assetsFromFile {
-
 	// manifests is a list type where each item in the list
 	// contains the contents of a given asset (manifest)
 	manifests := []assetsFromFile{}
@@ -124,7 +121,6 @@ func getAssetsFrom(path string) []assetsFromFile {
 }
 
 func addResourcesControls(path string) (Resources, controlFunc) {
-
 	// res is a Resources object that contains information
 	// about a given manifest, such as the Namespace and
 	// ServiceAccount being used
@@ -267,7 +263,6 @@ func (r *NodeFeatureDiscoveryReconciler) getSecurityContextConstraints(ctx conte
 
 // deleteServiceAccount deletes one of the NFD Operator's ServiceAccounts
 func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing ServiceAccount from the reconciler
 	sa, err := r.getServiceAccount(ctx, namespace, name)
 
@@ -290,7 +285,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Contex
 
 // deleteDaemonSet deletes the NFD Operator's DaemonSet (worker or master)
 func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing DaemonSet from the reconciler
 	ds, err := r.getDaemonSet(ctx, namespace, name)
 
@@ -313,7 +307,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, na
 
 // deleteService deletes the NFD Operator's Service
 func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing Service from the reconciler
 	svc, err := r.getService(ctx, namespace, name)
 
@@ -336,7 +329,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, name
 
 // deleteRole deletes one of the NFD Operator's Roles
 func (r *NodeFeatureDiscoveryReconciler) deleteRole(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing Role from the reconciler
 	role, err := r.getRole(ctx, namespace, name)
 
@@ -359,7 +351,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteRole(ctx context.Context, namespa
 
 // deleteRoleBinding deletes one of the NFD Operator's RoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteRoleBinding(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing RoleBinding from the reconciler
 	rb, err := r.getRoleBinding(ctx, namespace, name)
 
@@ -382,7 +373,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteRoleBinding(ctx context.Context, 
 
 // deleteClusterRole deletes one of the NFD Operator's ClusterRoles
 func (r *NodeFeatureDiscoveryReconciler) deleteClusterRole(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing ClusterRole from the reconciler
 	cr, err := r.getClusterRole(ctx, namespace, name)
 
@@ -405,7 +395,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteClusterRole(ctx context.Context, 
 
 // deleteClusterRoleBinding deletes one of the NFD Operator's ClusterRoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing ClusterRoleBinding from the reconciler
 	crb, err := r.getClusterRoleBinding(ctx, namespace, name)
 
@@ -428,7 +417,6 @@ func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Co
 
 // deleteSecurityContextConstraints deletes one of the NFD Operator's SecurityContextConstraints
 func (r *NodeFeatureDiscoveryReconciler) deleteSecurityContextConstraints(ctx context.Context, namespace string, name string) error {
-
 	// Attempt to get the existing SCC's from the reconciler
 	scc, err := r.getSecurityContextConstraints(ctx, namespace, name)
 
