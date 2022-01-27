@@ -9,14 +9,12 @@ require (
 	github.com/openshift/client-go v3.9.0+incompatible
 	github.com/openshift/custom-resource-status v0.0.0-20210221154447-420d9ecf2a00
 	github.com/prometheus/client_golang v1.11.0
-	github.com/stretchr/testify v1.7.0
 	k8s.io/api v0.22.2
 	k8s.io/apimachinery v0.22.2
 	k8s.io/client-go v0.22.2
 	k8s.io/klog/v2 v2.9.0
 	k8s.io/kubectl v0.22.2
 	sigs.k8s.io/controller-runtime v0.10.2
-	sigs.k8s.io/yaml v1.2.0
 )
 
 require (
@@ -49,7 +47,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.26.0 // indirect
 	github.com/prometheus/procfs v0.6.0 // indirect
@@ -76,4 +73,5 @@ require (
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e // indirect
 	k8s.io/utils v0.0.0-20210819203725-bdf08cb9a70a // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.2 // indirect
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
