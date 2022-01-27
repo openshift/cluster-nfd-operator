@@ -56,3 +56,14 @@ patchesJSON6902:
         - get
         - list
         - watch
+    - op: add
+      path: /rules/3
+      value:
+        apiGroups:
+        - topology.node.k8s.io
+        resources:
+        - noderesourcetopologies
+        verbs:
+        - create
+        - get
+        - update

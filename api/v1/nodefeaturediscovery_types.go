@@ -27,8 +27,11 @@ import (
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
 	// +optional
-	Operand      OperandSpec `json:"operand"`
-	WorkerConfig *ConfigMap  `json:"workerConfig,omitempty"`
+	Operand OperandSpec `json:"operand"`
+	// +optional
+	TopologyUpdater bool `json:"topologyupdater"`
+
+	WorkerConfig *ConfigMap `json:"workerConfig,omitempty"`
 
 	// Run NFD in multiple deployment mode
 	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance

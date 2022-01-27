@@ -73,6 +73,10 @@ spec:
         NodeFeatureRule resource specifies a configuration for feature-based customization of node objects, such as node labeling.
       kind: NodeFeatureRule
       name: nodefeaturerules.nfd.openshift.io
+    - description: |
+        noderesourcetopologies resource describes node resources and their topology.
+      kind: NodeResourceTopology
+      name: noderesourcetopologies.topology.node.k8s.io
       version: v1alpha1
   description: "The NFD operator creates and maintains the Node Feature Discovery
     (NFD) on Kubernetes. It detects hardware features available on each  node in a

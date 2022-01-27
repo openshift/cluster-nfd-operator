@@ -95,6 +95,8 @@ spec:
                   type: string
                 nullable: true
                 type: array
+              topologyupdater:
+                type: boolean
               workerConfig:
                 description: ConfigMap describes configuration options for the NFD
                   worker
