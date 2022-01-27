@@ -45,3 +45,14 @@ patchesJSON6902:
         - get
         - patch
         - update
+    - op: add
+      path: /rules/2
+      value:
+        apiGroups:
+        - nfd.openshift.io
+        resources:
+        - nodefeaturerules
+        verbs:
+        - get
+        - list
+        - watch
