@@ -92,7 +92,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of DaemonSet objects
 	dsPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new DaemonSet objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldDsObject, ok := e.ObjectOld.(*appsv1.DaemonSet)
@@ -104,7 +103,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldDsObject.GetDeletionTimestamp()
@@ -112,7 +110,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newDsObject.GetGeneration() == oldDsObject.GetGeneration() {
@@ -122,12 +119,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the DaemonSet object has been created already.
 			_, ok := e.Object.(*appsv1.DaemonSet)
 			return ok
@@ -137,7 +132,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of ServiceAccount objects
 	saPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new ServiceAccount objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldSaObject, ok := e.ObjectOld.(*corev1.ServiceAccount)
@@ -149,7 +143,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSaObject.GetDeletionTimestamp()
@@ -157,7 +150,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newSaObject.GetGeneration() == oldSaObject.GetGeneration() {
@@ -167,12 +159,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the ServiceAccount object has been created already.
 			_, ok := e.Object.(*corev1.ServiceAccount)
 			return ok
@@ -182,7 +172,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of Service objects
 	svcPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new Service objects. If either one doesn't
 			// exist, then no update occurred, so return 'false'.
 			oldSvcObject, ok := e.ObjectOld.(*corev1.Service)
@@ -194,7 +183,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSvcObject.GetDeletionTimestamp()
@@ -202,7 +190,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newSvcObject.GetGeneration() == oldSvcObject.GetGeneration() {
@@ -212,12 +199,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the Service object has been created already.
 			_, ok := e.Object.(*corev1.Service)
 			return ok
@@ -227,7 +212,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of RoleBinding objects
 	rbPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new RoleBinding objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldRbObject, ok := e.ObjectOld.(*rbacv1.RoleBinding)
@@ -239,7 +223,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldRbObject.GetDeletionTimestamp()
@@ -247,7 +230,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newRbObject.GetGeneration() == oldRbObject.GetGeneration() {
@@ -257,12 +239,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the RoleBinding object has been created already.
 			_, ok := e.Object.(*rbacv1.RoleBinding)
 			return ok
@@ -272,7 +252,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of Role objects
 	rPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new Role objects. If either one doesn't
 			// exist, then no update occurred, so return false.
 			oldRObject, ok := e.ObjectOld.(*rbacv1.Role)
@@ -284,7 +263,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldRObject.GetDeletionTimestamp()
@@ -292,7 +270,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newRObject.GetGeneration() == oldRObject.GetGeneration() {
@@ -302,12 +279,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the Role object has been created already.
 			_, ok := e.Object.(*rbacv1.Role)
 			return ok
@@ -317,7 +292,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of ConfigMap objects
 	cmPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new ConfigMap objects. If either
 			// one doesn't exist, then no update occurred, so return
 			// 'false'.
@@ -330,7 +304,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldCmObject.GetDeletionTimestamp()
@@ -338,7 +311,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newCmObject.GetGeneration() == oldCmObject.GetGeneration() {
@@ -348,12 +320,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the ConfigMap object has been created already.
 			_, ok := e.Object.(*corev1.ConfigMap)
 			return ok
@@ -364,7 +334,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// objects
 	sccPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new SecurityContextConstraints objects. If
 			// either one doesn't exist, then no update occurred, return 'false'.
 			oldSccObject, ok := e.ObjectOld.(*security.SecurityContextConstraints)
@@ -376,7 +345,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSccObject.GetDeletionTimestamp()
@@ -410,7 +378,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of NFD instances
 	nfdPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new NodeFeatureDiscovery instances. If
 			// either one doesn't exist, then no update occurred, return 'false'.
 			oldNfdObject, ok := e.ObjectOld.(*nfdv1.NodeFeatureDiscovery)

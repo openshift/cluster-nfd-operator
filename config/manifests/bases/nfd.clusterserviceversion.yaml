@@ -15,52 +15,15 @@ metadata:
             "customConfig": {
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
+            "instance": "",
             "operand": {
               "image": "quay.io/openshift/origin-node-feature-discovery:4.10",
               "imagePullPolicy": "Always",
-              "servicePort": 12000
+              "namespace": "openshift-nfd"
             },
             "workerConfig": {
-              "configData": "core:\n#  labelWhiteList:\n#  noPublish: false\n  sleepInterval: 60s\n#  sources: [all]\n#  klog:\n#    addDirHeader: false\n#    alsologtostderr: false\n#    logBacktraceAt:\n#    logtostderr: true\n#    skipHeaders: false\n#    stderrthreshold: 2\n#    v: 0\n#    vmodule:\n##   NOTE: the following options are not dynamically run-time \n##          configurable and require a nfd-worker restart to take effect\n##          after being changed\n#    logDir:\n#    logFile:\n#    logFileMaxSize: 1800\n#    skipLogHeaders: false\nsources:\n#  cpu:\n#    cpuid:\n##     NOTE: whitelist has priority over blacklist\n#      attributeBlacklist:\n#        - \"BMI1\"\n#        - \"BMI2\"\n#        - \"CLMUL\"\n#        - \"CMOV\"\n#        - \"CX16\"\n#        - \"ERMS\"\n#        - \"F16C\"\n#        - \"HTT\"\n#        - \"LZCNT\"\n#        - \"MMX\"\n#        - \"MMXEXT\"\n#        - \"NX\"\n#        - \"POPCNT\"\n#        - \"RDRAND\"\n#        - \"RDSEED\"\n#        - \"RDTSCP\"\n#        - \"SGX\"\n#        - \"SSE\"\n#        - \"SSE2\"\n#        - \"SSE3\"\n#        - \"SSE4.1\"\n#        - \"SSE4.2\"\n#        - \"SSSE3\"\n#      attributeWhitelist:\n#  kernel:\n#    kconfigFile: \"/path/to/kconfig\"\n#    configOpts:\n#      - \"NO_HZ\"\n#      - \"X86\"\n#      - \"DMI\"\n  pci:\n    deviceClassWhitelist:\n      - \"0200\"\n      - \"03\"\n      - \"12\"\n    deviceLabelFields:\n#      - \"class\"\n      - \"vendor\"\n#      - \"device\"\n#      - \"subsystem_vendor\"\n#      - \"subsystem_device\"\n#  usb:\n#    deviceClassWhitelist:\n#      - \"0e\"\n#      - \"ef\"\n#      - \"fe\"\n#      - \"ff\"\n#    deviceLabelFields:\n#      - \"class\"\n#      - \"vendor\"\n#      - \"device\"\n#  custom:\n#    - name: \"my.kernel.feature\"\n#      matchOn:\n#        - loadedKMod: [\"example_kmod1\", \"example_kmod2\"]\n#    - name: \"my.pci.feature\"\n#      matchOn:\n#        - pciId:\n#            class: [\"0200\"]\n#            vendor: [\"15b3\"]\n#            device: [\"1014\", \"1017\"]\n#        - pciId :\n#            vendor: [\"8086\"]\n#            device: [\"1000\", \"1100\"]\n#    - name: \"my.usb.feature\"\n#      matchOn:\n#        - usbId:\n#          class: [\"ff\"]\n#          vendor: [\"03e7\"]\n#          device: [\"2485\"]\n#        - usbId:\n#          class: [\"fe\"]\n#          vendor: [\"1a6e\"]\n#          device: [\"089a\"]\n#    - name: \"my.combined.feature\"\n#      matchOn:\n#        - pciId:\n#            vendor: [\"15b3\"]\n#            device: [\"1014\", \"1017\"]\n#          loadedKMod : [\"vendor_kmod1\", \"vendor_kmod2\"]\n"
+              "configData": "#core:\n#  labelWhiteList:\n#  noPublish: false\n#  sleepInterval: 60s\n#  sources: [all]\n#  klog:\n#    addDirHeader: false\n#    alsologtostderr: false\n#    logBacktraceAt:\n#    logtostderr: true\n#    skipHeaders: false\n#    stderrthreshold: 2\n#    v: 0\n#    vmodule:\n##   NOTE: the following options are not dynamically run-time configurable\n##         and require a nfd-worker restart to take effect after being changed\n#    logDir:\n#    logFile:\n#    logFileMaxSize: 1800\n#    skipLogHeaders: false\n#sources:\n#  cpu:\n#    cpuid:\n##     NOTE: whitelist has priority over blacklist\n#      attributeBlacklist:\n#        - \"BMI1\"\n#        - \"BMI2\"\n#        - \"CLMUL\"\n#        - \"CMOV\"\n#        - \"CX16\"\n#        - \"ERMS\"\n#        - \"F16C\"\n#        - \"HTT\"\n#        - \"LZCNT\"\n#        - \"MMX\"\n#        - \"MMXEXT\"\n#        - \"NX\"\n#        - \"POPCNT\"\n#        - \"RDRAND\"\n#        - \"RDSEED\"\n#        - \"RDTSCP\"\n#        - \"SGX\"\n#        - \"SSE\"\n#        - \"SSE2\"\n#        - \"SSE3\"\n#        - \"SSE4.1\"\n#        - \"SSE4.2\"\n#        - \"SSSE3\"\n#      attributeWhitelist:\n#  kernel:\n#    kconfigFile: \"/path/to/kconfig\"\n#    configOpts:\n#      - \"NO_HZ\"\n#      - \"X86\"\n#      - \"DMI\"\n#  pci:\n#    deviceClassWhitelist:\n#      - \"0200\"\n#      - \"03\"\n#      - \"12\"\n#    deviceLabelFields:\n#      - \"class\"\n#      - \"vendor\"\n#      - \"device\"\n#      - \"subsystem_vendor\"\n#      - \"subsystem_device\"\n#  usb:\n#    deviceClassWhitelist:\n#      - \"0e\"\n#      - \"ef\"\n#      - \"fe\"\n#      - \"ff\"\n#    deviceLabelFields:\n#      - \"class\"\n#      - \"vendor\"\n#      - \"device\"\n#  custom:\n#    - name: \"my.kernel.feature\"\n#      matchOn:\n#        - loadedKMod: [\"example_kmod1\", \"example_kmod2\"]\n#    - name: \"my.pci.feature\"\n#      matchOn:\n#        - pciId:\n#            class: [\"0200\"]\n#            vendor: [\"15b3\"]\n#            device: [\"1014\", \"1017\"]\n#        - pciId :\n#            vendor: [\"8086\"]\n#            device: [\"1000\", \"1100\"]\n#    - name: \"my.usb.feature\"\n#      matchOn:\n#        - usbId:\n#          class: [\"ff\"]\n#          vendor: [\"03e7\"]\n#          device: [\"2485\"]\n#        - usbId:\n#          class: [\"fe\"]\n#          vendor: [\"1a6e\"]\n#          device: [\"089a\"]\n#    - name: \"my.combined.feature\"\n#      matchOn:\n#        - pciId:\n#            vendor: [\"15b3\"]\n#            device: [\"1014\", \"1017\"]\n#          loadedKMod : [\"vendor_kmod1\", \"vendor_kmod2\"]\n"
             }
-          }
-        },
-        {
-          "apiVersion": "nfd.openshift.io/v1alpha1",
-          "kind": "NodeFeatureRule",
-          "metadata": {
-            "name": "my-sample-rule-object"
-          },
-          "spec": {
-            "rules": [
-              {
-                "labels": {
-                  "my-sample-feature": "true"
-                },
-                "matchFeatures": [
-                  {
-                    "feature": "kernel.loadedmodule",
-                    "matchExpressions": {
-                      "dummy": {
-                        "op": "Exists"
-                      }
-                    }
-                  },
-                  {
-                    "feature": "kernel.config",
-                    "matchExpressions": {
-                      "X86": {
-                        "op": "In",
-                        "value": [
-                          "y"
-                        ]
-                      }
-                    }
-                  }
-                ],
-                "name": "my sample rule"
-              }
-            ]
           }
         }
       ]
@@ -86,7 +49,7 @@ metadata:
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.4.0+git
     operators.operatorframework.io/internal-objects: '["noderesourcetopologies.topology.node.k8s.io"]'
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
@@ -97,7 +60,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: node-feature-discovery-operator.v4.10.0
+  name: nfd.v4.10.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -133,7 +96,7 @@ spec:
 
     ##NFD-Topology-Updater
     NFD-Topology-Updater is a daemon responsible for examining allocated resources on a worker node to account for resources available to be allocated to new pod on a per-zone basis (where a zone can be a NUMA node). It then communicates the information to nfd-master which does the NodeResourceTopology CR creation corresponding to all the nodes in the cluster. One instance of nfd-topology-updater is supposed to be running on each node of the cluster.
-  displayName: Node Feature Discovery
+  displayName: Node Feature Discovery Operator
   icon:
   - base64data: |
       iVBORw0KGgoAAAANSUhEUgAAAikAAAIACAMAAABw7gzSAAAABGdBTUEAALGPC/xhBQAAAAFzUkdC
@@ -344,30 +307,6 @@ spec:
           - podsecuritypolicies
           verbs:
           - use
-        - apiGroups:
-          - ""
-          resources:
-          - nodes/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - nfd.openshift.io
-          resources:
-          - nodefeaturerules
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - topology.node.k8s.io
-          resources:
-          - noderesourcetopologies
-          verbs:
-          - create
-          - get
-          - update
         - apiGroups:
           - apps
           resources:
@@ -724,18 +663,6 @@ spec:
           - update
           - use
           - watch
-        - apiGroups:
-          - authentication.k8s.io
-          resources:
-          - tokenreviews
-          verbs:
-          - create
-        - apiGroups:
-          - authorization.k8s.io
-          resources:
-          - subjectaccessreviews
-          verbs:
-          - create
         serviceAccountName: nfd-operator
       deployments:
       - name: nfd-controller-manager
@@ -756,35 +683,20 @@ spec:
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
                 - --v=10
-                - --tls-cert-file=/etc/secrets/tls.crt
-                - --tls-private-key-file=/etc/secrets/tls.key
-                - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
                   name: https
-                resources:
-                  limits:
-                    cpu: 500m
-                    memory: 128Mi
-                  requests:
-                    cpu: 250m
-                    memory: 64Mi
-                securityContext:
-                  readOnlyRootFilesystem: true
-                volumeMounts:
-                - mountPath: /etc/secrets
-                  name: node-feature-discovery-operator-tls
+                resources: {}
               - args:
+                - --health-probe-bind-address=:8081
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
                 command:
                 - /node-feature-discovery-operator
                 env:
-                - name: SSL_CERT_DIR
-                  value: /etc/pki/tls/certs
-                - name: WATCH_NAMESPACE
+                - name: POD_NAMESPACE
                   valueFrom:
                     fieldRef:
                       fieldPath: metadata.namespace
@@ -805,9 +717,6 @@ spec:
                   initialDelaySeconds: 15
                   periodSeconds: 20
                 name: manager
-                ports:
-                - containerPort: 8080
-                  name: metrics
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -823,87 +732,6 @@ spec:
                   readOnlyRootFilesystem: true
               serviceAccountName: nfd-operator
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: node-feature-discovery-operator-tls
-                secret:
-                  secretName: node-feature-discovery-operator-tls
-      permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          - coordination.k8s.io
-          resources:
-          - configmaps
-          - leases
-          verbs:
-          - get
-          - list
-          - watch
-          - create
-          - update
-          - patch
-          - delete
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - patch
-        - apiGroups:
-          - rbac.authorization.k8s.io
-          resources:
-          - roles
-          - rolebindings
-          - clusterroles
-          - clusterrolebindings
-          verbs:
-          - '*'
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          - services
-          - endpoints
-          - persistentvolumeclaims
-          - events
-          - configmaps
-          - secrets
-          - serviceaccounts
-          - nodes
-          verbs:
-          - '*'
-        - apiGroups:
-          - ""
-          resources:
-          - namespaces
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
-          verbs:
-          - '*'
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
-          verbs:
-          - get
-          - create
-        - apiGroups:
-          - nfd.openshift.io
-          resources:
-          - '*'
-          verbs:
-          - '*'
-        serviceAccountName: nfd-operator
     strategy: deployment
   installModes:
   - supported: true

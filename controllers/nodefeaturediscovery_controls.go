@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	secv1 "github.com/openshift/api/security/v1"
+	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -108,6 +109,11 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	// object
 	obj := n.resources[state].ServiceAccount
 
+	// Check if nfd-topology-updater is needed, if not, skip
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+		return Ready, nil
+	}
+
 	// It is also assumed that our service account has a defined Namespace
 	obj.SetNamespace(n.ins.GetNamespace())
 
@@ -155,6 +161,11 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	// object
 	obj := n.resources[state].ClusterRole
 
+	// Check if nfd-topology-updater is needed, if not, skip
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+		return Ready, nil
+	}
+
 	// found states if the ClusterRole was found
 	found := &rbacv1.ClusterRole{}
 	r.Log.Info("Looking for ClusterRole '", obj.Name, "'")
@@ -196,6 +207,11 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	// ClusterRoleBinding object, so let's get the resource's
 	// ClusterRoleBinding object
 	obj := n.resources[state].ClusterRoleBinding
+
+	// Check if nfd-topology-updater is needed, if not, skip
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+		return Ready, nil
+	}
 
 	// found states if the ClusterRoleBinding was found
 	found := &rbacv1.ClusterRoleBinding{}
@@ -403,6 +419,11 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	// DaemonSet object, so let's get the resource's DaemonSet object
 	obj := n.resources[state].DaemonSet
 
+	// Check if nfd-topology-updater is needed, if not, skip
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+		return Ready, nil
+	}
+
 	// update the image
 	obj.Spec.Template.Spec.Containers[0].Image = n.ins.Spec.Operand.ImagePath()
 
@@ -567,8 +588,17 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	// scc object, so let's get the resource's scc object
 	obj := n.resources[state].SecurityContextConstraints
 
-	// Set the correct namespace for SCC when installed in non default namespace
-	obj.Users[0] = "system:serviceaccount:" + n.ins.GetNamespace() + ":" + obj.GetName()
+	// Check if nfd-topology-updater is needed, if not, skip
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+		return Ready, nil
+	}
+
+	// Set the correct namespace for SCC
+	ns, err := config.GetWatchNamespace()
+	if err != nil {
+		return NotReady, err
+	}
+	obj.Users[0] = "system:serviceaccount:" + ns + ":" + obj.GetName()
 
 	// found states if the scc was found
 	found := &secv1.SecurityContextConstraints{}
@@ -577,7 +607,7 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	// Look for the scc to see if it exists, and if so, check if it's
 	// Ready/NotReady. If the scc does not exist, then attempt to create
 	// it
-	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
+	err = n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
