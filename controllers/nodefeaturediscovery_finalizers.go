@@ -254,7 +254,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		if err != nil {
 			return false, interpretError(err, "ClusterRoleBinding")
 		}
-		r.Log.Info("ClusterRoleBinding resource has been deleted.")
+		r.Log.Info("ClusterRoleBinding", nfdWorkerApp, "resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -267,7 +267,20 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		if err != nil {
 			return false, interpretError(err, "ClusterRoleBinding")
 		}
-		r.Log.Info("ClusterRoleBinding resource has been deleted.")
+		r.Log.Info("ClusterRoleBinding", nfdTopologyApp, "resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the ClusterRoleBinding
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
+		if err != nil {
+			return false, interpretError(err, "ClusterRoleBinding")
+		}
+		r.Log.Info("ClusterRoleBinding", nfdMasterApp, "resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -319,7 +332,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		if err != nil {
 			return false, interpretError(err, "SecurityContextConstraints")
 		}
-		r.Log.Info("SecurityContextConstraints resource has been deleted.")
+		r.Log.Info("SecurityContextConstraints nfd-worker resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -332,7 +345,20 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		if err != nil {
 			return false, interpretError(err, "SecurityContextConstraints")
 		}
-		r.Log.Info("SecurityContextConstraints resource has been deleted.")
+		r.Log.Info("SecurityContextConstraints nfd-topology-updater resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the Worker config map
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteConfigMap(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		if err != nil {
+			return false, interpretError(err, "nfd-worker config map")
+		}
+		r.Log.Info("nfd-worker config map resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {

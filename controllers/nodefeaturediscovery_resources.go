@@ -219,6 +219,13 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSet(ctx context.Context, names
 	return ds, err
 }
 
+// getConfigMap gets one of the NFD Operator's ConfigMap
+func (r *NodeFeatureDiscoveryReconciler) getConfigMap(ctx context.Context, namespace string, name string) (*corev1.ConfigMap, error) {
+	cm := &corev1.ConfigMap{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, cm)
+	return cm, err
+}
+
 // getService gets one of the NFD Operator's Services
 func (r *NodeFeatureDiscoveryReconciler) getService(ctx context.Context, namespace string, name string) (*corev1.Service, error) {
 	svc := &corev1.Service{}
@@ -281,6 +288,28 @@ func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Contex
 
 	// ...otherwise, delete it
 	return r.Delete(context.TODO(), sa)
+}
+
+// deleteConfigMap deletes the NFD Operator's DaemonSet (worker or master)
+func (r *NodeFeatureDiscoveryReconciler) deleteConfigMap(ctx context.Context, namespace string, name string) error {
+	// Attempt to get the existing DaemonSet from the reconciler
+	cm, err := r.getConfigMap(ctx, namespace, name)
+
+	// If the resource was not found, then do not return an
+	// error because this means the resource has already
+	// been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	// If some other error occurred when trying to get the
+	// resource, then return that error
+	if err != nil {
+		return err
+	}
+
+	// ...otherwise, delete it
+	return r.Delete(context.TODO(), cm)
 }
 
 // deleteDaemonSet deletes the NFD Operator's DaemonSet (worker or master)
