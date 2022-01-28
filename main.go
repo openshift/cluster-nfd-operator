@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -31,6 +32,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
@@ -66,7 +71,37 @@ func getWatchNamespace() (string, error) {
 	if !found {
 		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
 	}
+
 	return ns, nil
+}
+
+// labelNamespace labels the watchNamespace to enable metrics and alerts
+func labelNamespace(watchNamespace string) error {
+	// creates the in-cluster config
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	ns, err := clientset.CoreV1().Namespaces().Get(context.TODO(), watchNamespace, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	ns.Labels["openshift.io/cluster-monitoring"] = "true"
+
+	_, err = clientset.CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -108,6 +143,11 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")
+	}
+
+	if err := labelNamespace(watchNamespace); err != nil {
+		setupLog.Error(err, "unable to update Namespace, "+watchNamespace+
+			" the manager won't expose metrics and alerts")
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

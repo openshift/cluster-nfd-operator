@@ -89,7 +89,6 @@ type NodeFeatureDiscoveryReconciler struct {
 // dependencies (like caches and clients) from the 'client.Client' field in the
 // NodeFeatureDiscoveryReconciler struct.
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	// For handling the the creation, deletion, and updates of DaemonSet objects
 	dsPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
@@ -492,7 +491,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
 	// Fetch the NodeFeatureDiscovery instance
 	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
@@ -545,94 +543,78 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return reconcile.Result{}, err
 	}
 
-	// Check the status of the NFD Operator worker ServiceAccount
-	rstatus, err := r.getWorkerServiceAccountConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerServiceAccount, err)
+	// Check the status of the NFD Operator Worker ServiceAccount
+	if rstatus, err := r.getWorkerServiceAccountConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerServiceAccount, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDWorkerServiceAccountDegraded, "nfd-worker service account has been degraded")
 	}
 
-	// Check the status of the NFD Operator master ServiceAccount
-	rstatus, err = r.getMasterServiceAccountConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterServiceAccount, err)
+	// Check the status of the NFD Operator Master ServiceAccount
+	if rstatus, err := r.getMasterServiceAccountConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterServiceAccount, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDMasterServiceAccountDegraded, "nfd-master service account has been degraded")
 	}
 
 	// Check the status of the NFD Operator role
-	rstatus, err = r.getRoleConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
+	if rstatus, err := r.getRoleConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, "nfd-worker role has been degraded")
 	}
 
 	// Check the status of the NFD Operator cluster role
-	rstatus, err = r.getClusterRoleConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
+	if rstatus, err := r.getClusterRoleConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, "nfd ClusterRole has been degraded")
 	}
 
 	// Check the status of the NFD Operator cluster role binding
-	rstatus, err = r.getClusterRoleBindingConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
+	if rstatus, err := r.getClusterRoleBindingConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRoleBinding, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, "nfd ClusterRoleBinding has been degraded")
 	}
 
 	// Check the status of the NFD Operator role binding
-	rstatus, err = r.getRoleBindingConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
+	if rstatus, err := r.getRoleBindingConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDRoleBindingDegraded, "nfd RoleBinding has been degraded")
 	}
 
 	// Check the status of the NFD Operator Service
-	rstatus, err = r.getServiceConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+	if rstatus, err := r.getServiceConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, "nfd Service has been degraded")
 	}
 
 	// Check the status of the NFD Operator worker ConfigMap
-	rstatus, err = r.getWorkerConfigConditions(nfd)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	if rstatus, err := r.getWorkerConfigConditions(nfd); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, "nfd-worker ConfigMap has been degraded")
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
-	if rstatus.isProgressing {
-		return r.updateProgressingCondition(instance, err.Error(), err)
+	if rstatus, err := r.getWorkerDaemonSetConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err.Error())
+	} else if rstatus.isProgressing {
+		return r.updateProgressingCondition(instance, err.Error(), "nfd-worker Daemonset is progressing")
 	} else if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+		return r.updateDegradedCondition(instance, err.Error(), "nfd-worker Daemonset has been degraded")
 	}
 
-	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err = r.getMasterDaemonSetConditions(ctx)
-	if rstatus.isProgressing {
-		return r.updateProgressingCondition(instance, err.Error(), err)
+	// Check the status of the NFD Operator Master DaemonSet
+	if rstatus, err := r.getMasterDaemonSetConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err.Error())
+	} else if rstatus.isProgressing {
+		return r.updateProgressingCondition(instance, err.Error(), "nfd-master Daemonset is progressing")
 	} else if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err)
+		return r.updateDegradedCondition(instance, err.Error(), "nfd-master Daemonset has been degraded")
 	}
 
 	// Get available conditions
@@ -655,7 +637,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func applyComponents() (*reconcile.Result, error) {
-
 	for {
 		err := nfd.step()
 		if err != nil {

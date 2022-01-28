@@ -65,7 +65,6 @@ func (s ResourceStatus) String() string {
 // Namespace checks if the Namespace for NFD exists and attempts to create
 // it if it doesn't exist
 func Namespace(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -101,7 +100,6 @@ func Namespace(n NFD) (ResourceStatus, error) {
 // ServiceAccount checks if the ServiceAccount for NFD exists and attempts to
 // create it if it doesn't exist.
 func ServiceAccount(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -149,7 +147,6 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 // ClusterRole attempts to create a ClusterRole in a given Namespace. If
 // the ClusterRole already exists, then attempt to update it.
 func ClusterRole(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -192,7 +189,6 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 // Namespace. If the ClusterRoleBinding already exists, then attempt to
 // update it.
 func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -239,7 +235,6 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 // Role attempts to create a Role in a given Namespace. If the Role
 // already exists, then attempt to update it.
 func Role(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -291,7 +286,6 @@ func Role(n NFD) (ResourceStatus, error) {
 // RoleBinding attempts to create a RoleBinding in a given Namespace. If
 // the RoleBinding already exists, then attempt to update it.
 func RoleBinding(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -345,7 +339,6 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 // ConfigMap attempts to create a ConfigMap in a given Namespace. If
 // the ConfigMap already exists, then attempt to update it.
 func ConfigMap(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -403,7 +396,6 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 // DaemonSet attempts to create a DaemonSet in a given Namespace. If
 // the DaemonSet already exists, then attempt to update it.
 func DaemonSet(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -494,7 +486,6 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 // Service attempts to create a Service in a given Namespace. If the
 // Service already exists, then attempt to update it.
 func Service(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -569,7 +560,6 @@ func Service(n NFD) (ResourceStatus, error) {
 // SecurityContextConstraints attempts to create SecurityContextConstraints
 // in a given Namespace. If the scc already exists, then attempt to update it.
 func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
