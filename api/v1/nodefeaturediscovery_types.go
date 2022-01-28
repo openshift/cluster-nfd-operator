@@ -27,8 +27,11 @@ import (
 // +k8s:openapi-gen=true
 type NodeFeatureDiscoverySpec struct {
 	// +optional
-	Operand      OperandSpec `json:"operand"`
-	WorkerConfig *ConfigMap  `json:"workerConfig,omitempty"`
+	Operand OperandSpec `json:"operand"`
+	// +optional
+	TopologyUpdater bool `json:"topologyupdater"`
+
+	WorkerConfig *ConfigMap `json:"workerConfig,omitempty"`
 
 	// Run NFD in multiple deployment mode
 	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
@@ -64,14 +67,6 @@ type NodeFeatureDiscoverySpec struct {
 
 // OperandSpec describes configuration options for the operand
 type OperandSpec struct {
-	// Namespace defines the namespace to deploy nfd-master
-	// and nfd-worker pods
-	// [defaults to openshift-nfd]
-	//
-	// +nullable
-	// +optional
-	Namespace string `json:"namespace,omitempty"`
-
 	// Image defines the image to pull for the
 	// NFD operand
 	//

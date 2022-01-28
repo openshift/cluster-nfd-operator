@@ -78,11 +78,6 @@ spec:
                       NFD operand image [defaults to Always]
                     nullable: true
                     type: string
-                  namespace:
-                    description: Namespace defines the namespace to deploy nfd-master
-                      and nfd-worker pods [defaults to openshift-nfd]
-                    nullable: true
-                    type: string
                   servicePort:
                     description: ServicePort specifies the TCP port that nfd-master
                       listens for incoming requests.
@@ -95,6 +90,8 @@ spec:
                   type: string
                 nullable: true
                 type: array
+              topologyupdater:
+                type: boolean
               workerConfig:
                 description: ConfigMap describes configuration options for the NFD
                   worker
