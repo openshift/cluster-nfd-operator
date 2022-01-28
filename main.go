@@ -18,7 +18,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -39,6 +38,7 @@ import (
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
+	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	"github.com/openshift/cluster-nfd-operator/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -58,21 +58,6 @@ func init() {
 
 func printVersion() {
 	klog.Infof("Operator Version: %s", version.Version)
-}
-
-// getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, error) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
-
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
-	}
-
-	return ns, nil
 }
 
 // labelNamespace labels the watchNamespace to enable metrics and alerts
@@ -139,7 +124,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	watchNamespace, err := getWatchNamespace()
+	watchNamespace, err := config.GetWatchNamespace()
 	if err != nil {
 		setupLog.Error(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")

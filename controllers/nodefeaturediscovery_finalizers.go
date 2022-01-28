@@ -39,7 +39,7 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 	// then call the reconciler once more to see if the error
 	// can be corrected.
 	r.Log.Info("Attempting to delete NFD operator components")
-	if err := r.deleteComponents(ctx); err != nil {
+	if err := r.deleteComponents(ctx, instance); err != nil {
 		r.Log.Error(err, "Failed to delete one or more components")
 		return ctrl.Result{}, err
 	}
@@ -48,7 +48,7 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 	// then call the reconciler but wait 10 seconds before
 	// checking again.
 	r.Log.Info("Deletion appears to have succeeded, but running a secondary check to ensure resources are cleaned up")
-	if r.doComponentsExist(ctx) {
+	if r.doComponentsExist(ctx, instance) {
 		r.Log.Info("Some components still exist. Requeueing deletion request.")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
@@ -143,11 +143,10 @@ func (r *NodeFeatureDiscoveryReconciler) removeFinalizer(instance *nfdv1.NodeFea
 }
 
 // deleteComponents deletes all of the NFD operator's components
-func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) error {
-
+func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error {
 	// Attempt to delete worker DaemonSet
 	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteDaemonSet(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
 		if err != nil {
 			return false, interpretError(err, "worker DaemonSet")
 		}
@@ -160,7 +159,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete master DaemonSet
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteDaemonSet(ctx, nfdNamespace, nfdMasterApp)
+		err = r.deleteDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return false, interpretError(err, "master DaemonSet")
 		}
@@ -171,9 +170,22 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 		return err
 	}
 
+	// Attempt to delete Topology DaemonSet
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdTopologyApp)
+		if err != nil {
+			return false, interpretError(err, "Topology DaemonSet")
+		}
+		r.Log.Info("Master DaemonSet resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	// Attempt to delete the Service
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteService(ctx, nfdNamespace, nfdMasterApp)
+		err = r.deleteService(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return false, interpretError(err, "Service")
 		}
@@ -186,7 +198,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the Role
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteRole(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteRole(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
 		if err != nil {
 			return false, interpretError(err, "Role")
 		}
@@ -199,7 +211,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the ClusterRole
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteClusterRole(ctx, nfdNamespace, nfdMasterApp)
+		err = r.deleteClusterRole(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return false, interpretError(err, "ClusterRole")
 		}
@@ -212,7 +224,20 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the RoleBinding
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteRoleBinding(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		if err != nil {
+			return false, interpretError(err, "RoleBinding")
+		}
+		r.Log.Info("RoleBinding resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the RoleBinding
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdTopologyApp)
 		if err != nil {
 			return false, interpretError(err, "RoleBinding")
 		}
@@ -225,7 +250,20 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the ClusterRoleBinding
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteClusterRoleBinding(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		if err != nil {
+			return false, interpretError(err, "ClusterRoleBinding")
+		}
+		r.Log.Info("ClusterRoleBinding resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the ClusterRoleBinding
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdTopologyApp)
 		if err != nil {
 			return false, interpretError(err, "ClusterRoleBinding")
 		}
@@ -238,7 +276,7 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the Worker ServiceAccount
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteServiceAccount(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
 		if err != nil {
 			return false, interpretError(err, "worker ServiceAccount")
 		}
@@ -249,9 +287,22 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 		return err
 	}
 
+	// Attempt to delete the Worker ServiceAccount
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdTopologyApp)
+		if err != nil {
+			return false, interpretError(err, "worker ServiceAccount")
+		}
+		r.Log.Info("TopologyUpdater ServiceAccount resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	// Attempt to delete the Master ServiceAccount
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteServiceAccount(ctx, nfdNamespace, nfdMasterApp)
+		err = r.deleteServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return false, interpretError(err, "master ServiceAccount")
 		}
@@ -264,7 +315,20 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 
 	// Attempt to delete the SecurityContextConstraints
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteSecurityContextConstraints(ctx, nfdNamespace, nfdWorkerApp)
+		err = r.deleteSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		if err != nil {
+			return false, interpretError(err, "SecurityContextConstraints")
+		}
+		r.Log.Info("SecurityContextConstraints resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the SecurityContextConstraints
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdTopologyApp)
 		if err != nil {
 			return false, interpretError(err, "SecurityContextConstraints")
 		}
@@ -281,55 +345,55 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context) e
 // doComponentsExist checks to see if any of the NFD Operator's
 // components exist. If they do, then return 'true' to let the
 // user know that all components have NOT been deleted successfully
-func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context) bool {
+func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) bool {
 
 	// Attempt to find the worker DaemonSet
-	if _, err := r.getDaemonSet(ctx, nfdNamespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to find the master DaemonSet
-	if _, err := r.getDaemonSet(ctx, nfdNamespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the Service
-	if _, err := r.getService(ctx, nfdNamespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getService(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the Role
-	if _, err := r.getRole(ctx, nfdNamespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getRole(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the ClusterRole
-	if _, err := r.getClusterRole(ctx, nfdNamespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the RoleBinding
-	if _, err := r.getRoleBinding(ctx, nfdNamespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the ClusterRoleBinding
-	if _, err := r.getClusterRoleBinding(ctx, nfdNamespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the Worker ServiceAccount
-	if _, err := r.getServiceAccount(ctx, nfdNamespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the Master ServiceAccount
-	if _, err := r.getServiceAccount(ctx, nfdNamespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
 	// Attempt to get the SecurityContextConstraints
-	if _, err := r.getSecurityContextConstraints(ctx, nfdNamespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+	if _, err := r.getSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 

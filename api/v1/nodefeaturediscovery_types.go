@@ -67,14 +67,6 @@ type NodeFeatureDiscoverySpec struct {
 
 // OperandSpec describes configuration options for the operand
 type OperandSpec struct {
-	// Namespace defines the namespace to deploy nfd-master
-	// and nfd-worker pods
-	// [defaults to openshift-nfd]
-	//
-	// +nullable
-	// +optional
-	Namespace string `json:"namespace,omitempty"`
-
 	// Image defines the image to pull for the
 	// NFD operand
 	//
