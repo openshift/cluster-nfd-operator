@@ -7,6 +7,11 @@
 bin
 testbin/*
 
+#kustomize
+config/crd/bases/nfd.openshift.io_nodefeaturediscoveries.yaml
+bundle
+
+bundle.Dockerfile
 # Test binary, build with `go test -c`
 *.test
 
