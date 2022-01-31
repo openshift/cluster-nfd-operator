@@ -140,6 +140,9 @@ func (r *NodeFeatureDiscoveryReconciler) removeFinalizer(instance *nfdv1.NodeFea
 
 // deleteComponents deletes all of the NFD operator's components
 func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error {
+	// Update CRD status to notify instance is undergoing deletion
+	r.updateProgressingCondition(instance, "finalizers", "Foreground-Deletion")
+
 	// Attempt to delete worker DaemonSet
 	err := wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
