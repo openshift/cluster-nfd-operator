@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	secv1 "github.com/openshift/api/security/v1"
+	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -65,7 +66,6 @@ func (s ResourceStatus) String() string {
 // Namespace checks if the Namespace for NFD exists and attempts to create
 // it if it doesn't exist
 func Namespace(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -101,7 +101,6 @@ func Namespace(n NFD) (ResourceStatus, error) {
 // ServiceAccount checks if the ServiceAccount for NFD exists and attempts to
 // create it if it doesn't exist.
 func ServiceAccount(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -149,7 +148,6 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 // ClusterRole attempts to create a ClusterRole in a given Namespace. If
 // the ClusterRole already exists, then attempt to update it.
 func ClusterRole(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -192,7 +190,6 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 // Namespace. If the ClusterRoleBinding already exists, then attempt to
 // update it.
 func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -239,7 +236,6 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 // Role attempts to create a Role in a given Namespace. If the Role
 // already exists, then attempt to update it.
 func Role(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -291,7 +287,6 @@ func Role(n NFD) (ResourceStatus, error) {
 // RoleBinding attempts to create a RoleBinding in a given Namespace. If
 // the RoleBinding already exists, then attempt to update it.
 func RoleBinding(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -345,7 +340,6 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 // ConfigMap attempts to create a ConfigMap in a given Namespace. If
 // the ConfigMap already exists, then attempt to update it.
 func ConfigMap(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -403,7 +397,6 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 // DaemonSet attempts to create a DaemonSet in a given Namespace. If
 // the DaemonSet already exists, then attempt to update it.
 func DaemonSet(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -494,7 +487,6 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 // Service attempts to create a Service in a given Namespace. If the
 // Service already exists, then attempt to update it.
 func Service(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -569,7 +561,6 @@ func Service(n NFD) (ResourceStatus, error) {
 // SecurityContextConstraints attempts to create SecurityContextConstraints
 // in a given Namespace. If the scc already exists, then attempt to update it.
 func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
-
 	// state represents the resource's 'control' function index
 	state := n.idx
 
@@ -577,8 +568,12 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	// scc object, so let's get the resource's scc object
 	obj := n.resources[state].SecurityContextConstraints
 
-	// Set the correct namespace for SCC when installed in non default namespace
-	obj.Users[0] = "system:serviceaccount:" + n.ins.GetNamespace() + ":" + obj.GetName()
+	// Set the correct namespace for SCC
+	ns, err := config.GetWatchNamespace()
+	if err != nil {
+		return NotReady, err
+	}
+	obj.Users[0] = "system:serviceaccount:" + ns + ":" + obj.GetName()
 
 	// found states if the scc was found
 	found := &secv1.SecurityContextConstraints{}
@@ -587,7 +582,7 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	// Look for the scc to see if it exists, and if so, check if it's
 	// Ready/NotReady. If the scc does not exist, then attempt to create
 	// it
-	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
+	err = n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && apierrors.IsNotFound(err) {
 		r.Log.Info("Not found, creating")
 		err = n.rec.Client.Create(context.TODO(), &obj)
