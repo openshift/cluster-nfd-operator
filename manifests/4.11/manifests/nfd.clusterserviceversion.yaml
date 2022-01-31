@@ -16,7 +16,7 @@ metadata:
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
             "operand": {
-              "image": "quay.io/openshift/origin-node-feature-discovery:4.10",
+              "image": "quay.io/openshift/origin-node-feature-discovery:4.11",
               "imagePullPolicy": "Always",
               "servicePort": 12000
             },
@@ -82,7 +82,7 @@ metadata:
 
       ##NFD-Topology-Updater
       NFD-Topology-Updater is a daemon responsible for examining allocated resources on a worker node to account for resources available to be allocated to new pod on a per-zone basis (where a zone can be a NUMA node). It then communicates the information to nfd-master which does the NodeResourceTopology CR creation corresponding to all the nodes in the cluster. One instance of nfd-topology-updater is supposed to be running on each node of the cluster.
-    olm.skipRange: '>=4.6.0 <4.10.0'
+    olm.skipRange: '>=4.6.0 <4.12.0'
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -97,7 +97,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: nfd.v4.10.0 
+  name: nfd.v4.11.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -759,7 +759,7 @@ spec:
                 - --tls-cert-file=/etc/secrets/tls.crt
                 - --tls-private-key-file=/etc/secrets/tls.key
                 - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy:latest
+                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
@@ -795,8 +795,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:4.10
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.10
+                  value: quay.io/openshift/origin-node-feature-discovery:4.11
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.11
                 imagePullPolicy: Always
                 livenessProbe:
                   httpGet:
@@ -931,4 +931,4 @@ spec:
   provider:
     name: Red Hat
     url: https://github.com/openshift/cluster-nfd-operator
-  version: 4.10.0
+  version: 4.11.0
