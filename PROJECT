@@ -1,6 +1,6 @@
 domain: nodefeaturediscoveries.nfd.openshift.io
 layout: go.kubebuilder.io/v3
-projectName: node-feature-discovery-operator
+projectName: nfd
 repo: github.com/openshift/cluster-nfd-operator
 resources:
 - api:
