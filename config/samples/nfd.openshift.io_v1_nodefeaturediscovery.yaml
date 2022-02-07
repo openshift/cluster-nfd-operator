@@ -11,8 +11,8 @@ spec:
   #resourceLabels:
   #  - "example.com/resource"
   operand:
-    image: quay.io/openshift/origin-node-feature-discovery:4.11
-    imagePullPolicy: IfNotPresent
+    image: gcr.io/k8s-staging-nfd/node-feature-discovery:master
+    imagePullPolicy: Always
     servicePort: 12000
   workerConfig:
     configData: |

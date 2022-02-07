@@ -32,15 +32,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-
-	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdkubernetesiov1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
-	"github.com/openshift/cluster-nfd-operator/pkg/config"
-	"github.com/openshift/cluster-nfd-operator/pkg/leaderelection"
-	"github.com/openshift/cluster-nfd-operator/version"
+	"github.com/openshift/cluster-nfd-operator/pkg/utils"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -79,11 +73,30 @@ func printVersion() {
 		os.Exit(0)
 	}
 
+<<<<<<< HEAD
 	watchNamespace, envSet := utils.GetWatchNamespace()
 	if !envSet {
 		klog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all namespaces")
 	}
+=======
+	watchNamespace, err := utils.GetWatchNamespace()
+	if err != nil {
+		klog.Error(err, "unable to get WatchNamespace, "+
+			"the manager will watch and manage resources in all namespaces")
+	}
+
+	// Create a new manager to manage the operator
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		MetricsBindAddress:     args.metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: args.probeAddr,
+		LeaderElection:         args.enableLeaderElection,
+		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.kubernetes.io",
+		Namespace:              watchNamespace,
+	})
+>>>>>>> 7c09709f (Drop operand.namespace from CRD)
 
 	if err := labelNamespace(watchNamespace); err != nil {
 		setupLog.V(2).Error(err, "unable to update Namespace, "+watchNamespace+

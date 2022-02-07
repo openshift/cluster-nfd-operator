@@ -63,43 +63,7 @@ func (s ResourceStatus) String() string {
 	return names[s]
 }
 
-// Namespace checks if the Namespace for NFD exists and attempts to create
-// it if it doesn't exist
-func Namespace(n NFD) (ResourceStatus, error) {
-	// state represents the resource's 'control' function index
-	state := n.idx
-
-	// It is assumed that the index has already been verified to be a
-	// Namespace object, so let's get the resource's Namespace object
-	obj := n.resources[state].Namespace
-
-	// found states if the Namespace was found
-	found := &corev1.Namespace{}
-
-	// Look for the Namespace to see if it exists, and if so, check if
-	// it's Ready/NotReady. If the Namespace does not exist, then
-	// attempt to create it
-	r.Log.Info("Looking for Namespace '", obj.Name, "'")
-	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: obj.Namespace, Name: obj.Name}, found)
-	if err != nil && apierrors.IsNotFound(err) {
-		r.Log.Info("Not found, creating ")
-		err = n.rec.Client.Create(context.TODO(), &obj)
-		if err != nil {
-			r.Log.Info("Couldn't create")
-			return NotReady, err
-		}
-		return Ready, nil
-	} else if err != nil {
-		return NotReady, err
-	}
-
-	r.Log.Info("Found, skipping update")
-
-	return Ready, nil
-}
-
-// ServiceAccount checks if the ServiceAccount for NFD exists and attempts to
-// create it if it doesn't exist.
+// ServiceAccount checks the readiness of the NFD ServiceAccount and creates it if it doesn't exist
 func ServiceAccount(n NFD) (ResourceStatus, error) {
 	// state represents the resource's 'control' function index
 	state := n.idx

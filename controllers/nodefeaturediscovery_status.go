@@ -17,9 +17,8 @@ import (
 )
 
 const (
-	nfdWorkerApp   string = "nfd-worker"
-	nfdMasterApp   string = "nfd-master"
-	nfdTopologyApp string = "nfd-topology-updater"
+	nfdWorkerApp string = "nfd-worker"
+	nfdMasterApp string = "nfd-master"
 )
 
 const (
@@ -298,8 +297,8 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx contex
 
 // getTopologyUpdaterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
 // worker DaemonSets
-func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
-	return r.getDaemonSetConditions(ctx, instance, nfdTopologyUpdaterApp)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getDaemonSetConditions(ctx, instance, nfdWorkerApp)
 }
 
 // getMasterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
@@ -316,11 +315,11 @@ func (r *NodeFeatureDiscoveryReconciler) getMasterDeploymentConditions(ctx conte
 
 // getDeploymentConditions gets the current status of a Deployment. If an error
 // occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getDeploymentConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
 	// Initialize the resource's status to 'Degraded'
 	status := initializeDegradedStatus()
 
-	d, err := r.getDeployment(ctx, instance.ObjectMeta.Namespace, nfdAppName)
+	ds, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 	if err != nil {
 		return status, err
 	}
@@ -406,9 +405,11 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getServiceConditions gets the current status of a Service. If an error
+// occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing Service from the reconciler
 	_, err := r.getService(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
@@ -443,9 +444,11 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(n NFD) (resou
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getRoleConditions gets the current status of a Role. If an error occurs, this
+// function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing Role from the reconciler
 	_, err := r.getRole(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
@@ -461,9 +464,11 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(ctx context.Context, 
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getRoleBindingConditions gets the current status of a RoleBinding. If an error
+// occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing RoleBinding from the reconciler
 	_, err := r.getRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
@@ -493,12 +498,12 @@ func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleConditions
 
 // geClusterRoleConditions gets the current status of a ClusterRole. If an error
 // occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
 	// Initialize status to 'Degraded'
 	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRole from the reconciler
-	_, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdAppName)
+	_, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 
 	// If 'clusterRole' is nil, then it hasn't been (re)created yet
 	if err != nil {
@@ -525,12 +530,12 @@ func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleBindingCon
 
 // getClusterRoleBindingConditions gets the current status of a ClusterRoleBinding.
 // If an error occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
 	// Initialize status to 'Degraded'
 	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRoleBinding from the reconciler
-	_, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdAppName)
+	_, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 
 	// If 'clusterRole' is nil, then it hasn't been (re)created yet
 	if err != nil {
@@ -552,8 +557,8 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx c
 
 // getTopologyUpdaterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
 // worker service account.
-func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
-	return r.getServiceAccountConditions(ctx, instance, nfdTopologyUpdaterApp)
+func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getServiceAccountConditions(ctx, instance, nfdWorkerApp)
 }
 
 // getMasterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
@@ -564,7 +569,7 @@ func (r *NodeFeatureDiscoveryReconciler) getMasterServiceAccountConditions(ctx c
 
 // getServiceAccountConditions gets the current status of a ServiceAccount. If an error
 // occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (resourceStatus, error) {
+func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
 	// Initialize status to 'Degraded'
 	status := initializeDegradedStatus()
 
