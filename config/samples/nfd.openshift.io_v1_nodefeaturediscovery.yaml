@@ -11,7 +11,6 @@ spec:
   #resourceLabels:
   #  - "example.com/resource"
   operand:
-    namespace: openshift-nfd
     image: quay.io/openshift/origin-node-feature-discovery:4.9
     imagePullPolicy: Always
     servicePort: 12000

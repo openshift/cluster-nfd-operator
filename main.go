@@ -16,8 +16,8 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -32,8 +32,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
+	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	"github.com/openshift/cluster-nfd-operator/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -55,18 +60,33 @@ func printVersion() {
 	klog.Infof("Operator Version: %s", version.Version)
 }
 
-// getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, error) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	var watchNamespaceEnvVar = "WATCH_NAMESPACE"
-
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("%s must be set", watchNamespaceEnvVar)
+// labelNamespace labels the watchNamespace to enable metrics and alerts
+func labelNamespace(watchNamespace string) error {
+	// creates the in-cluster config
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
 	}
-	return ns, nil
+
+	// creates the clientset
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+
+	ns, err := clientset.CoreV1().Namespaces().Get(context.TODO(), watchNamespace, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	ns.Labels["openshift.io/cluster-monitoring"] = "true"
+
+	_, err = clientset.CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func main() {
@@ -104,10 +124,15 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	watchNamespace, err := getWatchNamespace()
+	watchNamespace, err := config.GetWatchNamespace()
 	if err != nil {
 		setupLog.Error(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")
+	}
+
+	if err := labelNamespace(watchNamespace); err != nil {
+		setupLog.Error(err, "unable to update Namespace, "+watchNamespace+
+			" the manager won't expose metrics and alerts")
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

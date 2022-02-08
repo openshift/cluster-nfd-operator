@@ -20,18 +20,24 @@ spec:
         description: An Node Feature Discovery cluster instance
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
             type: string
           metadata:
             type: object
           spec:
-            description: Specification of the desired behavior of the Node Feature Discovery
+            description: Specification of the desired behavior of the Node Feature
+              Discovery
             properties:
               customConfig:
-                description: WorkerConfig describes configuration options for the NFD worker.
+                description: WorkerConfig describes configuration options for the
+                  NFD worker.
                 properties:
                   configData:
                     description: BinaryData holds the NFD configuration file
@@ -40,7 +46,9 @@ spec:
                 - configData
                 type: object
               extraLabelNs:
-                description: ExtraLabelNs defines the list of of allowed extra label namespaces By default, only allow labels in the default `feature.node.kubernetes.io` label namespace
+                description: ExtraLabelNs defines the list of of allowed extra label
+                  namespaces By default, only allow labels in the default `feature.node.kubernetes.io`
+                  label namespace
                 items:
                   type: string
                 nullable: true
@@ -50,7 +58,9 @@ spec:
                 nullable: true
                 type: string
               labelWhiteList:
-                description: LabelWhiteList defines a regular expression for filtering feature labels based on their name. Each label must match against the given reqular expression in order to be published.
+                description: LabelWhiteList defines a regular expression for filtering
+                  feature labels based on their name. Each label must match against
+                  the given reqular expression in order to be published.
                 nullable: true
                 type: string
               operand:
@@ -62,25 +72,25 @@ spec:
                     pattern: '[a-zA-Z0-9\-]+'
                     type: string
                   imagePullPolicy:
-                    description: ImagePullPolicy defines Image pull policy for the NFD operand image [defaults to Always]
-                    nullable: true
-                    type: string
-                  namespace:
-                    description: Namespace defines the namespace to deploy nfd-master and nfd-worker pods [defaults to openshift-nfd]
+                    description: ImagePullPolicy defines Image pull policy for the
+                      NFD operand image [defaults to Always]
                     nullable: true
                     type: string
                   servicePort:
-                    description: ServicePort specifies the TCP port that nfd-master listens for incoming requests.
+                    description: ServicePort specifies the TCP port that nfd-master
+                      listens for incoming requests.
                     type: integer
                 type: object
               resourceLabels:
-                description: ResourceLabels defines the list of features to be advertised as extended resources instead of labels.
+                description: ResourceLabels defines the list of features to be advertised
+                  as extended resources instead of labels.
                 items:
                   type: string
                 nullable: true
                 type: array
               workerConfig:
-                description: ConfigMap describes configuration options for the NFD worker
+                description: ConfigMap describes configuration options for the NFD
+                  worker
                 properties:
                   configData:
                     description: BinaryData holds the NFD configuration file
@@ -90,12 +100,15 @@ spec:
                 type: object
             type: object
           status:
-            description: NodeFeatureDiscoveryStatus defines the observed state of NodeFeatureDiscovery
+            description: NodeFeatureDiscoveryStatus defines the observed state of
+              NodeFeatureDiscovery
             properties:
               conditions:
-                description: Conditions represents the latest available observations of current state.
+                description: Conditions represents the latest available observations
+                  of current state.
                 items:
-                  description: Condition represents the state of the operator's reconciliation functionality.
+                  description: Condition represents the state of the operator's reconciliation
+                    functionality.
                   properties:
                     lastHeartbeatTime:
                       format: date-time
@@ -110,7 +123,8 @@ spec:
                     status:
                       type: string
                     type:
-                      description: ConditionType is the state of the operator's reconciliation functionality.
+                      description: ConditionType is the state of the operator's reconciliation
+                        functionality.
                       type: string
                   required:
                   - status

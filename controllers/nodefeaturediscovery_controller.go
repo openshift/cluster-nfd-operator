@@ -89,11 +89,9 @@ type NodeFeatureDiscoveryReconciler struct {
 // dependencies (like caches and clients) from the 'client.Client' field in the
 // NodeFeatureDiscoveryReconciler struct.
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	// For handling the the creation, deletion, and updates of DaemonSet objects
 	dsPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new DaemonSet objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldDsObject, ok := e.ObjectOld.(*appsv1.DaemonSet)
@@ -105,7 +103,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldDsObject.GetDeletionTimestamp()
@@ -113,7 +110,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newDsObject.GetGeneration() == oldDsObject.GetGeneration() {
@@ -123,12 +119,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the DaemonSet object has been created already.
 			_, ok := e.Object.(*appsv1.DaemonSet)
 			return ok
@@ -138,7 +132,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of ServiceAccount objects
 	saPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new ServiceAccount objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldSaObject, ok := e.ObjectOld.(*corev1.ServiceAccount)
@@ -150,7 +143,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSaObject.GetDeletionTimestamp()
@@ -158,7 +150,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newSaObject.GetGeneration() == oldSaObject.GetGeneration() {
@@ -168,12 +159,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the ServiceAccount object has been created already.
 			_, ok := e.Object.(*corev1.ServiceAccount)
 			return ok
@@ -183,7 +172,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of Service objects
 	svcPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new Service objects. If either one doesn't
 			// exist, then no update occurred, so return 'false'.
 			oldSvcObject, ok := e.ObjectOld.(*corev1.Service)
@@ -195,7 +183,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSvcObject.GetDeletionTimestamp()
@@ -203,7 +190,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newSvcObject.GetGeneration() == oldSvcObject.GetGeneration() {
@@ -213,12 +199,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the Service object has been created already.
 			_, ok := e.Object.(*corev1.Service)
 			return ok
@@ -228,7 +212,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of RoleBinding objects
 	rbPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new RoleBinding objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.
 			oldRbObject, ok := e.ObjectOld.(*rbacv1.RoleBinding)
@@ -240,7 +223,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldRbObject.GetDeletionTimestamp()
@@ -248,7 +230,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newRbObject.GetGeneration() == oldRbObject.GetGeneration() {
@@ -258,12 +239,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the RoleBinding object has been created already.
 			_, ok := e.Object.(*rbacv1.RoleBinding)
 			return ok
@@ -273,7 +252,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of Role objects
 	rPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new Role objects. If either one doesn't
 			// exist, then no update occurred, so return false.
 			oldRObject, ok := e.ObjectOld.(*rbacv1.Role)
@@ -285,7 +263,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldRObject.GetDeletionTimestamp()
@@ -293,7 +270,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newRObject.GetGeneration() == oldRObject.GetGeneration() {
@@ -303,12 +279,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the Role object has been created already.
 			_, ok := e.Object.(*rbacv1.Role)
 			return ok
@@ -318,7 +292,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of ConfigMap objects
 	cmPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new ConfigMap objects. If either
 			// one doesn't exist, then no update occurred, so return
 			// 'false'.
@@ -331,7 +304,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldCmObject.GetDeletionTimestamp()
@@ -339,7 +311,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if oldDeletionTimestamp == newDeletionTimestamp {
 				return false
 			}
-
 			// If everything else is the same, then no update has been made
 			// either.
 			if newCmObject.GetGeneration() == oldCmObject.GetGeneration() {
@@ -349,12 +320,10 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			return true
 		},
 		DeleteFunc: func(e event.DeleteEvent) bool {
-
 			// Evaluates to false if the object has been deleted
 			return !e.DeleteStateUnknown
 		},
 		CreateFunc: func(e event.CreateEvent) bool {
-
 			// Check if the ConfigMap object has been created already.
 			_, ok := e.Object.(*corev1.ConfigMap)
 			return ok
@@ -365,7 +334,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// objects
 	sccPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new SecurityContextConstraints objects. If
 			// either one doesn't exist, then no update occurred, return 'false'.
 			oldSccObject, ok := e.ObjectOld.(*security.SecurityContextConstraints)
@@ -377,7 +345,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 			if !ok {
 				return false
 			}
-
 			// Get the deletion timestamps. If they're the same, then no update
 			// has been made.
 			oldDeletionTimestamp := oldSccObject.GetDeletionTimestamp()
@@ -411,7 +378,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 	// For handling the the creation, deletion, and updates of NFD instances
 	nfdPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-
 			// Extract the old and new NodeFeatureDiscovery instances. If
 			// either one doesn't exist, then no update occurred, return 'false'.
 			oldNfdObject, ok := e.ObjectOld.(*nfdv1.NodeFeatureDiscovery)
@@ -492,7 +458,6 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-
 	// Fetch the NodeFeatureDiscovery instance
 	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
@@ -527,7 +492,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 
 	// Register NFD instance metrics
 	if instance.Spec.Instance != "" {
-		nfdMetrics.RegisterInstance(instance.Spec.Instance, instance.Spec.Operand.Namespace)
+		nfdMetrics.RegisterInstance(instance.Spec.Instance, instance.ObjectMeta.Namespace)
 	}
 
 	// apply components
@@ -545,94 +510,78 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return reconcile.Result{}, err
 	}
 
-	// Check the status of the NFD Operator worker ServiceAccount
-	rstatus, err := r.getWorkerServiceAccountConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerServiceAccount, err)
+	// Check the status of the NFD Operator Worker ServiceAccount
+	if rstatus, err := r.getWorkerServiceAccountConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerServiceAccount, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDWorkerServiceAccountDegraded, "nfd-worker service account has been degraded")
 	}
 
-	// Check the status of the NFD Operator master ServiceAccount
-	rstatus, err = r.getMasterServiceAccountConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterServiceAccount, err)
+	// Check the status of the NFD Operator Master ServiceAccount
+	if rstatus, err := r.getMasterServiceAccountConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterServiceAccount, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDMasterServiceAccountDegraded, "nfd-master service account has been degraded")
 	}
 
 	// Check the status of the NFD Operator role
-	rstatus, err = r.getRoleConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err)
+	if rstatus, err := r.getRoleConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDRoleDegraded, "nfd-worker role has been degraded")
 	}
 
 	// Check the status of the NFD Operator cluster role
-	rstatus, err = r.getClusterRoleConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err)
+	if rstatus, err := r.getClusterRoleConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, "nfd ClusterRole has been degraded")
 	}
 
 	// Check the status of the NFD Operator cluster role binding
-	rstatus, err = r.getClusterRoleBindingConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, err)
+	if rstatus, err := r.getClusterRoleBindingConditions(ctx); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRoleBinding, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, "nfd ClusterRoleBinding has been degraded")
 	}
 
 	// Check the status of the NFD Operator role binding
-	rstatus, err = r.getRoleBindingConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err)
+	if rstatus, err := r.getRoleBindingConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDRoleBinding, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDRoleBindingDegraded, "nfd RoleBinding has been degraded")
 	}
 
 	// Check the status of the NFD Operator Service
-	rstatus, err = r.getServiceConditions(ctx)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err)
+	if rstatus, err := r.getServiceConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDService, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDServiceDegraded, "nfd Service has been degraded")
 	}
 
 	// Check the status of the NFD Operator worker ConfigMap
-	rstatus, err = r.getWorkerConfigConditions(nfd)
-	if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err)
+	if rstatus, err := r.getWorkerConfigConditions(nfd); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerConfig, err.Error())
+	} else if rstatus.isDegraded {
+		return r.updateDegradedCondition(instance, conditionNFDWorkerConfigDegraded, "nfd-worker ConfigMap has been degraded")
 	}
 
 	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err = r.getWorkerDaemonSetConditions(ctx)
-	if rstatus.isProgressing {
-		return r.updateProgressingCondition(instance, err.Error(), err)
+	if rstatus, err := r.getWorkerDaemonSetConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err.Error())
+	} else if rstatus.isProgressing {
+		return r.updateProgressingCondition(instance, err.Error(), "nfd-worker Daemonset is progressing")
 	} else if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDWorkerDaemonSet, err)
+		return r.updateDegradedCondition(instance, err.Error(), "nfd-worker Daemonset has been degraded")
 	}
 
-	// Check the status of the NFD Operator Worker DaemonSet
-	rstatus, err = r.getMasterDaemonSetConditions(ctx)
-	if rstatus.isProgressing {
-		return r.updateProgressingCondition(instance, err.Error(), err)
+	// Check the status of the NFD Operator Master DaemonSet
+	if rstatus, err := r.getMasterDaemonSetConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err.Error())
+	} else if rstatus.isProgressing {
+		return r.updateProgressingCondition(instance, err.Error(), "nfd-master Daemonset is progressing")
 	} else if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), err)
-	} else if err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err)
+		return r.updateDegradedCondition(instance, err.Error(), "nfd-master Daemonset has been degraded")
 	}
 
 	// Get available conditions
@@ -655,7 +604,6 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 }
 
 func applyComponents() (*reconcile.Result, error) {
-
 	for {
 		err := nfd.step()
 		if err != nil {

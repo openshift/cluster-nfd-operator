@@ -1,7 +1,7 @@
 images:
 - name: kube-rbac-proxy
   newName: registry.redhat.io/openshift4/ose-kube-rbac-proxy
-  newTag: latest
+  newTag: "4.9"
 
 # Adds namespace to all resources.
 namespace: openshift-nfd
