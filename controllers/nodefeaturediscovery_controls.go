@@ -110,7 +110,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ServiceAccount
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyApp {
 		return Ready, nil
 	}
 
@@ -162,7 +162,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ClusterRole
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyApp {
 		return Ready, nil
 	}
 
@@ -211,7 +211,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ClusterRoleBinding
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyApp {
 		return Ready, nil
 	}
 
@@ -422,8 +422,16 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].DaemonSet
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyApp {
 		return Ready, nil
+	}
+
+	// Update the NFD operand image
+	obj.Spec.Template.Spec.Containers[0].Image = n.ins.Spec.Operand.ImagePath()
+
+	// Update the image pull policy
+	if n.ins.Spec.Operand.ImagePullPolicy != "" {
+		obj.Spec.Template.Spec.Containers[0].ImagePullPolicy = n.ins.Spec.Operand.ImagePolicy(n.ins.Spec.Operand.ImagePullPolicy)
 	}
 
 	// update the image

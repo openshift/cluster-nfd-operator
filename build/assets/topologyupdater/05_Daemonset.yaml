@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    app: nfd-topology-updater
+    app: nfd
   name: nfd-topology-updater
 spec:
   selector:

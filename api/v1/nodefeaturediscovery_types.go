@@ -34,6 +34,7 @@ type NodeFeatureDiscoverySpec struct {
 	// resources on a worker node to account for resources available to be
 	// allocated to new pod on a per-zone basis
 	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.10/get-started/introduction.html#nfd-topology-updater
+<<<<<<< HEAD
 	//
 	// +optional
 	TopologyUpdater bool `json:"topologyupdater"`
@@ -44,6 +45,13 @@ type NodeFeatureDiscoverySpec struct {
 	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
 	//
 	// +nullable
+=======
+	// +optional
+	TopologyUpdater bool `json:"topologyUpdater"`
+
+	// Instance name. Used to separate annotation namespaces for
+	// multiple parallel deployments.
+>>>>>>> 809780db (Enable TopologyUpdater worker)
 	// +optional
 	Instance string `json:"instance"`
 
