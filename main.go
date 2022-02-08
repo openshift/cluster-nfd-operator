@@ -61,73 +61,27 @@ func printVersion() {
 	klog.Infof("Operator Version: %s", version.Version)
 }
 
-// labelNamespace labels the watchNamespace to enable metrics and alerts
-func labelNamespace(watchNamespace string) error {
-	// creates the in-cluster config
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return err
+	printVersion := flags.Bool("version", false, "Print version and exit.")
+
+	args := initFlags(flags)
+	// Inject klog flags
+	klog.InitFlags(flags)
+
+	_ = flags.Parse(os.Args[1:])
+	if len(flags.Args()) > 0 {
+		fmt.Fprintf(flags.Output(), "unknown command line argument: %s\n", flags.Args()[0])
+		flags.Usage()
+		os.Exit(2)
 	}
 
-	// creates the clientset
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
+	if *printVersion {
+		fmt.Println(ProgramName, version.Get())
+		os.Exit(0)
 	}
 
-	ns, err := clientset.CoreV1().Namespaces().Get(context.TODO(), watchNamespace, metav1.GetOptions{})
-	if err != nil {
-		return err
-	}
-
-	ns.Labels["openshift.io/cluster-monitoring"] = "true"
-
-	_, err = clientset.CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func main() {
-	// metricsAddr is used by Prometheus to gather NFD's resource usage data. The bind
-	// address tells Prometheus which port to scrape this data's metrics from. The
-	// metrics port defined by this flag must match the metrics port defined in the
-	// various manifests under ./manifests/[MAJOR].[MINOR]/manifests, where [MAJOR]
-	// corresponds to the OCP major version, and [MINOR] corresponds to the OCP minor
-	// version.
-	var metricsAddr string
-
-	// enableLeaderElection should be set to 'disable' by default If we enable leader
-	// election, then only one node can run the controller manager and we will not
-	// have NFD Operator running on all nodes.
-	var enableLeaderElection bool
-
-	// probeAddr is responsible for the health probe bind address, where the health
-	// probe is responsible for determining liveness, readiness, and configuration
-	// of the operator pods. Note that the port which is being binded must match
-	// the bind port under './config' and './manifests'
-	var probeAddr string
-
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
-
-	printVersion()
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
-	watchNamespace, err := config.GetWatchNamespace()
-	if err != nil {
-		setupLog.V(2).WithValues(err, "unable to get WatchNamespace, "+
+	watchNamespace, envSet := utils.GetWatchNamespace()
+	if !envSet {
+		klog.Info("unable to get WatchNamespace, " +
 			"the manager will watch and manage resources in all namespaces")
 	}
 
