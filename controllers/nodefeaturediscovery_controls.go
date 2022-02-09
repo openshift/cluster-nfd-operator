@@ -110,7 +110,7 @@ func ServiceAccount(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ServiceAccount
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
 		return Ready, nil
 	}
 
@@ -162,7 +162,7 @@ func ClusterRole(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ClusterRole
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
 		return Ready, nil
 	}
 
@@ -211,7 +211,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].ClusterRoleBinding
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
 		return Ready, nil
 	}
 
@@ -422,7 +422,7 @@ func DaemonSet(n NFD) (ResourceStatus, error) {
 	obj := n.resources[state].DaemonSet
 
 	// Check if nfd-topology-updater is needed, if not, skip
-	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == "nfd-topology-updater" {
+	if !n.ins.Spec.TopologyUpdater && obj.ObjectMeta.Name == nfdTopologyUpdaterApp {
 		return Ready, nil
 	}
 
