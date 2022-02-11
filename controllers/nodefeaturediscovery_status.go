@@ -30,7 +30,7 @@ const (
 	conditionFailedGettingNFDMasterServiceAccount          = "FailedGettingNFDMasterServiceAccount"
 	conditionFailedGettingNFDService                       = "FailedGettingNFDService"
 	conditionFailedGettingNFDWorkerDaemonSet               = "FailedGettingNFDWorkerDaemonSet"
-	conditionFailedGettingNFDMasterDeployment              = "FailedGettingNFDMasterDeployment"
+	conditionFailedGettingNFDMasterDaemonSet               = "FailedGettingNFDMasterDaemonSet"
 	conditionFailedGettingNFDRoleBinding                   = "FailedGettingNFDRoleBinding"
 	conditionFailedGettingNFDClusterRoleBinding            = "FailedGettingNFDClusterRole"
 
@@ -42,7 +42,7 @@ const (
 	conditionNFDServiceDegraded                       = "NFDServiceDegraded"
 	conditionNFDWorkerDaemonSetDegraded               = "NFDWorkerDaemonSetDegraded"
 	conditionNFDTopologyUpdaterDaemonSetDegraded      = "NFDTopologyUpdaterDaemonSetDegraded"
-	conditionNFDMasterDeploymentDegraded              = "NFDMasterDDeploymentDegraded"
+	conditionNFDMasterDaemonSetDegraded               = "NFDMasterDaemonSetDegraded"
 	conditionNFDRoleDegraded                          = "NFDRoleDegraded"
 	conditionNFDRoleBindingDegraded                   = "NFDRoleBindingDegraded"
 	conditionNFDClusterRoleDegraded                   = "NFDClusterRoleDegraded"
@@ -302,6 +302,12 @@ func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterDaemonSetConditions(c
 	return r.getDaemonSetConditions(ctx, instance, nfdTopologyUpdaterApp)
 }
 
+// getMasterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
+// master DaemonSets
+func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getDaemonSetConditions(ctx, instance, nfdMasterApp)
+}
+
 // getMasterDeploymentConditions is a wrapper around "getDeploymentConditions" for
 // master Deployment
 func (r *NodeFeatureDiscoveryReconciler) getMasterDeploymentConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
@@ -473,12 +479,26 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(ctx context.Co
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getMasterClusterRoleConditions is a wrapper around "getClusterRoleConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getMasterClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getClusterRoleConditions(ctx, instance, nfdMasterApp)
+}
+
+// getTopologyUpdaterClusterRoleConditions is a wrapper around "getClusterRoleConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getClusterRoleConditions(ctx, instance, nfdTopologyUpdaterApp)
+}
+
+// geClusterRoleConditions gets the current status of a ClusterRole. If an error
+// occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRole from the reconciler
-	_, err := r.getClusterRole(ctx, "", nfdMasterApp)
+	_, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 
 	// If 'clusterRole' is nil, then it hasn't been (re)created yet
 	if err != nil {
@@ -491,12 +511,26 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Co
 	return rstatus, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getMasterClusterRoleBindingConditions is a wrapper around "getServiceAccountConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getMasterClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getServiceAccountConditions(ctx, instance, nfdMasterApp)
+}
+
+// getTopologyUpdaterClusterRoleBindingConditions is a wrapper around "getServiceAccountConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getClusterRoleBindingConditions(ctx, instance, nfdTopologyUpdaterApp)
+}
+
+// getClusterRoleBindingConditions gets the current status of a ClusterRoleBinding.
+// If an error occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRoleBinding from the reconciler
-	_, err := r.getClusterRoleBinding(ctx, "", nfdMasterApp)
+	_, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 
 	// If 'clusterRole' is nil, then it hasn't been (re)created yet
 	if err != nil {
@@ -516,11 +550,16 @@ func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx c
 	return r.getServiceAccountConditions(ctx, instance, nfdWorkerApp)
 }
 
-// getMasterDaemonSetServiceAccount is a wrapper around
-// "getServiceAccountConditions" for ease of calling the
-// master ServiceAccount status
-func (r *NodeFeatureDiscoveryReconciler) getMasterServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
-	return r.getServiceAccountConditions(ctx, instance, nfdWorkerApp)
+// getTopologyUpdaterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getServiceAccountConditions(ctx, instance, nfdTopologyUpdaterApp)
+}
+
+// getMasterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
+// master service account.
+func (r *NodeFeatureDiscoveryReconciler) getMasterServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getServiceAccountConditions(ctx, instance, nfdMasterApp)
 }
 
 // getServiceAccountConditions gets the current status of a ServiceAccount. If an error
@@ -534,10 +573,14 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceAccountConditions(ctx context
 
 	// If the error is not nil, then the ServiceAccount hasn't been (re)created yet
 	if err != nil {
-		if nfdAppName == nfdWorkerApp {
+		switch nfdAppName {
+		case nfdWorkerApp:
 			return status, errors.New(conditionNFDWorkerServiceAccountDegraded)
+		case nfdMasterApp:
+			return status, errors.New(conditionNFDMasterServiceAccountDegraded)
+		case nfdTopologyUpdaterApp:
+			return status, errors.New(conditionNFDTopologyUpdaterServiceAccountDegraded)
 		}
-		return status, errors.New(conditionNFDMasterServiceAccountDegraded)
 	}
 
 	// Set the resource to available
