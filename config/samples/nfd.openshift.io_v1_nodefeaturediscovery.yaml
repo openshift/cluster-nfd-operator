@@ -12,7 +12,6 @@ spec:
   #  - "example.com/resource"
   operand:
     image: quay.io/openshift/origin-node-feature-discovery:4.9
-    imagePullPolicy: Always
     servicePort: 12000
   workerConfig:
     configData: |
