@@ -38,7 +38,6 @@ spec:
             - "--zap-encoder=console"
             - "--zap-log-level=debug"
           image: controller:latest
-          imagePullPolicy: Always
           env:
             - name: SSL_CERT_DIR
               value: "/etc/pki/tls/certs"
