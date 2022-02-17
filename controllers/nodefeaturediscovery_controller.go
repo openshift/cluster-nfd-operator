@@ -35,9 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
-
+ 
 var nfd NFD
 
 const finalizer = "foreground-deletion"

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 module github.com/openshift/cluster-nfd-operator
+=======
+module sigs.k8s.io/node-feature-discovery-operator
+>>>>>>> e506b76e (Align with k8s-sigs nomenclature)
 
 go 1.18
 

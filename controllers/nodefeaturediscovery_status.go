@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
 const (
@@ -356,10 +358,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 		if nfdAppName == nfdWorkerApp {
 			return rstatus, errors.New(errorNFDWorkerDaemonSetUnknown)
 		}
-<<<<<<< HEAD
-		return rstatus, errors.New(errorNFDMasterDaemonSetUnknown)
-=======
->>>>>>> 539372d0 (Run nfd-master as Deployment)
 	}
 
 	// If one or more pods is listed as "Unavailable", then it means the
@@ -369,10 +367,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 		if nfdAppName == nfdWorkerApp {
 			return rstatus, errors.New(warningNFDWorkerDaemonSetProgressing)
 		}
-<<<<<<< HEAD
-		return rstatus, errors.New(warningNFDMasterDaemonSetProgressing)
-=======
->>>>>>> 539372d0 (Run nfd-master as Deployment)
 	}
 
 	// If there are none scheduled, then we have a problem because we should
@@ -381,10 +375,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 		if nfdAppName == nfdWorkerApp {
 			return rstatus, errors.New(conditionNFDWorkerDaemonSetDegraded)
 		}
-<<<<<<< HEAD
-		return rstatus, errors.New(conditionNFDMasterDaemonSetDegraded)
-=======
->>>>>>> 539372d0 (Run nfd-master as Deployment)
 	}
 
 	// Just check in case the number of "ready" nodes is greater than the
@@ -395,10 +385,6 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 		if nfdAppName == nfdWorkerApp {
 			return rstatus, errors.New(errorTooManyNFDWorkerDaemonSetReadyNodes)
 		}
-<<<<<<< HEAD
-		return rstatus, errors.New(errorTooManyNFDMasterDaemonSetReadyNodes)
-=======
->>>>>>> 539372d0 (Run nfd-master as Deployment)
 	}
 
 	// If we have less than the number of scheduled pods, then the DaemonSet
