@@ -61,6 +61,7 @@ LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 PACKAGE=github.com/openshift/cluster-nfd-operator
 MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
+LDFLAGS = -ldflags "-s -w -X sigs.k8s.io/node-feature-discovery-operator/pkg/version.version=$(VERSION)"
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
@@ -80,8 +81,8 @@ go_mod:
 	@go mod download
 
 # Build binary
-build:
-	@$(GO) build -o $(BIN) $(LDFLAGS) $(MAIN_PACKAGE)
+build: go_mod
+	@GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 $(GO_CMD) build -o $(BIN) $(LDFLAGS) $(MAIN_PACKAGE)
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
