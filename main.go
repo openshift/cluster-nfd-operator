@@ -19,6 +19,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"time"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
@@ -135,6 +136,7 @@ func main() {
 			" the manager won't expose metrics and alerts")
 	}
 
+	renewDeadline := 60 * time.Second
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -143,6 +145,7 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.kubernetes.io",
 		Namespace:              watchNamespace, // namespaced-scope when the value is not an empty string
+		RenewDeadline:          &renewDeadline,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
