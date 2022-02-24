@@ -19,7 +19,6 @@ import (
 	"context"
 	"flag"
 	"os"
-	"time"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
@@ -40,6 +39,7 @@ import (
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
 	"github.com/openshift/cluster-nfd-operator/pkg/config"
+	"github.com/openshift/cluster-nfd-operator/pkg/leaderelection"
 	"github.com/openshift/cluster-nfd-operator/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -51,7 +51,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	securityscheme.AddToScheme(scheme)
+	utilruntime.Must(securityscheme.AddToScheme(scheme))
 
 	utilruntime.Must(nfdopenshiftv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
@@ -136,16 +136,20 @@ func main() {
 			" the manager won't expose metrics and alerts")
 	}
 
-	renewDeadline := 60 * time.Second
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	le := leaderelection.GetLeaderElectionConfig(restConfig, enableLeaderElection)
+
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.kubernetes.io",
+		LeaseDuration:          &le.LeaseDuration.Duration,
+		RenewDeadline:          &le.RenewDeadline.Duration,
+		RetryPeriod:            &le.RetryPeriod.Duration,
+		LeaderElectionID:       "nfd.openshift.io",
 		Namespace:              watchNamespace, // namespaced-scope when the value is not an empty string
-		RenewDeadline:          &renewDeadline,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
