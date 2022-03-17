@@ -2,9 +2,8 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   labels:
-    app: nfd
+    app: nfd-topology-updater
   name: nfd-topology-updater
-  namespace: node-feature-discovery
 spec:
   selector:
     matchLabels:

@@ -127,12 +127,12 @@ func main() {
 
 	watchNamespace, err := config.GetWatchNamespace()
 	if err != nil {
-		setupLog.Error(err, "unable to get WatchNamespace, "+
+		setupLog.V(2).WithValues(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")
 	}
 
 	if err := labelNamespace(watchNamespace); err != nil {
-		setupLog.Error(err, "unable to update Namespace, "+watchNamespace+
+		setupLog.V(2).Error(err, "unable to update Namespace, "+watchNamespace+
 			" the manager won't expose metrics and alerts")
 	}
 
