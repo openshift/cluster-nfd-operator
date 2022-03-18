@@ -598,11 +598,16 @@ func SecurityContextConstraints(n NFD) (ResourceStatus, error) {
 	if err != nil {
 		return NotReady, err
 	}
+	if ns == "" {
+		r.Log.Infof("Running on cluster scope")
+		ns = "default"
+	}
+
 	obj.Users[0] = "system:serviceaccount:" + ns + ":" + obj.GetName()
 
 	// found states if the scc was found
 	found := &secv1.SecurityContextConstraints{}
-	r.Log.Info("Looking for SecurityContextConstraints '", obj.Name, "' in Namespace 'default'")
+	r.Log.Info("Looking for SecurityContextConstraints '", obj.Name, "'  in Namespace", ns)
 
 	// Look for the scc to see if it exists, and if so, check if it's
 	// Ready/NotReady. If the scc does not exist, then attempt to create
