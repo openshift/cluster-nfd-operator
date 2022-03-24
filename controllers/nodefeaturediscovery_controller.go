@@ -51,46 +51,10 @@ func (log *NodeFeatureDiscoveryLogger) Info(args ...interface{}) {
 	klog.Info(args)
 }
 
-func (log *NodeFeatureDiscoveryLogger) Infof(format string, args ...interface{}) {
-	klog.Infof(format, args)
-}
-
-func (log *NodeFeatureDiscoveryLogger) Error(args ...interface{}) {
-	klog.Error(args)
-}
-
-// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
-// Below is a description of each field within this struct:
-//
-//	- client.Client reads and writes directly from/to the OCP API server.
-//	  This field needs to be added to the reconciler because it is
-//	  responsible for for fetching objects from the server, which NFD
-//	  needs to do in order to add its labels to each node in the cluster.
-//
-//	- Log is used to log the reconciliation. Every controllers needs this.
-//
-//	- Scheme is used by the kubebuilder library to set OwnerReferences.
-//	  Every controller needs this.
-//
-//	- Recorder defines interfaces for working with OCP event recorders.
-//	  This field is needed by NFD in order for NFD to write events.
-//
-//	- AssetsDir defines the directory with assets under the operator image
-type NodeFeatureDiscoveryReconciler struct {
-	client.Client
-	Log       NodeFeatureDiscoveryLogger
-	Scheme    *runtime.Scheme
-	Recorder  record.EventRecorder
-	AssetsDir string
-}
-
-// SetupWithManager sets up the controller with the Manager in order to create
-// the controller. The Manager serves the purpose of initializing shared
-// dependencies (like caches and clients) from the 'client.Client' field in the
-// NodeFeatureDiscoveryReconciler struct.
-func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// For handling the the creation, deletion, and updates of DaemonSet objects
-	dsPredicateFuncs := predicate.Funcs{
+	// The predicate package is used by the controller to filter events before
+	// they are sent to event handlers. Use it to initiate the reconcile loop only
+	// on a spec change of the runtime object.
+	p := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
 			// Extract the old and new DaemonSet objects. If either one
 			// doesn't exist, then no update occurred, so return 'false'.

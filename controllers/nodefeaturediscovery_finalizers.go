@@ -68,7 +68,7 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperator(ctx context.Context
 		return ctrl.Result{Requeue: false}, nil
 	}
 
-	r.Log.Info("Finalizer does not exist, but resource deletion succesful.")
+	klog.Info("Finalizer does not exist, but resource deletion successful.")
 	return ctrl.Result{Requeue: false}, nil
 }
 

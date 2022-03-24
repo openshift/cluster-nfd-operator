@@ -58,7 +58,7 @@ func (s ResourceStatus) String() string {
 	// so return information stating that the resource status is
 	// unknown
 	if s < Ready || s > NotReady {
-		return "Unkown Resources Status"
+		return "Unknown Resources Status"
 	}
 	return names[s]
 }
