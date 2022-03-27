@@ -4,7 +4,6 @@ metadata:
   labels:
     app: nfd
   name: nfd-topology-updater
-  namespace: node-feature-discovery
 spec:
   selector:
     matchLabels:

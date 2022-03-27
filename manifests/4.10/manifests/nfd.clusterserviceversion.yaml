@@ -783,10 +783,10 @@ spec:
                 env:
                 - name: SSL_CERT_DIR
                   value: /etc/pki/tls/certs
-                - name: WATCH_NAMESPACE
+                - name: POD_NAMESPACE
                   valueFrom:
                     fieldRef:
-                      fieldPath: metadata.annotations['olm.targetNamespaces']
+                      fieldPath: metadata.namespace
                 - name: POD_NAME
                   valueFrom:
                     fieldRef:
