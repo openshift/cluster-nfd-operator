@@ -19,6 +19,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"time"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2"
@@ -135,13 +136,21 @@ func main() {
 			" the manager won't expose metrics and alerts")
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	restConfig := ctrl.GetConfigOrDie()
+	retryPeriod := time.Duration(60) * time.Second
+	renewDeadline := time.Duration(240) * time.Second
+	leaseDuration := time.Duration(270) * time.Second
+
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.kubernetes.io",
+		LeaseDuration:          &leaseDuration,
+		RenewDeadline:          &renewDeadline,
+		RetryPeriod:            &retryPeriod,
+		LeaderElectionID:       "nfd.openshift.io",
 		Namespace:              watchNamespace, // namespaced-scope when the value is not an empty string
 	})
 	if err != nil {
