@@ -42,17 +42,17 @@ type assetsFromFile []byte
 // 'NFD' struct to assist in the process of checking if NFD's resources
 // are 'Ready' or 'NotReady'.
 type Resources struct {
-	Namespace                  corev1.Namespace
-	ServiceAccount             corev1.ServiceAccount
-	Role                       rbacv1.Role
-	RoleBinding                rbacv1.RoleBinding
-	ClusterRole                rbacv1.ClusterRole
-	ClusterRoleBinding         rbacv1.ClusterRoleBinding
-	ConfigMap                  corev1.ConfigMap
-	DaemonSet                  appsv1.DaemonSet
-	Pod                        corev1.Pod
-	Service                    corev1.Service
-	SecurityContextConstraints secv1.SecurityContextConstraints
+	Namespace          corev1.Namespace
+	ServiceAccount     corev1.ServiceAccount
+	Role               rbacv1.Role
+	RoleBinding        rbacv1.RoleBinding
+	ClusterRole        rbacv1.ClusterRole
+	ClusterRoleBinding rbacv1.ClusterRoleBinding
+	ConfigMap          corev1.ConfigMap
+	DaemonSet          appsv1.DaemonSet
+	Deployment         appsv1.Deployment
+	Pod                corev1.Pod
+	Service            corev1.Service
 }
 
 // Add3dpartyResourcesToScheme Adds 3rd party resources To the operator
@@ -180,6 +180,10 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			_, _, err := s.Decode(m, nil, &res.DaemonSet)
 			panicIfError(err)
 			ctrl = append(ctrl, DaemonSet)
+		case "Deployment":
+			_, _, err := s.Decode(m, nil, &res.Deployment)
+			panicIfError(err)
+			ctrl = append(ctrl, Deployment)
 		case "Service":
 			_, _, err := s.Decode(m, nil, &res.Service)
 			panicIfError(err)
@@ -219,7 +223,14 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSet(ctx context.Context, names
 	return ds, err
 }
 
-// getConfigMap gets one of the NFD Operator's ConfigMap
+// getDeployment gets one of the NFD Operand's Deployment
+func (r *NodeFeatureDiscoveryReconciler) getDeployment(ctx context.Context, namespace string, name string) (*appsv1.Deployment, error) {
+	d := &appsv1.Deployment{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, d)
+	return d, err
+}
+
+// getConfigMap gets one of the NFD Operand's ConfigMap
 func (r *NodeFeatureDiscoveryReconciler) getConfigMap(ctx context.Context, namespace string, name string) (*corev1.ConfigMap, error) {
 	cm := &corev1.ConfigMap{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, cm)
@@ -334,7 +345,23 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, na
 	return r.Delete(context.TODO(), ds)
 }
 
-// deleteService deletes the NFD Operator's Service
+// deleteDeployment deletes Operand Deployment
+func (r *NodeFeatureDiscoveryReconciler) deleteDeployment(ctx context.Context, namespace string, name string) error {
+	d, err := r.getDeployment(ctx, namespace, name)
+
+	// Do not return an error if the object has already been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return r.Delete(context.TODO(), d)
+}
+
+// deleteService deletes the NFD Operand's Service
 func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
 	// Attempt to get the existing Service from the reconciler
 	svc, err := r.getService(ctx, namespace, name)
