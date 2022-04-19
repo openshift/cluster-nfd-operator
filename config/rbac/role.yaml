@@ -7,6 +7,14 @@ metadata:
   name: operator
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - update
+  - watch
+- apiGroups:
   - apps
   resources:
   - daemonsets
@@ -35,62 +43,17 @@ rules:
   resources:
   - certificates
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
   - cert-manager.io
   resources:
   - issuers
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - clusteroperators
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - clusteroperators/status
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - clusterversions
-  verbs:
-  - get
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - proxies
-  verbs:
-  - get
-  - list
 - apiGroups:
   - coordination.k8s.io
   resources:
@@ -117,34 +80,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - endpoints
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - imagestreams/layers
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
   - namespaces
   verbs:
   - create
@@ -159,8 +94,6 @@ rules:
   resources:
   - nodes
   verbs:
-  - create
-  - delete
   - get
   - list
   - patch
@@ -169,44 +102,15 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - persistentvolumeclaims
+  - nodes/status
   verbs:
   - get
-  - list
+  - patch
   - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - watch
 - apiGroups:
   - ""
   resources:
   - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pods/log
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
-  - secrets
   verbs:
   - create
   - delete
@@ -240,55 +144,21 @@ rules:
   - update
   - watch
 - apiGroups:
-  - monitoring.coreos.com
+  - nfd.k8s-sigs.io
   resources:
-  - prometheusrules
+  - nodefeaturerules
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
-  - monitoring.coreos.com
+  - policy
+  resourceNames:
+  - nfd-worker
   resources:
-  - servicemonitors
+  - podsecuritypolicies
   verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries/status
-  verbs:
-  - get
-  - patch
-  - update
+  - use
 - apiGroups:
   - rbac.authorization.k8s.io
   resources:
@@ -338,27 +208,10 @@ rules:
   - update
   - watch
 - apiGroups:
-  - route.openshift.io
+  - topology.node.k8s.io
   resources:
-  - routes
+  - noderesourcetopologies
   verbs:
   - create
-  - delete
   - get
-  - list
-  - patch
   - update
-  - watch
-- apiGroups:
-  - security.openshift.io
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - use
-  - watch
