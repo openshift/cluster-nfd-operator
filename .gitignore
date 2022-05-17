@@ -22,3 +22,4 @@ bundle
 *.swp
 *.swo
 *~
+.vscode/
