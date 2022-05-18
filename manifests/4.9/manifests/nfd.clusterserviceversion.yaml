@@ -40,7 +40,7 @@ metadata:
 
       ##NFD-Worker
       NFD-Worker is a daemon responsible for feature detection. It then communicates the information to nfd-master which does the actual node labeling. One instance of nfd-worker is supposed to be running on each node of the cluster.
-    olm.skipRange: '>=4.6.0 <4.10.0'
+    olm.skipRange: '>=4.6.0 <4.9.0'
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
