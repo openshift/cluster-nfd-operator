@@ -45,7 +45,7 @@ IMAGE_TAG_RBAC_PROXY ?= gcr.io/kubebuilder/kube-rbac-proxy:v0.5.0
 BUNDLE_IMG ?= $(IMAGE_REGISTRY)/nfd-operator-bundle:$(VERSION)
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
-CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+CRD_OPTIONS ?= "crd"
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -55,6 +55,8 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 GOOS=linux
+GO_CMD ?= go
+GO_FMT ?= gofmt
 GO=GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 GOFLAGS=-mod=vendor go
 LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 
@@ -63,61 +65,60 @@ MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
+CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
+KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
 
 all: build
 
 # Run tests
-test:
-	@echo "TODO UNIT TEST"
-
 ENVTEST_ASSETS_DIR=$(PROJECT_DIR)/testbin
-test-e2e: generate fmt vet manifests
-	mkdir -p ${ENVTEST_ASSETS_DIR}
-	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.7.0/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test ./... -coverprofile cover.out
-
+test:
+	@echo "TODO"	
 go_mod:
-	@go mod download
+	@$(GO_CMD) mod download
 
 # Build binary
-build:
-	@$(GO) build -o $(BIN) $(LDFLAGS) $(MAIN_PACKAGE)
+build: go_mod
+	@GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 $(GO_CMD) build -o $(BIN) $(LDFLAGS) $(MAIN_PACKAGE)
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
 run: generate fmt vet manifests
-	go run ./main.go
+	$(GO_CMD) run ./main.go
 
 # Install CRDs into a cluster
-install: manifests kustomize
+install: manifests 
 	$(KUSTOMIZE) build config/crd | kubectl apply -f -
 
 # Uninstall CRDs from a cluster
-uninstall: manifests kustomize
+uninstall: manifests 
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
+clean-manifests = (cd config/manager && $(KUSTOMIZE) edit set image controller=k8s.gcr.io/nfd/node-feature-discovery-operator:0.4.2)
+
 # Deploy controller in the configured Kubernetes cluster in ~/.kube/config
-deploy: kustomize
+deploy: 
 	cd $(PROJECT_DIR)/config/manager && \
-		$(KUSTOMIZE) edit set image controller=${IMAGE_TAG}
+		$(KUSTOMIZE) edit set image controller=${IMAGE_TAG}-minimal
 	cd $(PROJECT_DIR)/config/default && \
 		$(KUSTOMIZE) edit set image kube-rbac-proxy=${IMAGE_TAG_RBAC_PROXY}
 	$(KUSTOMIZE) build config/default | kubectl apply -f -
+	@$(call clean-manifests)
 
 # UnDeploy controller from the configured Kubernetes cluster in ~/.kube/config
 undeploy:
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 # Generate manifests e.g. CRD, RBAC etc.
-manifests: controller-gen
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=operator webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+manifests: 
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 # Run go fmt against code
 fmt:
-	go fmt ./...
+	@$(GO_FMT) -w -l $$(find . -name '*.go')
 
 # Run go vet against code
 vet:
-	go vet ./...
+	$(GO_CMD)  vet ./...
 
 verify:	verify-gofmt
 
@@ -133,8 +134,11 @@ else
 	@exit 1
 endif
 
+mdlint:
+	find docs/ -path docs/vendor -prune -false -o -name '*.md' | xargs $(MDL) -s docs/mdl-style.rb
+
 clean:
-	go clean
+	$(GO_CMD)  clean
 	rm -f $(BIN)
 
 # clean NFD labels on all nodes
@@ -143,67 +147,36 @@ clean-labels:
 	kubectl get no -o yaml | sed -e '/^\s*nfd.node.kubernetes.io/d' -e '/^\s*feature.node.kubernetes.io/d' | kubectl replace -f -
 
 # Generate code
-generate: controller-gen
+generate: 
 	$(CONTROLLER_GEN) object:headerFile="utils/boilerplate.go.txt" paths="./..."
 
-# Build the docker image
+# Build the container image
 image:
 	$(IMAGE_BUILD_CMD) -t $(IMAGE_TAG) \
 		$(foreach tag,$(IMAGE_EXTRA_TAGS),-t $(tag)) \
 		$(IMAGE_BUILD_EXTRA_OPTS) ./
 
-# Push the docker image
-push:
+# Push the container image
+push: 
 	$(IMAGE_PUSH_CMD) $(IMAGE_TAG)
 	for tag in $(IMAGE_EXTRA_TAGS); do $(IMAGE_PUSH_CMD) $$tag; done
 
-site-build:
-	@mkdir -p docs/vendor/bundle
-	$(SITE_BUILD_CMD) sh -c '/usr/local/bin/bundle install && "$$BUNDLE_BIN/jekyll" build $(JEKYLL_OPTS)'
-
-site-serve:
-	@mkdir -p docs/vendor/bundle
-	$(SITE_BUILD_CMD) sh -c '/usr/local/bin/bundle install && "$$BUNDLE_BIN/jekyll" serve $(JEKYLL_OPTS) -H 127.0.0.1'
-
-.PHONY: all build test generate verify verify-gofmt clean deploy-objects deploy-operator deploy-crds push image
-.SILENT: go_mod
-# Download controller-gen locally if necessary
-CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
-controller-gen:
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.1)
-
-# Download kustomize locally if necessary
-KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
-kustomize:
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
-
-# go-get-tool will 'go get' any package $2 and install it to $1.
-define go-get-tool
-@[ -f $(1) ] || { \
-set -e ;\
-TMP_DIR=$$(mktemp -d) ;\
-cd $$TMP_DIR ;\
-go mod init tmp ;\
-echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
-rm -rf $$TMP_DIR ;\
-}
-endef
 
 # Generate bundle manifests and metadata, then validate generated files.
 .PHONY: bundle
-bundle: manifests kustomize
+bundle: manifests 
 	operator-sdk generate kustomize manifests -q
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG)
-	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle --output-dir bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG)-minimal
+	$(KUSTOMIZE) build config/manifests | operator-sdk generate bundle -q --overwrite --version $(VERSION) $(BUNDLE_METADATA_OPTS)
 	operator-sdk bundle validate ./bundle
 
 # Build the bundle image.
 .PHONY: bundle-build
 bundle-build:
-	$(IMAGE_BUILD_CMD) -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	$(IMAGE_BUILD_CMD)  -f bundle.Dockerfile -t $(BUNDLE_IMG) .
 
 # push the bundle image.
 .PHONY: bundle-push
 bundle-push:
 	$(IMAGE_PUSH_CMD) $(BUNDLE_IMG)
+
