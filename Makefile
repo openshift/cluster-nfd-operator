@@ -55,6 +55,8 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 GOOS=linux
+GO_CMD ?= go
+GO_FMT ?= gofmt
 GO=GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 GOFLAGS=-mod=vendor go
 LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 

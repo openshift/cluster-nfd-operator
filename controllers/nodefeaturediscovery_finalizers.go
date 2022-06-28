@@ -1,8 +1,4 @@
 /*
-<<<<<<< HEAD
-=======
-Copyright 2022 The Kubernetes Authors.
->>>>>>> b4552ce8 (Enable status checks and finalizers for TopologyUpdater (#117))
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -68,7 +64,7 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperand(ctx context.Context,
 		return ctrl.Result{Requeue: false}, nil
 	}
 
-	klog.Info("Finalizer does not exist, but resource deletion succesful.")
+	klog.Info("Finalizer does not exist, but resource deletion successful.")
 	return ctrl.Result{Requeue: false}, nil
 }
 
@@ -177,13 +173,13 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		return err
 	}
 
-	// Attempt to delete master DaemonSet
+	// Attempt to delete master Deployment
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		err = r.deleteDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
+		err = r.deleteDeployment(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
-			return false, interpretError(err, "master DaemonSet")
+			return false, interpretError(err, "master Deployment")
 		}
-		klog.Info("Master DaemonSet resource has been deleted.")
+		klog.Info("Master Deployment resource has been deleted.")
 		return true, nil
 	})
 	if err != nil {
@@ -281,6 +277,19 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		return err
 	}
 
+	// Attempt to delete the SecurityContextConstraints
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		if err != nil {
+			return false, interpretError(err, "SecurityContextConstraints")
+		}
+		klog.Info("SecurityContextConstraints nfd-worker resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
 	// Attempt to delete the Worker config map
 	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		err = r.deleteConfigMap(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
@@ -304,8 +313,8 @@ func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context, 
 		return true
 	}
 
-	// Attempt to find the master DaemonSet
-	if _, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
+	// Attempt to find the master Deployment
+	if _, err := r.getDeployment(ctx, instance.ObjectMeta.Namespace, nfdMasterApp); !k8serrors.IsNotFound(err) {
 		return true
 	}
 
@@ -344,6 +353,11 @@ func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context, 
 		return true
 	}
 
+	// Attempt to get the SecurityContextConstraints
+	if _, err := r.getSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp); !k8serrors.IsNotFound(err) {
+		return true
+	}
+
 	if instance.Spec.TopologyUpdater {
 		// Attempt to find the topology-updater DaemonSet
 		if _, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp); !k8serrors.IsNotFound(err) {
@@ -359,6 +373,10 @@ func (r *NodeFeatureDiscoveryReconciler) doComponentsExist(ctx context.Context, 
 		}
 		// Attempt to get the ClusterRoleBinding
 		if _, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp); !k8serrors.IsNotFound(err) {
+			return true
+		}
+		// Attempt to get the SecurityContextConstraints
+		if _, err := r.getSecurityContextConstraints(ctx, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp); !k8serrors.IsNotFound(err) {
 			return true
 		}
 	}

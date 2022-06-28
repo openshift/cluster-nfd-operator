@@ -16,9 +16,6 @@ limitations under the License.
 package v1
 
 import (
-	"os"
-
-	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -34,24 +31,11 @@ type NodeFeatureDiscoverySpec struct {
 	// resources on a worker node to account for resources available to be
 	// allocated to new pod on a per-zone basis
 	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.10/get-started/introduction.html#nfd-topology-updater
-<<<<<<< HEAD
-	//
-	// +optional
-	TopologyUpdater bool `json:"topologyupdater"`
-
-	WorkerConfig *ConfigMap `json:"workerConfig,omitempty"`
-
-	// Run NFD in multiple deployment mode
-	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
-	//
-	// +nullable
-=======
 	// +optional
 	TopologyUpdater bool `json:"topologyUpdater"`
 
 	// Instance name. Used to separate annotation namespaces for
 	// multiple parallel deployments.
->>>>>>> 809780db (Enable TopologyUpdater worker)
 	// +optional
 	Instance string `json:"instance"`
 
@@ -77,24 +61,20 @@ type NodeFeatureDiscoverySpec struct {
 	// WorkerConfig describes configuration options for the NFD
 	// worker.
 	// +optional
-	CustomConfig ConfigMap `json:"customConfig"`
+	WorkerConfig ConfigMap `json:"workerConfig"`
 }
 
 // OperandSpec describes configuration options for the operand
 type OperandSpec struct {
 	// Image defines the image to pull for the
 	// NFD operand
-	//
+	// [defaults to k8s.gcr.io/nfd/node-feature-discovery]
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
-	// +nullable
-	// +optional
 	Image string `json:"image,omitempty"`
 
 	// ImagePullPolicy defines Image pull policy for the
 	// NFD operand image [defaults to Always]
-	//
-	// +nullable
-	// +optional
+	// +kubebuilder:validation:Optional
 	ImagePullPolicy string `json:"imagePullPolicy,omitempty"`
 
 	// ServicePort specifies the TCP port that nfd-master
@@ -115,27 +95,25 @@ type NodeFeatureDiscoveryStatus struct {
 	// Conditions represents the latest available observations of current state.
 	//
 	// +optional
-	Conditions []conditionsv1.Condition `json:"conditions,omitempty"`
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=nodefeaturediscoveries,scope=Namespaced
 //
-// An Node Feature Discovery cluster instance
-// +operator-sdk:csv:customresourcedefinitions:displayName="NodeFeatureDiscovery"
+// NodeFeatureDiscovery is the Schema for the nodefeaturediscoveries API
 type NodeFeatureDiscovery struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	// Specification of the desired behavior of the Node Feature Discovery
 	Spec   NodeFeatureDiscoverySpec   `json:"spec,omitempty"`
 	Status NodeFeatureDiscoveryStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
+//
 // NodeFeatureDiscoveryList contains a list of NodeFeatureDiscovery
 type NodeFeatureDiscoveryList struct {
 	metav1.TypeMeta `json:",inline"`
@@ -149,12 +127,7 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-	if o.Image != "" {
-		return o.Image
-	}
-
-	image := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
-	return image
+	return o.Image
 }
 
 // ImagePolicy returns a valid corev1.PullPolicy from the string in the CR

@@ -1,3 +1,19 @@
+/*
+Copyright 2021 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package controllers
 
 import (
@@ -5,20 +21,19 @@ import (
 	"errors"
 	"time"
 
-	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
-	conditionsv1 "github.com/openshift/custom-resource-status/conditions/v1"
-	corev1 "k8s.io/api/core/v1"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
 
 const (
-	nfdWorkerApp string = "nfd-worker"
-	nfdMasterApp string = "nfd-master"
+	nfdWorkerApp          string = "nfd-worker"
+	nfdMasterApp          string = "nfd-master"
+	nfdTopologyUpdaterApp string = "nfd-topology-updater"
 )
 
 const (
@@ -29,7 +44,7 @@ const (
 	conditionFailedGettingNFDMasterServiceAccount          = "FailedGettingNFDMasterServiceAccount"
 	conditionFailedGettingNFDService                       = "FailedGettingNFDService"
 	conditionFailedGettingNFDWorkerDaemonSet               = "FailedGettingNFDWorkerDaemonSet"
-	conditionFailedGettingNFDMasterDaemonSet               = "FailedGettingNFDMasterDaemonSet"
+	conditionFailedGettingNFDMasterDeployment              = "FailedGettingNFDMasterDeployment"
 	conditionFailedGettingNFDRoleBinding                   = "FailedGettingNFDRoleBinding"
 	conditionFailedGettingNFDClusterRoleBinding            = "FailedGettingNFDClusterRole"
 
@@ -41,13 +56,13 @@ const (
 	conditionNFDServiceDegraded                       = "NFDServiceDegraded"
 	conditionNFDWorkerDaemonSetDegraded               = "NFDWorkerDaemonSetDegraded"
 	conditionNFDTopologyUpdaterDaemonSetDegraded      = "NFDTopologyUpdaterDaemonSetDegraded"
-	conditionNFDMasterDaemonSetDegraded               = "NFDMasterDaemonSetDegraded"
+	conditionNFDMasterDeploymentDegraded              = "NFDMasterDDeploymentDegraded"
 	conditionNFDRoleDegraded                          = "NFDRoleDegraded"
 	conditionNFDRoleBindingDegraded                   = "NFDRoleBindingDegraded"
 	conditionNFDClusterRoleDegraded                   = "NFDClusterRoleDegraded"
 	conditionNFDClusterRoleBindingDegraded            = "NFDClusterRoleBindingDegraded"
 
-	// Unknown errors. (These occur when the error is unknown.)
+	// Unknown errors. (Catch all)
 	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
 
 	// More nodes are listed as "ready" than selected
@@ -79,7 +94,7 @@ const (
 
 // updateStatus is used to update the status of a resource (e.g., degraded,
 // available, etc.)
-func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDiscovery, conditions []conditionsv1.Condition) error {
+func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDiscovery, condition []metav1.Condition) error {
 	// The actual 'nfd' object should *not* be modified when trying to
 	// check the object's status. This variable is a dummy variable used
 	// to set temporary conditions.
@@ -87,8 +102,8 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 
 	// If a set of conditions exists, then it should be added to the
 	// 'nfd' Copy.
-	if conditions != nil {
-		nfdCopy.Status.Conditions = conditions
+	if condition != nil {
+		nfdCopy.Status.Conditions = condition
 	}
 
 	// Next step is to check if we need to update the status
@@ -98,7 +113,7 @@ func (r *NodeFeatureDiscoveryReconciler) updateStatus(nfd *nfdv1.NodeFeatureDisc
 	// updatable, and progressing), it isn't necessary to check if old
 	// conditions should be removed.
 	for _, newCondition := range nfdCopy.Status.Conditions {
-		oldCondition := conditionsv1.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
+		oldCondition := meta.FindStatusCondition(nfd.Status.Conditions, newCondition.Type)
 		if oldCondition == nil {
 			modified = true
 			break
@@ -142,101 +157,93 @@ func (r *NodeFeatureDiscoveryReconciler) updateProgressingCondition(nfd *nfdv1.N
 	return reconcile.Result{Requeue: true}, nil
 }
 
-// getAvailableConditions returns a list of conditionsv1.Condition objects and marks
+// getAvailableConditions returns a list of Condition objects and marks
 // every condition as FALSE except for ConditionAvailable so that the
 // reconciler can determine that the resource is available.
-func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []conditionsv1.Condition {
+func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []metav1.Condition {
 	now := time.Now()
 	nfdMetrics.Degraded(false)
-	return []conditionsv1.Condition{
+	return []metav1.Condition{
 		{
-			Type:               conditionsv1.ConditionAvailable,
-			Status:             corev1.ConditionTrue,
+			Type:               ConditionAvailable,
+			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionUpgradeable,
-			Status:             corev1.ConditionTrue,
+			Type:               ConditionUpgradeable,
+			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionProgressing,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionProgressing,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionDegraded,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionDegraded,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 	}
 }
 
-// getDegradedConditions returns a list of conditionsv1.Condition objects and marks
-// every condition as FALSE except for ConditionDegraded so that the
+// getDegradedConditions returns a list of conditions.Condition objects and marks
+// every condition as FALSE except for conditions.ConditionDegraded so that the
 // reconciler can determine that the resource is degraded.
-func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, message string) []conditionsv1.Condition {
+func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, message string) []metav1.Condition {
 	now := time.Now()
-	return []conditionsv1.Condition{
+	return []metav1.Condition{
 		{
-			Type:               conditionsv1.ConditionAvailable,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionAvailable,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionUpgradeable,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionUpgradeable,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionProgressing,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionProgressing,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionDegraded,
-			Status:             corev1.ConditionTrue,
+			Type:               ConditionDegraded,
+			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
-			LastHeartbeatTime:  metav1.Time{Time: now},
 			Reason:             reason,
 			Message:            message,
 		},
 	}
 }
 
-// getProgressingConditions returns a list of conditionsv1.Condition objects and marks
+// getProgressingConditions returns a list of Condition objects and marks
 // every condition as FALSE except for ConditionProgressing so that the
 // reconciler can determine that the resource is progressing.
-func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
+func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []metav1.Condition {
 	now := time.Now()
-	return []conditionsv1.Condition{
+	return []metav1.Condition{
 		{
-			Type:               conditionsv1.ConditionAvailable,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionAvailable,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionUpgradeable,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionUpgradeable,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
-			Type:               conditionsv1.ConditionProgressing,
-			Status:             corev1.ConditionTrue,
+			Type:               ConditionProgressing,
+			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
 			Reason:             reason,
 			Message:            message,
 		},
 		{
-			Type:               conditionsv1.ConditionDegraded,
-			Status:             corev1.ConditionFalse,
+			Type:               ConditionDegraded,
+			Status:             metav1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 	}
@@ -244,67 +251,32 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 
 // The status of the resource (available, upgradeable, progressing, or
 // degraded).
-type resourceStatus struct {
-	// Is the resource available, upgradable, etc.
+type Status struct {
+	// Is the resource available, upgradable, etc.?
 	isAvailable   bool
-	isUpgradeable bool
 	isProgressing bool
 	isDegraded    bool
-
-	// How many statuses are set to 'true'?
-	numActiveStatuses int
 }
 
 // initializeDegradedStatus initializes the status struct to degraded
-func initializeDegradedStatus() resourceStatus {
-	return resourceStatus{
-		isAvailable:       false,
-		isUpgradeable:     false,
-		isProgressing:     false,
-		isDegraded:        true,
-		numActiveStatuses: 1,
+func initializeDegradedStatus() Status {
+	return Status{
+		isAvailable:   false,
+		isProgressing: false,
+		isDegraded:    true,
 	}
 }
 
-// setStatusAsAvailable sets the current resource status
-// as "isAvailable". This function is called after all
-// resource status conditions have been checked.
-func setStatusAsAvailable(rstatus *resourceStatus) {
-	rstatus.isAvailable = true
-	rstatus.isUpgradeable = false
-	rstatus.isProgressing = false
-	rstatus.isDegraded = false
-	rstatus.numActiveStatuses = 1
-}
-
-// setStatusAsProgressing sets the current resource status
-// as "isProgressing". This function is called after all
-// resource status conditions have been checked.
-func setStatusAsProgressing(rstatus *resourceStatus) {
-	rstatus.isAvailable = false
-	rstatus.isUpgradeable = false
-	rstatus.isProgressing = true
-	rstatus.isDegraded = false
-	rstatus.numActiveStatuses = 1
-}
-
-// getWorkerDaemonSetConditions is a wrapper around
-// "getDaemonSetConditions" for ease of calling the
-// worker DaemonSet status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
-	return r.getDaemonSetConditions(ctx, instance, nfdWorkerApp)
-}
-
-// getTopologyUpdaterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
+// getWorkerDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
 // worker DaemonSets
 func (r *NodeFeatureDiscoveryReconciler) getWorkerDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
 	return r.getDaemonSetConditions(ctx, instance, nfdWorkerApp)
 }
 
-// getMasterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
-// master DaemonSets
-func (r *NodeFeatureDiscoveryReconciler) getMasterDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
-	return r.getDaemonSetConditions(ctx, instance, nfdMasterApp)
+// getTopologyUpdaterDaemonSetConditions is a wrapper around "getDaemonSetConditions" for
+// worker DaemonSets
+func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getDaemonSetConditions(ctx, instance, nfdTopologyUpdaterApp)
 }
 
 // getMasterDeploymentConditions is a wrapper around "getDeploymentConditions" for
@@ -315,11 +287,11 @@ func (r *NodeFeatureDiscoveryReconciler) getMasterDeploymentConditions(ctx conte
 
 // getDeploymentConditions gets the current status of a Deployment. If an error
 // occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getDeploymentConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
 	// Initialize the resource's status to 'Degraded'
 	status := initializeDegradedStatus()
 
-	ds, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdAppName)
+	d, err := r.getDeployment(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 	if err != nil {
 		return status, err
 	}
@@ -338,14 +310,15 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	return status, nil
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getDaemonSetConditions gets the current status of a DaemonSet. If an error
+// occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
+	// Initialize the resource's status to 'Degraded'
+	status := initializeDegradedStatus()
 
-	// Get the current DaemonSet from the reconciler
 	ds, err := r.getDaemonSet(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 	if err != nil {
-		return rstatus, err
+		return status, err
 	}
 
 	// Index the DaemonSet status. (Note: there is no "Conditions" array here.)
@@ -361,16 +334,14 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	// then we have a problem because we should at least see 1 pod per node
 	if numberDesired == 0 {
 		if nfdAppName == nfdWorkerApp {
-			return rstatus, errors.New(errorNFDWorkerDaemonSetUnknown)
+			return status, errors.New(errorNFDWorkerDaemonSetUnknown)
 		}
 	}
-
-	// If one or more pods is listed as "Unavailable", then it means the
-	// DaemonSet is currently progressing, and neither "Available" or "Degraded"
 	if numberUnavailable > 0 {
-		setStatusAsProgressing(&rstatus)
+		status.isProgressing = true
+		status.isDegraded = false
 		if nfdAppName == nfdWorkerApp {
-			return rstatus, errors.New(warningNFDWorkerDaemonSetProgressing)
+			return status, errors.New(warningNFDWorkerDaemonSetProgressing)
 		}
 	}
 
@@ -378,31 +349,32 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSetConditions(ctx context.Cont
 	// at least see 1 pod per node, even after the scheduling happens.
 	if currentNumberScheduled == 0 {
 		if nfdAppName == nfdWorkerApp {
-			return rstatus, errors.New(conditionNFDWorkerDaemonSetDegraded)
+			return status, errors.New(conditionNFDWorkerDaemonSetDegraded)
 		}
 	}
 
 	// Just check in case the number of "ready" nodes is greater than the
 	// number of scheduled ones (for whatever reason)
 	if numberReady > currentNumberScheduled {
-		rstatus.isDegraded = false
-		rstatus.numActiveStatuses = 0
+		status.isDegraded = false
 		if nfdAppName == nfdWorkerApp {
-			return rstatus, errors.New(errorTooManyNFDWorkerDaemonSetReadyNodes)
+			return status, errors.New(errorTooManyNFDWorkerDaemonSetReadyNodes)
 		}
 	}
 
 	// If we have less than the number of scheduled pods, then the DaemonSet
 	// is in progress
 	if numberReady < currentNumberScheduled {
-		setStatusAsProgressing(&rstatus)
-		return rstatus, errors.New(warningNumberOfReadyNodesIsLessThanScheduled)
+		status.isProgressing = true
+		status.isDegraded = false
+		return status, errors.New(warningNumberOfReadyNodesIsLessThanScheduled)
 	}
 
 	// If all nodes are ready, then update the status to be "isAvailable"
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 }
 
 // getServiceConditions gets the current status of a Service. If an error
@@ -416,32 +388,36 @@ func (r *NodeFeatureDiscoveryReconciler) getServiceConditions(ctx context.Contex
 
 	// If the Service could not be obtained, then it is degraded
 	if err != nil {
-		return rstatus, errors.New(conditionNFDServiceDegraded)
+		return status, errors.New(conditionNFDServiceDegraded)
 	}
 
 	// If we could get the Service, then it is not empty and it exists
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 
 }
 
-func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(n NFD) (resourceStatus, error) {
-	// Initialize Resource Status to 'Degraded'
-	rstatus := initializeDegradedStatus()
+// getWorkerConfigConditions gets the current status of a worker config. If an error
+// occurs, this function returns the corresponding error message
+func (r *NodeFeatureDiscoveryReconciler) getWorkerConfigConditions(n NFD) (Status, error) {
+	// Initialize status to 'Degraded'
+	status := initializeDegradedStatus()
 
 	// Get the existing ConfigMap from the reconciler
 	wc := n.ins.Spec.WorkerConfig.ConfigData
 
 	// If 'wc' is nil, then the resource hasn't been (re)created yet
 	if wc == "" {
-		return rstatus, errors.New(conditionNFDWorkerConfigDegraded)
+		return status, errors.New(conditionNFDWorkerConfigDegraded)
 	}
 
 	// If we could get the WorkerConfig, then it is not empty and it exists
-	setStatusAsAvailable(&rstatus)
+	status.isDegraded = false
+	status.isAvailable = true
 
-	return rstatus, nil
+	return status, nil
 }
 
 // getRoleConditions gets the current status of a Role. If an error occurs, this
@@ -453,15 +429,16 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleConditions(ctx context.Context, 
 	// Get the existing Role from the reconciler
 	_, err := r.getRole(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
 
-	// If 'role' is nil, then it hasn't been (re)created yet
+	// If the error is not nil, then the Role hasn't been (re)created yet
 	if err != nil {
-		return rstatus, errors.New(conditionNFDRoleDegraded)
+		return status, errors.New(conditionNFDRoleDegraded)
 	}
 
 	// Set the resource to available
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 }
 
 // getRoleBindingConditions gets the current status of a RoleBinding. If an error
@@ -473,15 +450,16 @@ func (r *NodeFeatureDiscoveryReconciler) getRoleBindingConditions(ctx context.Co
 	// Get the existing RoleBinding from the reconciler
 	_, err := r.getRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdWorkerApp)
 
-	// If the error is not nil, then it hasn't been (re)created yet
+	// If the error is not nil, then the RoleBinding hasn't been (re)created yet
 	if err != nil {
-		return rstatus, errors.New(conditionNFDRoleBindingDegraded)
+		return status, errors.New(conditionNFDRoleBindingDegraded)
 	}
 
 	// Set the resource to available
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 }
 
 // getMasterClusterRoleConditions is a wrapper around "getClusterRoleConditions" for
@@ -498,22 +476,23 @@ func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleConditions
 
 // geClusterRoleConditions gets the current status of a ClusterRole. If an error
 // occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
 	// Initialize status to 'Degraded'
 	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRole from the reconciler
-	_, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
+	_, err := r.getClusterRole(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 
 	// If 'clusterRole' is nil, then it hasn't been (re)created yet
 	if err != nil {
-		return rstatus, errors.New(conditionNFDClusterRoleDegraded)
+		return status, errors.New(conditionNFDClusterRoleDegraded)
 	}
 
 	// Set the resource to available
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 }
 
 // getMasterClusterRoleBindingConditions is a wrapper around "getServiceAccountConditions" for
@@ -530,35 +509,36 @@ func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterClusterRoleBindingCon
 
 // getClusterRoleBindingConditions gets the current status of a ClusterRoleBinding.
 // If an error occurs, this function returns the corresponding error message
-func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBindingConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery, nfdAppName string) (Status, error) {
 	// Initialize status to 'Degraded'
 	status := initializeDegradedStatus()
 
 	// Get the existing ClusterRoleBinding from the reconciler
-	_, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdMasterApp)
+	_, err := r.getClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdAppName)
 
-	// If 'clusterRole' is nil, then it hasn't been (re)created yet
+	// If the error is not nil, then the ClusterRoleBinding hasn't been (re)created
+	// yet
 	if err != nil {
-		return rstatus, errors.New(conditionNFDClusterRoleBindingDegraded)
+		return status, errors.New(conditionNFDClusterRoleBindingDegraded)
 	}
 
 	// Set the resource to available
-	setStatusAsAvailable(&rstatus)
+	status.isAvailable = true
+	status.isDegraded = false
 
-	return rstatus, nil
+	return status, nil
 }
 
-// getWorkerDaemonSetServiceAccount is a wrapper around
-// "getServiceAccountConditions" for ease of calling the
-// worker ServiceAccount status
-func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (resourceStatus, error) {
+// getWorkerServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
+// worker service account.
+func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
 	return r.getServiceAccountConditions(ctx, instance, nfdWorkerApp)
 }
 
 // getTopologyUpdaterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for
 // worker service account.
-func (r *NodeFeatureDiscoveryReconciler) getWorkerServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
-	return r.getServiceAccountConditions(ctx, instance, nfdWorkerApp)
+func (r *NodeFeatureDiscoveryReconciler) getTopologyUpdaterServiceAccountConditions(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) (Status, error) {
+	return r.getServiceAccountConditions(ctx, instance, nfdTopologyUpdaterApp)
 }
 
 // getMasterServiceAccountConditions is a wrapper around "getServiceAccountConditions" for

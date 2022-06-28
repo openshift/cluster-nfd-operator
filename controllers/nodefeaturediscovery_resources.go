@@ -1,4 +1,5 @@
 /*
+Copyright 2020-2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,39 +30,34 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// assetsFromFile is a list where each item in the list contains the
-// contents of a given file as a list of bytes
+// assetsFromFile is the content of an asset file as raw data
 type assetsFromFile []byte
 
-// Resources holds objects owned by NFD. This struct is used with the
-// 'NFD' struct to assist in the process of checking if NFD's resources
-// are 'Ready' or 'NotReady'.
+// Resources holds objects owned by NFD
 type Resources struct {
-	Namespace          corev1.Namespace
-	ServiceAccount     corev1.ServiceAccount
-	Role               rbacv1.Role
-	RoleBinding        rbacv1.RoleBinding
-	ClusterRole        rbacv1.ClusterRole
-	ClusterRoleBinding rbacv1.ClusterRoleBinding
-	ConfigMap          corev1.ConfigMap
-	DaemonSet          appsv1.DaemonSet
-	Deployment         appsv1.Deployment
-	Pod                corev1.Pod
-	Service            corev1.Service
+	Namespace                  corev1.Namespace
+	ServiceAccount             corev1.ServiceAccount
+	Role                       rbacv1.Role
+	RoleBinding                rbacv1.RoleBinding
+	ClusterRole                rbacv1.ClusterRole
+	ClusterRoleBinding         rbacv1.ClusterRoleBinding
+	ConfigMap                  corev1.ConfigMap
+	DaemonSet                  appsv1.DaemonSet
+	Deployment                 appsv1.Deployment
+	Pod                        corev1.Pod
+	Service                    corev1.Service
+	SecurityContextConstraints secv1.SecurityContextConstraints
 }
 
 // filePathWalkDir finds all non-directory files under the given path recursively,
 // i.e. including its subdirectories
 func filePathWalkDir(root string) ([]string, error) {
 	var files []string
-
-	// Walk through the files in path, and if the os.FileInfo object
-	// states that the item is not a directory, append it
-	// to the list of files
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			files = append(files, path)
@@ -71,9 +67,7 @@ func filePathWalkDir(root string) ([]string, error) {
 	return files, err
 }
 
-// getAssetsFrom takes a path as an input and grabs all of the
-// file names in that path, then returns a list of the manifests
-// it found in that path.
+// getAssetsFrom recursively reads all manifest files under a given path
 func getAssetsFrom(path string) []assetsFromFile {
 	// All assets (manifests) as raw data
 	manifests := []assetsFromFile{}
@@ -88,21 +82,11 @@ func getAssetsFrom(path string) []assetsFromFile {
 	// For each file in the 'files' list, read the file
 	// and store its contents in 'manifests'
 	for _, file := range files {
-
-		// Read the file and return its contents in
-		// 'buffer'
 		buffer, err := ioutil.ReadFile(file)
-
-		// If we have an error, then something
-		// unexpectedly went wrong when reading the
-		// file's contents
 		if err != nil {
 			panic(err)
 		}
 
-		// If the reading goes smoothly, then append
-		// the buffer (the file's contents) to the
-		// list of manifests
 		manifests = append(manifests, buffer)
 	}
 	return manifests
@@ -112,9 +96,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 	// Information about the manifest
 	res := Resources{}
 
-	// ctrl is a controlFunc object that contains a function
-	// that returns information about the status of a resource
-	// (i.e., Ready or NotReady)
+	// A list of control functions for checking the status of a resource
 	ctrl := controlFunc{}
 
 	// Get the list of manifests from the given path
@@ -125,9 +107,7 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 		scheme.Scheme)
 	reg, _ := regexp.Compile(`\b(\w*kind:\w*)\B.*\b`)
 
-	// For each manifest, find its kind, then append the
-	// appropriate function (e.g., 'Namespace' or 'Role') to
-	// ctrl so that the Namespace, Role, etc. can be parsed
+	// Append the appropriate control function depending on the kind
 	for _, m := range manifests {
 		kind := reg.FindString(string(m))
 		slce := strings.Split(kind, ":")
@@ -176,14 +156,14 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			ctrl = append(ctrl, SecurityContextConstraints)
 
 		default:
-			r.Log.Infof("Unknown Resource: ", "Kind", kind)
+			klog.Info("Unknown Resource: ", "Kind", kind)
 		}
 	}
 
 	return res, ctrl
 }
 
-// Trigger a panic if an error occurs
+// panicIfError panics in case of an error
 func panicIfError(err error) {
 	if err != nil {
 		panic(err)
@@ -202,6 +182,13 @@ func (r *NodeFeatureDiscoveryReconciler) getDaemonSet(ctx context.Context, names
 	ds := &appsv1.DaemonSet{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, ds)
 	return ds, err
+}
+
+// getDeployment gets one of the NFD Operand's Deployment
+func (r *NodeFeatureDiscoveryReconciler) getDeployment(ctx context.Context, namespace string, name string) (*appsv1.Deployment, error) {
+	d := &appsv1.Deployment{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, d)
+	return d, err
 }
 
 // getConfigMap gets one of the NFD Operand's ConfigMap
@@ -244,6 +231,13 @@ func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBinding(ctx context.Conte
 	crb := &rbacv1.ClusterRoleBinding{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, crb)
 	return crb, err
+}
+
+// getSecurityContextConstraints gets one of the NFD Operator's SecurityContextConstraints
+func (r *NodeFeatureDiscoveryReconciler) getSecurityContextConstraints(ctx context.Context, namespace string, name string) (*secv1.SecurityContextConstraints, error) {
+	scc := &secv1.SecurityContextConstraints{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, scc)
+	return scc, err
 }
 
 // deleteServiceAccount deletes one of the NFD Operand's ServiceAccounts
@@ -292,6 +286,22 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, na
 	}
 
 	return r.Delete(context.TODO(), ds)
+}
+
+// deleteDeployment deletes Operand Deployment
+func (r *NodeFeatureDiscoveryReconciler) deleteDeployment(ctx context.Context, namespace string, name string) error {
+	d, err := r.getDeployment(ctx, namespace, name)
+
+	// Do not return an error if the object has already been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return r.Delete(context.TODO(), d)
 }
 
 // deleteService deletes the NFD Operand's Service
@@ -372,4 +382,26 @@ func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Co
 	}
 
 	return r.Delete(context.TODO(), crb)
+}
+
+// deleteSecurityContextConstraints deletes one of the NFD Operator's SecurityContextConstraints
+func (r *NodeFeatureDiscoveryReconciler) deleteSecurityContextConstraints(ctx context.Context, namespace string, name string) error {
+	// Attempt to get the existing SCC's from the reconciler
+	scc, err := r.getSecurityContextConstraints(ctx, namespace, name)
+
+	// If the resource was not found, then do not return an
+	// error because this means the resource has already
+	// been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	// If some other error occurred when trying to get the
+	// resource, then return that error
+	if err != nil {
+		return err
+	}
+
+	// ...otherwise, delete it
+	return r.Delete(context.TODO(), scc)
 }

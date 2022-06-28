@@ -93,7 +93,7 @@ spec:
     - description: |
         The NodeFeatureDiscovery instance is the CustomResource being watched by the NFD-Operator, and holds all the needed information to setup the behaviour of the master and worker pods
       kind: NodeFeatureDiscovery
-      name: nodefeaturediscoveries.nfd.kubernetes.io
+      name: nodefeaturediscoveries.nfd.openshift.io
       version: v1
     - description: |
         NodeFeatureRule resource specifies a configuration for feature-based customization of node objects, such as node labeling.

@@ -144,7 +144,33 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nfd.k8s-sigs.io
+  - nfd.openshift.io
+  resources:
+  - nodefeaturediscoveries
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeaturediscoveries/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeaturediscoveries/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - nfd.openshift.io
   resources:
   - nodefeaturerules
   verbs:
@@ -208,6 +234,19 @@ rules:
   - update
   - watch
 - apiGroups:
+  - security.openshift.io
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - use
+  - watch
+- apiGroups:
   - topology.node.k8s.io
   resources:
   - noderesourcetopologies
@@ -215,18 +254,3 @@ rules:
   - create
   - get
   - update
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - csinodes
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - storage.k8s.io
-  resources:
-  - storageclasses
-  verbs:
-  - watch

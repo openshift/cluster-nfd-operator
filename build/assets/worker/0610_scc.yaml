@@ -31,6 +31,8 @@ seLinuxContext:
   type: MustRunAs
 supplementalGroups:
   type: MustRunAs
+seccompProfiles:
+- '*'
 users:
 - system:serviceaccount:openshift-nfd:nfd-worker
 volumes:
