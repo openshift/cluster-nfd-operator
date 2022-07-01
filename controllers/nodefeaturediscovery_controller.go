@@ -1,5 +1,4 @@
 /*
-Copyright 2020-2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,6 +22,8 @@ import (
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -45,7 +46,6 @@ const finalizer = "foreground-deletion"
 
 // NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
 type NodeFeatureDiscoveryReconciler struct {
-
 	// Client interface to communicate with the API server. Reconciler needs this for
 	// fetching objects.
 	client.Client
@@ -62,13 +62,244 @@ type NodeFeatureDiscoveryReconciler struct {
 // SetupWithManager sets up the controller with a specified manager responsible for
 // initializing shared dependencies (like caches and clients)
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
-	// The predicate package is used by the controller to filter events before
-	// they are sent to event handlers. Use it to initiate the reconcile loop only
-	// on a spec change of the runtime object.
-	p := predicate.Funcs{
+	// For handling the the creation, deletion, and updates of DaemonSet objects
+	dsPredicateFuncs := predicate.Funcs{
 		UpdateFunc: func(e event.UpdateEvent) bool {
-			return validateUpdateEvent(&e)
+			// Extract the old and new DaemonSet objects. If either one
+			// doesn't exist, then no update occurred, so return 'false'.
+			oldDsObject, ok := e.ObjectOld.(*appsv1.DaemonSet)
+			if !ok {
+				return false
+			}
+
+			newDsObject, ok := e.ObjectNew.(*appsv1.DaemonSet)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldDsObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newDsObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newDsObject.GetGeneration() == oldDsObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the DaemonSet object has been created already.
+			_, ok := e.Object.(*appsv1.DaemonSet)
+			return ok
+		},
+	}
+
+	// For handling the the creation, deletion, and updates of ServiceAccount objects
+	saPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new ServiceAccount objects. If either one
+			// doesn't exist, then no update occurred, so return 'false'.
+			oldSaObject, ok := e.ObjectOld.(*corev1.ServiceAccount)
+			if !ok {
+				return false
+			}
+
+			newSaObject, ok := e.ObjectNew.(*corev1.ServiceAccount)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldSaObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newSaObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newSaObject.GetGeneration() == oldSaObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the ServiceAccount object has been created already.
+			_, ok := e.Object.(*corev1.ServiceAccount)
+			return ok
+		},
+	}
+
+	// For handling the the creation, deletion, and updates of Service objects
+	svcPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new Service objects. If either one doesn't
+			// exist, then no update occurred, so return 'false'.
+			oldSvcObject, ok := e.ObjectOld.(*corev1.Service)
+			if !ok {
+				return false
+			}
+
+			newSvcObject, ok := e.ObjectNew.(*corev1.Service)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldSvcObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newSvcObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newSvcObject.GetGeneration() == oldSvcObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the Service object has been created already.
+			_, ok := e.Object.(*corev1.Service)
+			return ok
+		},
+	}
+
+	// For handling the the creation, deletion, and updates of RoleBinding objects
+	rbPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new RoleBinding objects. If either one
+			// doesn't exist, then no update occurred, so return 'false'.
+			oldRbObject, ok := e.ObjectOld.(*rbacv1.RoleBinding)
+			if !ok {
+				return false
+			}
+
+			newRbObject, ok := e.ObjectNew.(*rbacv1.RoleBinding)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldRbObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newRbObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newRbObject.GetGeneration() == oldRbObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the RoleBinding object has been created already.
+			_, ok := e.Object.(*rbacv1.RoleBinding)
+			return ok
+		},
+	}
+
+	// For handling the the creation, deletion, and updates of Role objects
+	rPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new Role objects. If either one doesn't
+			// exist, then no update occurred, so return false.
+			oldRObject, ok := e.ObjectOld.(*rbacv1.Role)
+			if !ok {
+				return false
+			}
+
+			newRObject, ok := e.ObjectNew.(*rbacv1.Role)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldRObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newRObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newRObject.GetGeneration() == oldRObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the Role object has been created already.
+			_, ok := e.Object.(*rbacv1.Role)
+			return ok
+		},
+	}
+
+	// For handling the the creation, deletion, and updates of ConfigMap objects
+	cmPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new ConfigMap objects. If either
+			// one doesn't exist, then no update occurred, so return
+			// 'false'.
+			oldCmObject, ok := e.ObjectOld.(*corev1.ConfigMap)
+			if !ok {
+				return false
+			}
+
+			newCmObject, ok := e.ObjectNew.(*corev1.ConfigMap)
+			if !ok {
+				return false
+			}
+			// Get the deletion timestamps. If they're the same, then no update
+			// has been made.
+			oldDeletionTimestamp := oldCmObject.GetDeletionTimestamp()
+			newDeletionTimestamp := newCmObject.GetDeletionTimestamp()
+			if oldDeletionTimestamp == newDeletionTimestamp {
+				return false
+			}
+			// If everything else is the same, then no update has been made
+			// either.
+			if newCmObject.GetGeneration() == oldCmObject.GetGeneration() {
+				return false
+			}
+
+			return true
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+			// Check if the ConfigMap object has been created already.
+			_, ok := e.Object.(*corev1.ConfigMap)
+			return ok
 		},
 	}
 
@@ -117,34 +348,53 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		},
 	}
 
+	// For handling the the creation, deletion, and updates of NFD instances
+	nfdPredicateFuncs := predicate.Funcs{
+		UpdateFunc: func(e event.UpdateEvent) bool {
+			// Extract the old and new NodeFeatureDiscovery instances. If
+			// either one doesn't exist, then no update occurred, return 'false'.
+			oldNfdObject, ok := e.ObjectOld.(*nfdv1.NodeFeatureDiscovery)
+			if !ok {
+				return false
+			}
+
+			newNfdObject, ok := e.ObjectNew.(*nfdv1.NodeFeatureDiscovery)
+			if !ok {
+				return false
+			}
+
+			// If everything else is the same, then no update has been made
+			// either.
+			return oldNfdObject.GetGeneration() != newNfdObject.GetGeneration() ||
+				!apiequality.Semantic.DeepEqual(oldNfdObject.GetLabels(), newNfdObject.GetLabels())
+		},
+		DeleteFunc: func(e event.DeleteEvent) bool {
+
+			// Evaluates to false if the object has been deleted
+			return !e.DeleteStateUnknown
+		},
+		CreateFunc: func(e event.CreateEvent) bool {
+
+			// Check if the NodeFeatureDiscovery instance has been created
+			// already.
+			_, ok := e.Object.(*nfdv1.NodeFeatureDiscovery)
+			return ok
+		},
+	}
+
 	// Create a new controller.  "For" specifies the type of object being
 	// reconciled whereas "Owns" specify the types of objects being
 	// generated and "Complete" specifies the reconciler object.
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&nfdv1.NodeFeatureDiscovery{}).
-		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
-		Owns(&appsv1.Deployment{}, builder.WithPredicates(p)).
-		Owns(&corev1.Service{}, builder.WithPredicates(p)).
-		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(p)).
-		Owns(&corev1.Pod{}, builder.WithPredicates(p)).
-		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
+		For(&nfdv1.NodeFeatureDiscovery{}, builder.WithPredicates(nfdPredicateFuncs)).
+		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(saPredicateFuncs)).
+		Owns(&rbacv1.RoleBinding{}, builder.WithPredicates(rbPredicateFuncs)).
+		Owns(&rbacv1.Role{}, builder.WithPredicates(rPredicateFuncs)).
+		Owns(&corev1.Service{}, builder.WithPredicates(svcPredicateFuncs)).
+		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(dsPredicateFuncs)).
+		Owns(&corev1.ConfigMap{}, builder.WithPredicates(cmPredicateFuncs)).
 		Owns(&security.SecurityContextConstraints{}, builder.WithPredicates(sccPredicateFuncs)).
 		Complete(r)
-}
-
-// validateUpdateEvent looks at an update event and returns true or false
-// depending on whether the update event has runtime objects to update.
-func validateUpdateEvent(e *event.UpdateEvent) bool {
-	if e.ObjectOld == nil {
-		klog.Error("Update event has no old runtime object to update")
-		return false
-	}
-	if e.ObjectNew == nil {
-		klog.Error("Update event has no new runtime object for update")
-		return false
-	}
-
-	return true
 }
 
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=update
