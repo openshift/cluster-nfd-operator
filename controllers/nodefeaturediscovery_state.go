@@ -24,8 +24,7 @@ import (
 // NFD holds the needed information to watch from the Controller. The
 // following descriptions elaborate on each field in this struct:
 type NFD struct {
-	// resources contains information about NFD's resources. For more
-	// information, see ./nodefeaturediscovery_resources.go
+	// resources contains information about NFD's resources.
 	resources []Resources
 
 	// controls is a list that contains the status of an NFD resource
@@ -75,12 +74,6 @@ func (n *NFD) init(
 // NotReady. (See the following file for a list of functions that
 // 'n.controls' can take on: ./nodefeaturediscovery_resources.go.)
 func (n *NFD) step() error {
-	// For each function in n.controls, attempt to check the
-	// status of the relevant resource. If no error occurs and
-	// the resource is defined as being "NotReady," then return
-	// an error saying it's not ready. Otherwise, return the
-	// status as being ready, then increment the index for
-	// n.controls so that we can parse the next resource.
 	for _, fs := range n.controls[n.idx] {
 		stat, err := fs(*n)
 		if err != nil {

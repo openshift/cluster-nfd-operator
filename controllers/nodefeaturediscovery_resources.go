@@ -1,4 +1,5 @@
 /*
+Copyright 2020-2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,19 +29,16 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// assetsFromFile is a list where each item in the list contains the
-// contents of a given file as a list of bytes
+// assetsFromFile is the content of an asset file as raw data
 type assetsFromFile []byte
 
-// Resources holds objects owned by NFD. This struct is used with the
-// 'NFD' struct to assist in the process of checking if NFD's resources
-// are 'Ready' or 'NotReady'.
+// Resources holds objects owned by NFD
 type Resources struct {
 	Namespace                  corev1.Namespace
 	ServiceAccount             corev1.ServiceAccount
@@ -50,29 +48,16 @@ type Resources struct {
 	ClusterRoleBinding         rbacv1.ClusterRoleBinding
 	ConfigMap                  corev1.ConfigMap
 	DaemonSet                  appsv1.DaemonSet
+	Deployment                 appsv1.Deployment
 	Pod                        corev1.Pod
 	Service                    corev1.Service
 	SecurityContextConstraints secv1.SecurityContextConstraints
 }
 
-// Add3dpartyResourcesToScheme Adds 3rd party resources To the operator
-func Add3dpartyResourcesToScheme(scheme *runtime.Scheme) error {
-	if err := secv1.AddToScheme(scheme); err != nil {
-		return err
-	}
-	return nil
-}
-
-// filePathWalkDir takes a path as an input and finds all files
-// in that path, but not directories
+// filePathWalkDir finds all non-directory files under the given path recursively,
+// i.e. including its subdirectories
 func filePathWalkDir(root string) ([]string, error) {
-	// files contains the list of files found in the path
-	// 'root'
 	var files []string
-
-	// Walk through the files in path, and if the os.FileInfo object
-	// states that the item is not a directory, append it
-	// to the list of files
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
 			files = append(files, path)
@@ -82,12 +67,9 @@ func filePathWalkDir(root string) ([]string, error) {
 	return files, err
 }
 
-// getAssetsFrom takes a path as an input and grabs all of the
-// file names in that path, then returns a list of the manifests
-// it found in that path.
+// getAssetsFrom recursively reads all manifest files under a given path
 func getAssetsFrom(path string) []assetsFromFile {
-	// manifests is a list type where each item in the list
-	// contains the contents of a given asset (manifest)
+	// All assets (manifests) as raw data
 	manifests := []assetsFromFile{}
 	assets := path
 
@@ -100,35 +82,21 @@ func getAssetsFrom(path string) []assetsFromFile {
 	// For each file in the 'files' list, read the file
 	// and store its contents in 'manifests'
 	for _, file := range files {
-
-		// Read the file and return its contents in
-		// 'buffer'
 		buffer, err := ioutil.ReadFile(file)
-
-		// If we have an error, then something
-		// unexpectedly went wrong when reading the
-		// file's contents
 		if err != nil {
 			panic(err)
 		}
 
-		// If the reading goes smoothly, then append
-		// the buffer (the file's contents) to the
-		// list of manifests
 		manifests = append(manifests, buffer)
 	}
 	return manifests
 }
 
 func addResourcesControls(path string) (Resources, controlFunc) {
-	// res is a Resources object that contains information
-	// about a given manifest, such as the Namespace and
-	// ServiceAccount being used
+	// Information about the manifest
 	res := Resources{}
 
-	// ctrl is a controlFunc object that contains a function
-	// that returns information about the status of a resource
-	// (i.e., Ready or NotReady)
+	// A list of control functions for checking the status of a resource
 	ctrl := controlFunc{}
 
 	// Get the list of manifests from the given path
@@ -139,19 +107,13 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 		scheme.Scheme)
 	reg, _ := regexp.Compile(`\b(\w*kind:\w*)\B.*\b`)
 
-	// For each manifest, find its kind, then append the
-	// appropriate function (e.g., 'Namespace' or 'Role') to
-	// ctrl so that the Namespace, Role, etc. can be parsed
+	// Append the appropriate control function depending on the kind
 	for _, m := range manifests {
 		kind := reg.FindString(string(m))
 		slce := strings.Split(kind, ":")
 		kind = strings.TrimSpace(slce[1])
 
 		switch kind {
-		case "Namespace":
-			_, _, err := s.Decode(m, nil, &res.Namespace)
-			panicIfError(err)
-			ctrl = append(ctrl, Namespace)
 		case "ServiceAccount":
 			_, _, err := s.Decode(m, nil, &res.ServiceAccount)
 			panicIfError(err)
@@ -180,6 +142,10 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			_, _, err := s.Decode(m, nil, &res.DaemonSet)
 			panicIfError(err)
 			ctrl = append(ctrl, DaemonSet)
+		case "Deployment":
+			_, _, err := s.Decode(m, nil, &res.Deployment)
+			panicIfError(err)
+			ctrl = append(ctrl, Deployment)
 		case "Service":
 			_, _, err := s.Decode(m, nil, &res.Service)
 			panicIfError(err)
@@ -190,71 +156,77 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			ctrl = append(ctrl, SecurityContextConstraints)
 
 		default:
-			r.Log.Infof("Unknown Resource: ", "Kind", kind)
+			klog.Info("Unknown Resource: ", "Kind", kind)
 		}
-
 	}
 
 	return res, ctrl
 }
 
-// Trigger a panic if an error occurs
+// panicIfError panics in case of an error
 func panicIfError(err error) {
 	if err != nil {
 		panic(err)
 	}
 }
 
-// getServiceAccount gets one of the NFD Operator's ServiceAccounts
+// getServiceAccount gets one of the NFD Operand's ServiceAccounts
 func (r *NodeFeatureDiscoveryReconciler) getServiceAccount(ctx context.Context, namespace string, name string) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, sa)
 	return sa, err
 }
 
-// getDaemonSet gets one of the NFD Operator's DaemonSets
+// getDaemonSet gets one of the NFD Operand's DaemonSets
 func (r *NodeFeatureDiscoveryReconciler) getDaemonSet(ctx context.Context, namespace string, name string) (*appsv1.DaemonSet, error) {
 	ds := &appsv1.DaemonSet{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, ds)
 	return ds, err
 }
 
-// getConfigMap gets one of the NFD Operator's ConfigMap
+// getDeployment gets one of the NFD Operand's Deployment
+func (r *NodeFeatureDiscoveryReconciler) getDeployment(ctx context.Context, namespace string, name string) (*appsv1.Deployment, error) {
+	d := &appsv1.Deployment{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, d)
+	return d, err
+}
+
+// getConfigMap gets one of the NFD Operand's ConfigMap
 func (r *NodeFeatureDiscoveryReconciler) getConfigMap(ctx context.Context, namespace string, name string) (*corev1.ConfigMap, error) {
 	cm := &corev1.ConfigMap{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, cm)
 	return cm, err
 }
 
-// getService gets one of the NFD Operator's Services
+// getService gets one of the NFD Operand's Services
 func (r *NodeFeatureDiscoveryReconciler) getService(ctx context.Context, namespace string, name string) (*corev1.Service, error) {
 	svc := &corev1.Service{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, svc)
 	return svc, err
 }
 
-// getRole gets one of the NFD Operator's Roles
+// getRole gets one of the NFD Operand's Roles
 func (r *NodeFeatureDiscoveryReconciler) getRole(ctx context.Context, namespace string, name string) (*rbacv1.Role, error) {
 	role := &rbacv1.Role{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, role)
 	return role, err
 }
 
-// getRoleBinding gets one of the NFD Operator's RoleBindings
+// getRoleBinding gets one of the NFD Operand's RoleBindings
 func (r *NodeFeatureDiscoveryReconciler) getRoleBinding(ctx context.Context, namespace string, name string) (*rbacv1.RoleBinding, error) {
 	rb := &rbacv1.RoleBinding{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, rb)
 	return rb, err
 }
 
-// getClusterRole gets one of the NFD Operator's ClusterRoles
+// getClusterRole gets one of the NFD Operand's ClusterRoles
 func (r *NodeFeatureDiscoveryReconciler) getClusterRole(ctx context.Context, namespace string, name string) (*rbacv1.ClusterRole, error) {
 	cr := &rbacv1.ClusterRole{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, cr)
 	return cr, err
 }
 
-// getClusterRoleBinding gets one of the NFD Operator's ClusterRoleBindings
+// getClusterRoleBinding gets one of the NFD Operand's ClusterRoleBindings
 func (r *NodeFeatureDiscoveryReconciler) getClusterRoleBinding(ctx context.Context, namespace string, name string) (*rbacv1.ClusterRoleBinding, error) {
 	crb := &rbacv1.ClusterRoleBinding{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, crb)
@@ -268,179 +240,147 @@ func (r *NodeFeatureDiscoveryReconciler) getSecurityContextConstraints(ctx conte
 	return scc, err
 }
 
-// deleteServiceAccount deletes one of the NFD Operator's ServiceAccounts
+// deleteServiceAccount deletes one of the NFD Operand's ServiceAccounts
 func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing ServiceAccount from the reconciler
 	sa, err := r.getServiceAccount(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), sa)
 }
 
-// deleteConfigMap deletes the NFD Operator's DaemonSet (worker or master)
+// deleteConfigMap deletes the NFD Operand ConfigMap
 func (r *NodeFeatureDiscoveryReconciler) deleteConfigMap(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing DaemonSet from the reconciler
 	cm, err := r.getConfigMap(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), cm)
 }
 
-// deleteDaemonSet deletes the NFD Operator's DaemonSet (worker or master)
+// deleteDaemonSet deletes Operand DaemonSet
 func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing DaemonSet from the reconciler
 	ds, err := r.getDaemonSet(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), ds)
 }
 
-// deleteService deletes the NFD Operator's Service
-func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing Service from the reconciler
-	svc, err := r.getService(ctx, namespace, name)
+// deleteDeployment deletes Operand Deployment
+func (r *NodeFeatureDiscoveryReconciler) deleteDeployment(ctx context.Context, namespace string, name string) error {
+	d, err := r.getDeployment(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
+	return r.Delete(context.TODO(), d)
+}
+
+// deleteService deletes the NFD Operand's Service
+func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
+	svc, err := r.getService(ctx, namespace, name)
+
+	// Do not return an error if the object has already been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
 	return r.Delete(context.TODO(), svc)
 }
 
-// deleteRole deletes one of the NFD Operator's Roles
+// deleteRole deletes one of the NFD Operand's Roles
 func (r *NodeFeatureDiscoveryReconciler) deleteRole(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing Role from the reconciler
 	role, err := r.getRole(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), role)
 }
 
-// deleteRoleBinding deletes one of the NFD Operator's RoleBindings
+// deleteRoleBinding deletes one of the NFD Operand's RoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteRoleBinding(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing RoleBinding from the reconciler
 	rb, err := r.getRoleBinding(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), rb)
 }
 
-// deleteClusterRole deletes one of the NFD Operator's ClusterRoles
+// deleteClusterRole deletes one of the NFD Operand's ClusterRoles
 func (r *NodeFeatureDiscoveryReconciler) deleteClusterRole(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing ClusterRole from the reconciler
 	cr, err := r.getClusterRole(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), cr)
 }
 
-// deleteClusterRoleBinding deletes one of the NFD Operator's ClusterRoleBindings
+// deleteClusterRoleBinding deletes one of the NFD Operand's ClusterRoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Context, namespace string, name string) error {
-	// Attempt to get the existing ClusterRoleBinding from the reconciler
 	crb, err := r.getClusterRoleBinding(ctx, namespace, name)
 
-	// If the resource was not found, then do not return an
-	// error because this means the resource has already
-	// been deleted
+	// Do not return an error if the object has already been deleted
 	if k8serrors.IsNotFound(err) {
 		return nil
 	}
 
-	// If some other error occurred when trying to get the
-	// resource, then return that error
 	if err != nil {
 		return err
 	}
 
-	// ...otherwise, delete it
 	return r.Delete(context.TODO(), crb)
 }
 

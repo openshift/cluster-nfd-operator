@@ -17,6 +17,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	security "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -38,56 +39,28 @@ import (
 	nfdMetrics "github.com/openshift/cluster-nfd-operator/pkg/metrics"
 )
 
+// nfd is an NFD object that will be used to initialize the NFD operator
 var nfd NFD
 
 const finalizer = "foreground-deletion"
 
-// NodeFeatureDiscoveryLogger is a dummy logger struct that is used with
-// the NodeFeatureDiscoveryReconciler to initiate a logger.
-type NodeFeatureDiscoveryLogger struct {
-}
-
-func (log *NodeFeatureDiscoveryLogger) Info(args ...interface{}) {
-	klog.Info(args)
-}
-
-func (log *NodeFeatureDiscoveryLogger) Infof(format string, args ...interface{}) {
-	klog.Infof(format, args)
-}
-
-func (log *NodeFeatureDiscoveryLogger) Error(args ...interface{}) {
-	klog.Error(args)
-}
-
-// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object.
-// Below is a description of each field within this struct:
-//
-//	- client.Client reads and writes directly from/to the OCP API server.
-//	  This field needs to be added to the reconciler because it is
-//	  responsible for for fetching objects from the server, which NFD
-//	  needs to do in order to add its labels to each node in the cluster.
-//
-//	- Log is used to log the reconciliation. Every controllers needs this.
-//
-//	- Scheme is used by the kubebuilder library to set OwnerReferences.
-//	  Every controller needs this.
-//
-//	- Recorder defines interfaces for working with OCP event recorders.
-//	  This field is needed by NFD in order for NFD to write events.
-//
-//	- AssetsDir defines the directory with assets under the operator image
+// NodeFeatureDiscoveryReconciler reconciles a NodeFeatureDiscovery object
 type NodeFeatureDiscoveryReconciler struct {
+	// Client interface to communicate with the API server. Reconciler needs this for
+	// fetching objects.
 	client.Client
-	Log       NodeFeatureDiscoveryLogger
-	Scheme    *runtime.Scheme
-	Recorder  record.EventRecorder
-	AssetsDir string
+
+	// Scheme is used by the kubebuilder library to set OwnerReferences. Every
+	// controller needs this.
+	Scheme *runtime.Scheme
+
+	// Recorder defines interfaces for working with OCP event recorders. This
+	// field is needed by the operator in order for the operator to write events.
+	Recorder record.EventRecorder
 }
 
-// SetupWithManager sets up the controller with the Manager in order to create
-// the controller. The Manager serves the purpose of initializing shared
-// dependencies (like caches and clients) from the 'client.Client' field in the
-// NodeFeatureDiscoveryReconciler struct.
+// SetupWithManager sets up the controller with a specified manager responsible for
+// initializing shared dependencies (like caches and clients)
 func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// For handling the the creation, deletion, and updates of DaemonSet objects
 	dsPredicateFuncs := predicate.Funcs{
@@ -409,6 +382,9 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		},
 	}
 
+	// Create a new controller.  "For" specifies the type of object being
+	// reconciled whereas "Owns" specify the types of objects being
+	// generated and "Complete" specifies the reconciler object.
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&nfdv1.NodeFeatureDiscovery{}, builder.WithPredicates(nfdPredicateFuncs)).
 		Owns(&corev1.ServiceAccount{}, builder.WithPredicates(saPredicateFuncs)).
@@ -421,60 +397,55 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Complete(r)
 }
 
-// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=nodes,verbs=update
+// +kubebuilder:rbac:groups=core,resources=nodes/status,verbs=get;patch;update
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods/log,verbs=get
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=namespaces,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=config.openshift.io,resources=clusterversions,verbs=get
-// +kubebuilder:rbac:groups=config.openshift.io,resources=proxies,verbs=get;list
-// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use;get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=imagestreams/layers,verbs=get
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=events,verbs=list;watch;create;update;patch
-// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;update;
-// +kubebuilder:rbac:groups=core,resources=persistentvolumes,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;watch;create;update;delete
-// +kubebuilder:rbac:groups=core,resources=endpoints,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=servicemonitors,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=monitoring.coreos.com,resources=prometheusrules,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=config.openshift.io,resources=clusteroperators,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=config.openshift.io,resources=clusteroperators/status,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cert-manager.io,resources=issuers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cert-manager.io,resources=certificates,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;watch;update
+// +kubebuilder:rbac:groups=core,resources=nodes,verbs=get;list;watch;patch
+// +kubebuilder:rbac:groups=policy,resources=podsecuritypolicies,verbs=use,resourceNames=nfd-worker
+// +kubebuilder:rbac:groups=cert-manager.io,resources=issuers,verbs=get;list;watch
+// +kubebuilder:rbac:groups=cert-manager.io,resources=certificates,verbs=get;list;watch
+// +kubebuilder:rbac:groups=topology.node.k8s.io,resources=noderesourcetopologies,verbs=create;update;get
+// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturerules,verbs=get;list;watch
+// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/finalizers,verbs=update
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=use;get;list;watch;create;update;patch;delete
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
+// Reconcile is part of the main kubernetes reconciliation loop which aims
+// to move the current state of the cluster closer to the desired state.
 func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	// Fetch the NodeFeatureDiscovery instance
-	r.Log.Info("Fetch the NodeFeatureDiscovery instance")
+	// Fetch the NodeFeatureDiscovery instance on the cluster
+	klog.Info("Fetch the NodeFeatureDiscovery instance")
 	instance := &nfdv1.NodeFeatureDiscovery{}
 	err := r.Get(ctx, req.NamespacedName, instance)
-	// Error reading the object - requeue the request.
-	if err != nil {
 
+	// If an error occurs because "r.Get" cannot get the NFD instance
+	// (e.g., due to timeouts, aborts, etc. defined by ctx), the
+	// request likely needs to be requeued.
+	if err != nil {
 		// handle deletion of resource
 		if k8serrors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			r.Log.Infof("resource has been deleted", "req", req.Name, "got", instance.Name)
+			// Owned objects are automatically garbage collected. For additional cleanup
+			// logic use finalizers. Return and don't requeue.
+			klog.Info("resource has been deleted", "req", req.Name, "got", instance.Name)
 			return ctrl.Result{Requeue: false}, nil
 		}
 
-		r.Log.Error(err, "requeueing event since there was an error reading object")
+		klog.Error(err, "requeueing event since there was an error reading object")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -482,7 +453,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// deletion timestamp pointer is not nil. A non-nil value indicates
 	// someone or something has triggered the deletion.
 	if instance.DeletionTimestamp != nil {
-		return r.finalizeNFDOperator(ctx, instance, finalizer)
+		return r.finalizeNFDOperand(ctx, instance, finalizer)
 	}
 
 	// If the finalizer doesn't exist, add it.
@@ -495,10 +466,12 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		nfdMetrics.RegisterInstance(instance.Spec.Instance, instance.ObjectMeta.Namespace)
 	}
 
-	// apply components
-	r.Log.Info("Ready to apply components")
+	klog.Info("Ready to apply components")
 	nfd.init(r, instance)
 	result, err := applyComponents()
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
 
 	// If the components could not be applied, then check for degraded conditions
 	if err != nil {
@@ -532,14 +505,14 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// Check the status of the NFD Operator cluster role
-	if rstatus, err := r.getClusterRoleConditions(ctx); err != nil {
+	if rstatus, err := r.getMasterClusterRoleConditions(ctx, instance); err != nil {
 		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err.Error())
 	} else if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, "nfd ClusterRole has been degraded")
 	}
 
 	// Check the status of the NFD Operator cluster role binding
-	if rstatus, err := r.getClusterRoleBindingConditions(ctx); err != nil {
+	if rstatus, err := r.getMasterClusterRoleBindingConditions(ctx, instance); err != nil {
 		return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRoleBinding, err.Error())
 	} else if rstatus.isDegraded {
 		return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, "nfd ClusterRoleBinding has been degraded")
@@ -575,13 +548,43 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return r.updateDegradedCondition(instance, err.Error(), "nfd-worker Daemonset has been degraded")
 	}
 
-	// Check the status of the NFD Operator Master DaemonSet
-	if rstatus, err := r.getMasterDaemonSetConditions(ctx, instance); err != nil {
-		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDaemonSet, err.Error())
+	// Check the status of the NFD Operator Master Deployment
+	if rstatus, err := r.getMasterDeploymentConditions(ctx, instance); err != nil {
+		return r.updateDegradedCondition(instance, conditionFailedGettingNFDMasterDeployment, err.Error())
 	} else if rstatus.isProgressing {
-		return r.updateProgressingCondition(instance, err.Error(), "nfd-master Daemonset is progressing")
+		return r.updateProgressingCondition(instance, err.Error(), "nfd-master Deployment is progressing")
 	} else if rstatus.isDegraded {
-		return r.updateDegradedCondition(instance, err.Error(), "nfd-master Daemonset has been degraded")
+		return r.updateDegradedCondition(instance, err.Error(), "nfd-master Deployment has been degraded")
+	}
+
+	// Check if nfd-topology-updater is needed, if not, skip
+	if instance.Spec.TopologyUpdater {
+		// Check the status of the NFD Operator TopologyUpdater Worker DaemonSet
+		if rstatus, err := r.getTopologyUpdaterDaemonSetConditions(ctx, instance); err != nil {
+			return r.updateDegradedCondition(instance, conditionNFDTopologyUpdaterDaemonSetDegraded, err.Error())
+		} else if rstatus.isProgressing {
+			return r.updateProgressingCondition(instance, err.Error(), "nfd-topology-updater Daemonset is progressing")
+		} else if rstatus.isDegraded {
+			return r.updateDegradedCondition(instance, err.Error(), "nfd-topology-updater Daemonset has been degraded")
+		}
+		// Check the status of the NFD Operator TopologyUpdater cluster role
+		if rstatus, err := r.getTopologyUpdaterClusterRoleConditions(ctx, instance); err != nil {
+			return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, err.Error())
+		} else if rstatus.isDegraded {
+			return r.updateDegradedCondition(instance, conditionNFDClusterRoleDegraded, "nfd-topology-updater ClusterRole has been degraded")
+		}
+		// Check the status of the NFD Operator TopologyUpdater cluster role binding
+		if rstatus, err := r.getTopologyUpdaterClusterRoleBindingConditions(ctx, instance); err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDClusterRoleBinding, err.Error())
+		} else if rstatus.isDegraded {
+			return r.updateDegradedCondition(instance, conditionNFDClusterRoleBindingDegraded, "nfd-topology-updater ClusterRoleBinding has been degraded")
+		}
+		// Check the status of the NFD Operator TopologyUpdater ServiceAccount
+		if rstatus, err := r.getTopologyUpdaterServiceAccountConditions(ctx, instance); err != nil {
+			return r.updateDegradedCondition(instance, conditionFailedGettingNFDTopologyUpdaterServiceAccount, err.Error())
+		} else if rstatus.isDegraded {
+			return r.updateDegradedCondition(instance, conditionNFDTopologyUpdaterServiceAccountDegraded, "nfd-topology-updater service account has been degraded")
+		}
 	}
 
 	// Get available conditions
@@ -590,7 +593,7 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	// Update the status of the resource on the CRD
 	if err := r.updateStatus(instance, conditions); err != nil {
 		if result != nil {
-			return *result, nil
+			return *result, err
 		}
 		return reconcile.Result{}, err
 	}
@@ -600,10 +603,11 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	// All objects are healthy during reconcile loop
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: 60 * time.Second}, nil
 }
 
 func applyComponents() (*reconcile.Result, error) {
+	// Run through all control functions, return an error on any NotReady resource.
 	for {
 		err := nfd.step()
 		if err != nil {

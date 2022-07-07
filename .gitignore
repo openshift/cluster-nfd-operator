@@ -22,3 +22,5 @@ bundle
 *.swp
 *.swo
 *~
+.vscode/*
+bundle.Dockerfile

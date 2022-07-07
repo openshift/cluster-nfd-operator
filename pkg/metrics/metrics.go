@@ -16,7 +16,7 @@ limitations under the License.
 package metrics
 
 import (
-	"github.com/openshift/cluster-nfd-operator/version"
+	"github.com/openshift/cluster-nfd-operator/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
@@ -85,5 +85,5 @@ func init() {
 		instanceInfo,
 	)
 
-	registerVersion(version.Version)
+	registerVersion(version.Get())
 }

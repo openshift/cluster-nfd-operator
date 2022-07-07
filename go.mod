@@ -7,7 +7,6 @@ require (
 	github.com/onsi/gomega v1.18.1
 	github.com/openshift/api v0.0.0-20211209135129-c58d9f695577
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
-	github.com/openshift/custom-resource-status v1.1.1
 	github.com/prometheus/client_golang v1.12.1
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4

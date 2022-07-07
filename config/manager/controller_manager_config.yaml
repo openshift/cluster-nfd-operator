@@ -8,5 +8,5 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: 39f5e5c3.nodefeaturediscoveries.nfd.kubernetes.io
+  resourceName: 39f5e5c3.nodefeaturediscoveries.nfd.openshift.io
 
