@@ -64,6 +64,12 @@ func init() {
 }
 
 func main() {
+	// probeAddr is responsible for the health probe bind address, where the health
+	// probe is responsible for determining liveness, readiness, and configuration
+	// of the operator pods. Note that the port which is being binded must match
+	// the bind port under './config' and './manifests'
+	probeAddr := ":8081"
+
 	flags := flag.NewFlagSet(ProgramName, flag.ExitOnError)
 
 	printVersion := flags.Bool("version", false, "Print version and exit.")
@@ -95,7 +101,7 @@ func main() {
 		Scheme:                 scheme,
 		MetricsBindAddress:     args.metricsAddr,
 		Port:                   9443,
-		HealthProbeBindAddress: args.probeAddr,
+		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         args.enableLeaderElection,
 		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.openshift.io",
 		Namespace:              watchNamespace,
