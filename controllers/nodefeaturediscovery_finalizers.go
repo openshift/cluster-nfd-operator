@@ -76,8 +76,8 @@ func (r *NodeFeatureDiscoveryReconciler) addFinalizer(ctx context.Context, insta
 		return ctrl.Result{}, err
 	}
 
-	// we exit reconcile loop because we will have additional update reconcile
-	return ctrl.Result{Requeue: false}, nil
+	// we exit reconcile loop and explicitly requeue to continue reconciliation
+	return ctrl.Result{Requeue: true}, nil
 }
 
 // hasFinalizer determines if the operand has a certain finalizer.
