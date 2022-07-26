@@ -272,6 +272,11 @@ func RoleBinding(n NFD) (ResourceStatus, error) {
 	// The Namespace should already be defined, so let's set the
 	// namespace to the namespace defined in the
 	obj.SetNamespace(n.ins.GetNamespace())
+	// the namespace in the subject should be the same as in the NFD instance
+	// since service account will be created in that namespace
+	for i, _ := range obj.Subjects {
+		obj.Subjects[i].Namespace = n.ins.GetNamespace()
+	}
 
 	// found states if the RoleBinding was found
 	found := &rbacv1.RoleBinding{}
