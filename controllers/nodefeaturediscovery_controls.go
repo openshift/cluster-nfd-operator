@@ -176,10 +176,6 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	// found states if the ClusterRoleBinding was found
 	found := &rbacv1.ClusterRoleBinding{}
 
-	// It is also assumed that our ClusterRoleBinding has a defined
-	// Namespace
-	obj.Subjects[0].Namespace = n.ins.GetNamespace()
-
 	klog.Info("Looking for ClusterRoleBinding ", "name ", obj.Name)
 
 	// Look for the ClusterRoleBinding to see if it exists, and if so,
@@ -188,6 +184,8 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	err := n.rec.Client.Get(context.TODO(), types.NamespacedName{Namespace: "", Name: obj.Name}, found)
 	if err != nil && errors.IsNotFound(err) {
 		klog.Info("ClusterRoleBinding, creating ", "name ", obj.Name)
+		// It is also assumed that our ClusterRoleBinding subject points to a defined Namespace
+		obj.Subjects[0].Namespace = n.ins.GetNamespace()
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
 			klog.Error("Couldn't create ClusterRoleBinding ", "name ", obj.Name, " error:", err)
@@ -198,9 +196,25 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 		return NotReady, err
 	}
 
+	// check if Subjects field needs to be updated, since NFD instances can be deployed
+	// into different namespaces
+	subjectFound := false
+	for _, subject := range found.Subjects {
+		if subject.Namespace == n.ins.GetNamespace() {
+			subjectFound = true
+		}
+	}
+
+	if !subjectFound {
+		// in case a subject that point to the instance namespace is not found - add one
+		newSubject := found.Subjects[0]
+		newSubject.Namespace = n.ins.GetNamespace()
+		found.Subjects = append(found.Subjects, newSubject)
+	}
+
 	// If we found the ClusterRoleBinding, let's attempt to update it
 	klog.Info("ClusterRoleBinding found, updating ", "name ", obj.Name)
-	err = n.rec.Client.Update(context.TODO(), &obj)
+	err = n.rec.Client.Update(context.TODO(), found)
 	if err != nil {
 		return NotReady, err
 	}
