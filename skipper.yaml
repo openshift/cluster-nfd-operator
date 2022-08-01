@@ -1,0 +1,14 @@
+registry: quay.io
+build-container-image: cluster-nfd-operator-build
+
+containers:
+  cluster-nfd-operator-build: Dockerfile.cluster-nfd-operator-build
+volumes:
+    - $HOME/.cache/go-build:$HOME/.cache/go-build
+    - $HOME/go/pkg:/go/pkg
+    - $HOME/.cache/golangci-lint:$HOME/.cache/golangci-lint
+    - $HOME/.docker:$HOME/.docker
+env_file:
+  - skipper.env
+env:
+    GOCACHE: "/go/pkg/mod"

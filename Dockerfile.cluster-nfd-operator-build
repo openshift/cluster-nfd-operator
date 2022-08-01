@@ -1,0 +1,13 @@
+FROM registry.ci.openshift.org/openshift/release:golang-1.18 AS builder
+
+ENV GO111MODULE=on
+ENV GOFLAGS=""
+
+RUN yum install -y which
+RUN yum install -y podman docker
+RUN curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /tmp/kubectl
+RUN install -o root -g root -m 0755 /tmp/kubectl /usr/local/bin/kubectl
+RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
+RUN curl -L --retry 5 "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.10.0/kustomize_v3.10.0_linux_amd64.tar.gz" | \
+    tar -zx -C /usr/bin
+RUN go install sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0
