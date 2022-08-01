@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -30,6 +31,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	"k8s.io/kubectl/pkg/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -240,6 +242,17 @@ func (r *NodeFeatureDiscoveryReconciler) getSecurityContextConstraints(ctx conte
 	return scc, err
 }
 
+func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccountWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteServiceAccount(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("Service Account resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
+}
+
 // deleteServiceAccount deletes one of the NFD Operand's ServiceAccounts
 func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Context, namespace string, name string) error {
 	sa, err := r.getServiceAccount(ctx, namespace, name)
@@ -254,6 +267,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteServiceAccount(ctx context.Contex
 	}
 
 	return r.Delete(context.TODO(), sa)
+}
+
+func (r *NodeFeatureDiscoveryReconciler) deleteConfigMapWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteConfigMap(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("Config Map resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
 }
 
 // deleteConfigMap deletes the NFD Operand ConfigMap
@@ -272,6 +296,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteConfigMap(ctx context.Context, na
 	return r.Delete(context.TODO(), cm)
 }
 
+func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSetWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteDaemonSet(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("Worker DaemonSet resource has been deleted:", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
+}
+
 // deleteDaemonSet deletes Operand DaemonSet
 func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, namespace string, name string) error {
 	ds, err := r.getDaemonSet(ctx, namespace, name)
@@ -286,6 +321,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDaemonSet(ctx context.Context, na
 	}
 
 	return r.Delete(context.TODO(), ds)
+}
+
+func (r *NodeFeatureDiscoveryReconciler) deleteDeploymentWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteDeployment(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("Deployment resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
 }
 
 // deleteDeployment deletes Operand Deployment
@@ -304,6 +350,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteDeployment(ctx context.Context, n
 	return r.Delete(context.TODO(), d)
 }
 
+func (r *NodeFeatureDiscoveryReconciler) deleteServiceWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteService(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("service resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
+}
+
 // deleteService deletes the NFD Operand's Service
 func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, namespace string, name string) error {
 	svc, err := r.getService(ctx, namespace, name)
@@ -318,6 +375,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteService(ctx context.Context, name
 	}
 
 	return r.Delete(context.TODO(), svc)
+}
+
+func (r *NodeFeatureDiscoveryReconciler) deleteRoleWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteRole(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("role resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
 }
 
 // deleteRole deletes one of the NFD Operand's Roles
@@ -336,6 +404,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteRole(ctx context.Context, namespa
 	return r.Delete(context.TODO(), role)
 }
 
+func (r *NodeFeatureDiscoveryReconciler) deleteRoleBindingWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteRoleBinding(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("RoleBinding resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
+}
+
 // deleteRoleBinding deletes one of the NFD Operand's RoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteRoleBinding(ctx context.Context, namespace string, name string) error {
 	rb, err := r.getRoleBinding(ctx, namespace, name)
@@ -350,6 +429,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteRoleBinding(ctx context.Context, 
 	}
 
 	return r.Delete(context.TODO(), rb)
+}
+
+func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteClusterRole(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("ClusterRole resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
 }
 
 // deleteClusterRole deletes one of the NFD Operand's ClusterRoles
@@ -368,6 +458,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteClusterRole(ctx context.Context, 
 	return r.Delete(context.TODO(), cr)
 }
 
+func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBindingWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteClusterRoleBinding(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("ClusterRoleBinding resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
+}
+
 // deleteClusterRoleBinding deletes one of the NFD Operand's ClusterRoleBindings
 func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Context, namespace string, name string) error {
 	crb, err := r.getClusterRoleBinding(ctx, namespace, name)
@@ -382,6 +483,17 @@ func (r *NodeFeatureDiscoveryReconciler) deleteClusterRoleBinding(ctx context.Co
 	}
 
 	return r.Delete(context.TODO(), crb)
+}
+
+func (r *NodeFeatureDiscoveryReconciler) deleteSecurityContextConstraintsWithRetry(ctx context.Context, interval, timeout time.Duration, namespace, name string) error {
+	return wait.PollImmediate(interval, timeout, func() (done bool, err error) {
+		err = r.deleteSecurityContextConstraints(ctx, namespace, name)
+		if err != nil {
+			return false, err
+		}
+		klog.Info("SecurityContextConstraints resource has been deleted: ", "namespace ", namespace, " name ", name)
+		return true, nil
+	})
 }
 
 // deleteSecurityContextConstraints deletes one of the NFD Operator's SecurityContextConstraints
