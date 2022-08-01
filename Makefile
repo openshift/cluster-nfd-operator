@@ -27,8 +27,9 @@ endif
 BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 
 # Image URL to use all building/pushing image targets
-IMAGE_BUILD_CMD ?= podman build
-IMAGE_PUSH_CMD ?= podman push
+CONTAINER_COMMAND := $(or ${CONTAINER_COMMAND},podman)
+IMAGE_BUILD_CMD ?= ${CONTAINER_COMMAND} build
+IMAGE_PUSH_CMD ?= ${CONTAINER_COMMAND} push
 IMAGE_BUILD_EXTRA_OPTS ?=
 IMAGE_REGISTRY ?= quay.io/openshift-psap
 IMAGE_NAME := cluster-nfd-operator
