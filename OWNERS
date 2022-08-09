@@ -1,9 +1,7 @@
 approvers:
+  - yevgeny-shnaidman
   - ArangoGutierrez
 reviewers:
-  - jmencak
   - ArangoGutierrez
-  - dagrayvid
-  - kpouget
   - yevgeny-shnaidman
 component: "Node Feature Discovery Operator"
