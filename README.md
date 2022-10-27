@@ -65,3 +65,10 @@ https://github.com/kubernetes-sigs/node-feature-discovery#local-user-specific-fe
 The DaemonSet running on the workers will mount the `hostPath: /etc/kubernetes/node-feature-discovery/source.d`. Additional hooks can than be provided by a sidecar container that is as well running on the workers and mounting the same hostpath and writing the hook executable (shell-script, compiled code, ...) to this directory.
 
 NFD will execute any file in this directory, if one needs any configuration for the hook, a separate configuration directory can be created under `/etc/kubernetes/node-feature-discovery/source.d` e.g. `/etc/kubernetes/node-feature-discovery/source.d/own-hook-conf`, NFD will not recurse deeper into the file hierarchy.
+
+## Building NFD operator for ARM locally
+
+There 2 options:
+
+1) Using ARM server - process is the same, but you should use Dockerfile.arm instead of Dockerfile
+2) Using x86 server/laptop - process is the same but before running build command, Makefile.arm should be copied into Makefile

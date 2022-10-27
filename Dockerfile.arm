@@ -1,0 +1,36 @@
+# Build the manager binary
+FROM docker.io/arm64v8/golang as builder
+
+
+WORKDIR /go/src/github.com/openshift/cluster-nfd-operator
+
+
+# Build
+COPY . .
+RUN make build
+
+
+# Create production image for running the operator
+FROM ubi8/ubi
+
+
+ARG CSV=4.12
+COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/node-feature-discovery-operator /
+
+
+RUN mkdir -p /opt/nfd
+COPY build/assets /opt/nfd
+COPY manifests /manifests
+
+
+RUN useradd cluster-nfd-operator
+USER cluster-nfd-operator
+
+
+ENTRYPOINT ["/node-feature-discovery-operator"]
+LABEL io.k8s.display-name="node-feature-discovery-operator" \
+      io.k8s.description="This is the image for the Node Feature Discovery Operator."
+
+
+
+
