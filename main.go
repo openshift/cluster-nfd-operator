@@ -33,7 +33,6 @@ import (
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/controllers"
-	"github.com/openshift/cluster-nfd-operator/pkg/utils"
 	"github.com/openshift/cluster-nfd-operator/pkg/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -90,12 +89,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	watchNamespace, envSet := utils.GetWatchNamespace()
-	if !envSet {
-		klog.Info("unable to get WatchNamespace, " +
-			"the manager will watch and manage resources in all namespaces")
-	}
-
 	// Create a new manager to manage the operator
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -104,7 +97,6 @@ func main() {
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         args.enableLeaderElection,
 		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.openshift.io",
-		Namespace:              watchNamespace,
 	})
 
 	if err != nil {
