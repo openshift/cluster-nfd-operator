@@ -4,6 +4,7 @@ metadata:
   labels:
     control-plane: controller-manager
     openshift.io/cluster-monitoring: "true"
+    pod-security.kubernetes.io/enforce: privileged
   name: openshift-nfd
 ---
 apiVersion: apps/v1
