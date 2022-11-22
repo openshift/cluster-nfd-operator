@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.18-openshift-4.11 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.18-openshift-4.12 AS builder
 WORKDIR /go/src/github.com/openshift/cluster-nfd-operator
 
 # Build
@@ -7,9 +7,9 @@ COPY . .
 RUN make build
 
 # Create production image for running the operator
-FROM registry.ci.openshift.org/ocp/4.11:base
+FROM registry.ci.openshift.org/ocp/4.12:base
 
-ARG CSV=4.11
+ARG CSV=4.12
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/node-feature-discovery-operator /
 
 RUN mkdir -p /opt/nfd

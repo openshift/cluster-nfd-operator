@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	nodeFeatureDiscoveryImageDefault string = "quay.io/openshift/origin-node-feature-discovery:4.11"
+	nodeFeatureDiscoveryImageDefault string = "quay.io/openshift/origin-node-feature-discovery:4.12"
 	contextTimeout                          = 300 * time.Second
 	// A number in seconds to define a context Timeout
 	// E.g. if 5 seconds is wanted, the CTX_TIMEOUT=5
