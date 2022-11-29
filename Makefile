@@ -84,7 +84,7 @@ go_mod:
 	@go mod download
 
 # Build binary
-build: go_mod
+build:
 	@GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 $(GO_CMD) build -o $(BIN) $(LDFLAGS) $(MAIN_PACKAGE)
 
 # Run against the configured Kubernetes cluster in ~/.kube/config
