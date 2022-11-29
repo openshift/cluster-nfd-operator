@@ -5,7 +5,7 @@ updates:
       replace: "nfd.{FULL_VER}"
     - search: "version: {MAJOR}.{MINOR}.0"
       replace: "version: {FULL_VER}"
-    - search: 'olm.skipRange: ">=4.9.0 <{MAJOR}.{MINOR}.0"'
+    - search: "olm.skipRange: '>=4.9.0 <{MAJOR}.{MINOR}.0'"
       replace: 'olm.skipRange: ">=4.9.0 <{FULL_VER}"'
   - file: "nfd.package.yaml"
     update_list:
