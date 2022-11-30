@@ -1,7 +1,10 @@
 approvers:
   - yevgeny-shnaidman
-  - ArangoGutierrez
+  - chr15p
 reviewers:
-  - ArangoGutierrez
   - yevgeny-shnaidman
+  - chr15p
+  - bthurber
+  - ybettan
+  - qbarrand
 component: "Node Feature Discovery Operator"
