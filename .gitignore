@@ -25,3 +25,4 @@ bundle
 .vscode/*
 bundle.Dockerfile
 cache
+node-feature-discovery-operator
