@@ -34,12 +34,14 @@ import (
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
-//var cfg *rest.Config
+// var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
+
+	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
