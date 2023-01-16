@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.1
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: nodefeaturediscoveries.nfd.openshift.io
 spec:
@@ -19,7 +18,8 @@ spec:
   - name: v1
     schema:
       openAPIV3Schema:
-        description: An Node Feature Discovery cluster instance
+        description: NodeFeatureDiscovery is the Schema for the nodefeaturediscoveries
+          API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,19 +34,8 @@ spec:
           metadata:
             type: object
           spec:
-            description: Specification of the desired behavior of the Node Feature
-              Discovery
+            description: NodeFeatureDiscoverySpec defines the desired state of NodeFeatureDiscovery
             properties:
-              customConfig:
-                description: WorkerConfig describes configuration options for the
-                  NFD worker.
-                properties:
-                  configData:
-                    description: BinaryData holds the NFD configuration file
-                    type: string
-                required:
-                - configData
-                type: object
               extraLabelNs:
                 description: ExtraLabelNs defines the list of of allowed extra label
                   namespaces By default, only allow labels in the default `feature.node.kubernetes.io`
@@ -56,8 +45,8 @@ spec:
                 nullable: true
                 type: array
               instance:
-                description: Run NFD in multiple deployment mode https://kubernetes-sigs.github.io/node-feature-discovery/v0.8/advanced/master-commandline-reference.html#-instance
-                nullable: true
+                description: Instance name. Used to separate annotation namespaces
+                  for multiple parallel deployments.
                 type: string
               labelWhiteList:
                 description: LabelWhiteList defines a regular expression for filtering
@@ -70,7 +59,7 @@ spec:
                 properties:
                   image:
                     description: Image defines the image to pull for the NFD operand
-                    nullable: true
+                      [defaults to k8s.gcr.io/nfd/node-feature-discovery]
                     pattern: '[a-zA-Z0-9\-]+'
                     type: string
                   imagePullPolicy:
@@ -89,11 +78,15 @@ spec:
                   type: string
                 nullable: true
                 type: array
-              topologyupdater:
+              topologyUpdater:
+                description: Deploy the NFD-Topology-Updater NFD-Topology-Updater
+                  is a daemon responsible for examining allocated resources on a worker
+                  node to account for resources available to be allocated to new pod
+                  on a per-zone basis https://kubernetes-sigs.github.io/node-feature-discovery/v0.10/get-started/introduction.html#nfd-topology-updater
                 type: boolean
               workerConfig:
-                description: ConfigMap describes configuration options for the NFD
-                  worker
+                description: WorkerConfig describes configuration options for the
+                  NFD worker.
                 properties:
                   configData:
                     description: BinaryData holds the NFD configuration file
@@ -113,13 +106,12 @@ spec:
                   description: "Condition contains details for one aspect of the current
                     state of this API Resource. --- This struct is intended for direct
                     use as an array at the field path .status.conditions.  For example,
-                    type FooStatus struct{     // Represents the observations of a
-                    foo's current state.     // Known .status.conditions.type are:
-                    \"Available\", \"Progressing\", and \"Degraded\"     // +patchMergeKey=type
-                    \    // +patchStrategy=merge     // +listType=map     // +listMapKey=type
-                    \    Conditions []metav1.Condition `json:\"conditions,omitempty\"
-                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`
-                    \n     // other fields }"
+                    type FooStatus struct{ // Represents the observations of a foo's
+                    current state. // Known .status.conditions.type are: \"Available\",
+                    \"Progressing\", and \"Degraded\" // +patchMergeKey=type // +patchStrategy=merge
+                    // +listType=map // +listMapKey=type Conditions []metav1.Condition
+                    `json:\"conditions,omitempty\" patchStrategy:\"merge\" patchMergeKey:\"type\"
+                    protobuf:\"bytes,1,rep,name=conditions\"` \n // other fields }"
                   properties:
                     lastTransitionTime:
                       description: lastTransitionTime is the last time the condition
