@@ -16,8 +16,8 @@ RUN mkdir -p /opt/nfd
 COPY build/assets /opt/nfd
 COPY manifests /manifests
 
-RUN useradd cluster-nfd-operator
-USER cluster-nfd-operator
+# Run as unprivileged user
+USER 65534:65534
 
 ENTRYPOINT ["/node-feature-discovery-operator"]
 LABEL io.k8s.display-name="node-feature-discovery-operator" \
