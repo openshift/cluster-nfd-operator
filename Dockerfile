@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.18-openshift-4.12 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.19-openshift-4.12 AS builder
 WORKDIR /go/src/github.com/openshift/cluster-nfd-operator
 
 # Build
@@ -16,8 +16,8 @@ RUN mkdir -p /opt/nfd
 COPY build/assets /opt/nfd
 COPY manifests /manifests
 
-RUN useradd cluster-nfd-operator
-USER cluster-nfd-operator
+# Run as unprivileged user
+USER 65534:65534
 
 ENTRYPOINT ["/node-feature-discovery-operator"]
 LABEL io.k8s.display-name="node-feature-discovery-operator" \
