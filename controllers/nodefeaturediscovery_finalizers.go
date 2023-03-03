@@ -134,6 +134,11 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 		if err != nil {
 			return err
 		}
+		// Attempt to delete SCC
+		err = r.deleteSecurityContextConstraintsWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Attempt to delete worker DaemonSet
