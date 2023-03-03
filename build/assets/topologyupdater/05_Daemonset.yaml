@@ -15,8 +15,7 @@ spec:
     spec:
       containers:
       - args:
-        - -server=nfd-master:$(NFD_MASTER_SERVICE_PORT)
-        - -kubelet-config-file=/host-var/lib/kubelet/config.yaml
+        - -kubelet-config-uri=file:/host-var/lib/kubelet/config.yaml
         - -podresources-socket=/host-var/lib/kubelet/pod-resources/kubelet.sock
         - -sleep-interval=3s
         command:
