@@ -62,6 +62,9 @@ const (
 	conditionNFDClusterRoleDegraded                   = "NFDClusterRoleDegraded"
 	conditionNFDClusterRoleBindingDegraded            = "NFDClusterRoleBindingDegraded"
 
+	// reason for conditions that are currenly false
+	conditionNotBeingMetCurrentlyReason = "ConditionNotBeingMetCurrently"
+
 	// Unknown errors. (Catch all)
 	errorNFDWorkerDaemonSetUnknown = "NFDWorkerDaemonSetCorrupted"
 
@@ -167,21 +170,25 @@ func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []metav1.Condi
 		{
 			Type:               ConditionAvailable,
 			Status:             metav1.ConditionTrue,
+			Reason:             "InstanceComponentsAreDeployed",
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionUpgradeable,
 			Status:             metav1.ConditionTrue,
+			Reason:             "CanBeUpgraded",
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionProgressing,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionDegraded,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 	}
@@ -196,16 +203,19 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 		{
 			Type:               ConditionAvailable,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionUpgradeable,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionProgressing,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
@@ -227,11 +237,13 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 		{
 			Type:               ConditionAvailable,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
 			Type:               ConditionUpgradeable,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 		{
@@ -244,6 +256,7 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 		{
 			Type:               ConditionDegraded,
 			Status:             metav1.ConditionFalse,
+			Reason:             conditionNotBeingMetCurrentlyReason,
 			LastTransitionTime: metav1.Time{Time: now},
 		},
 	}
