@@ -185,7 +185,7 @@ func ClusterRoleBinding(n NFD) (ResourceStatus, error) {
 	if err != nil && errors.IsNotFound(err) {
 		klog.InfoS("ClusterRoleBinding not found, creating", "name", obj.Name, "namespace", obj.Namespace)
 		// It is also assumed that our ClusterRoleBinding subject points to a defined Namespace
-                obj.Subjects[0].Namespace = n.ins.GetNamespace()
+		obj.Subjects[0].Namespace = n.ins.GetNamespace()
 		err = n.rec.Client.Create(context.TODO(), &obj)
 		if err != nil {
 			klog.ErrorS(err, "Couldn't create ClusterRoleBinding", "name", obj.Name, "namespace", obj.Namespace)
