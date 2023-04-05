@@ -139,24 +139,32 @@ func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []conditionsv1
 			Status:             corev1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             "Available",
+			Message:            "Available",
 		},
 		{
 			Type:               conditionsv1.ConditionUpgradeable,
 			Status:             corev1.ConditionTrue,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             "Upgradeable",
+			Message:            "Upgradeable",
 		},
 		{
 			Type:               conditionsv1.ConditionProgressing,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             "Progressing",
+			Message:            "Progressing",
 		},
 		{
 			Type:               conditionsv1.ConditionDegraded,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             "Degraded",
+			Message:            "Degraded",
 		},
 	}
 }
@@ -166,24 +174,36 @@ func (r *NodeFeatureDiscoveryReconciler) getAvailableConditions() []conditionsv1
 // reconciler can determine that the resource is degraded.
 func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, message string) []conditionsv1.Condition {
 	now := time.Now()
+    if reason == "" {
+        reason = "Degraded"
+    }
+    if message == "" {
+        message = "Degraded"
+    }
 	return []conditionsv1.Condition{
 		{
 			Type:               conditionsv1.ConditionAvailable,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 		{
 			Type:               conditionsv1.ConditionUpgradeable,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 		{
 			Type:               conditionsv1.ConditionProgressing,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
 			LastHeartbeatTime:  metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 		{
 			Type:               conditionsv1.ConditionDegraded,
@@ -201,16 +221,27 @@ func (r *NodeFeatureDiscoveryReconciler) getDegradedConditions(reason string, me
 // reconciler can determine that the resource is progressing.
 func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string, message string) []conditionsv1.Condition {
 	now := time.Now()
+    if reason == "" {
+        reason = "Progressing"
+    }
+    if message == "" {
+        message = "Progressing"
+    }
+
 	return []conditionsv1.Condition{
 		{
 			Type:               conditionsv1.ConditionAvailable,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 		{
 			Type:               conditionsv1.ConditionUpgradeable,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 		{
 			Type:               conditionsv1.ConditionProgressing,
@@ -223,6 +254,8 @@ func (r *NodeFeatureDiscoveryReconciler) getProgressingConditions(reason string,
 			Type:               conditionsv1.ConditionDegraded,
 			Status:             corev1.ConditionFalse,
 			LastTransitionTime: metav1.Time{Time: now},
+			Reason:             reason,
+			Message:            message,
 		},
 	}
 }
