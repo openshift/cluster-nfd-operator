@@ -1,9 +1,12 @@
 approvers:
   - ArangoGutierrez
+  - yevgeny-shnaidman
+  - chr15p
 reviewers:
   - jmencak
   - ArangoGutierrez
   - dagrayvid
   - kpouget
   - yevgeny-shnaidman
+  - chr15p
 component: "Node Feature Discovery Operator"
