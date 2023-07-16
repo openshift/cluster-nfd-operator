@@ -1,5 +1,5 @@
 packageName: nfd
 channels:
 - name: stable
-  currentCSV: nfd.v4.13.0
+  currentCSV: nfd.v4.14.0
 defaultChannel: stable
