@@ -7,7 +7,7 @@
 
 [Node Feature Discovery](https://github.com/kubernetes-sigs/node-feature-discovery) – a Kubernetes add-on for detecting hardware features and system configuration.
 
-The [Node Feature Discovery](https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html) and [Node Feature Discovery operator](https://kubernetes-sigs.github.io/node-feature-discovery-operator/stable/get-started/index.html) are Upstream projects under the [kubernetes-Sigs](https://github.com/kubernetes-sigs) organization
+The [Node Feature Discovery](https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html) and [Node Feature Discovery operator](https://kubernetes-sigs.github.io/node-feature-discovery-operator/stable/introduction/index.html) are Upstream projects under the [kubernetes-Sigs](https://github.com/kubernetes-sigs) organization
 
 ## Getting started with the Node Feature Discovery Operator
 
