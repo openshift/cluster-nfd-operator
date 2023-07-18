@@ -19,6 +19,7 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -26,8 +27,8 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 30
+	RetryInterval = time.Second * 5
+	Timeout       = time.Second * 30
 )
 
 // finalizeNFDOperand finalizes an NFD Operand instance
@@ -124,94 +125,94 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 	// If NFD-Topology-Updater was requested
 	if instance.Spec.TopologyUpdater {
 		// Attempt to delete Topology DaemonSet
-		err := r.deleteDaemonSetWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err := r.deleteDaemonSetWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRole
-		err = r.deleteClusterRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteClusterRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRoleBinding
-		err = r.deleteClusterRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteClusterRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the Worker ServiceAccount
-		err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete SCC
-		err = r.deleteSecurityContextConstraintsWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteSecurityContextConstraintsWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Attempt to delete worker DaemonSet
-	err := r.deleteDaemonSetWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err := r.deleteDaemonSetWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete master Deployment
-	err = r.deleteDeploymentWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteDeploymentWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Service
-	err = r.deleteServiceWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteServiceWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Role
-	err = r.deleteRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	if !usedByAnotherInstance {
 		// Attempt to delete the ClusterRole
-		err = r.deleteClusterRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+		err = r.deleteClusterRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRoleBinding
-		err = r.deleteClusterRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+		err = r.deleteClusterRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the SecurityContextConstraints
-		err = r.deleteSecurityContextConstraintsWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		err = r.deleteSecurityContextConstraintsWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Attempt to delete the RoleBinding
-	err = r.deleteRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Worker ServiceAccount
-	err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Master ServiceAccount
-	err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Worker config map
-	err = r.deleteConfigMapWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteConfigMapWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
@@ -305,12 +306,12 @@ func (r *NodeFeatureDiscoveryReconciler) isUsedByAnotherInstance(ctx context.Con
 		return false, fmt.Errorf("failed to list NFD CRs: %w", err)
 	}
 
-        for _, item := range nfdList.Items {
-                if item.Namespace != instance.ObjectMeta.Namespace && item.DeletionTimestamp == nil {
-                        return true, nil
-                }
-        }
-        return false, nil
+	for _, item := range nfdList.Items {
+		if item.Namespace != instance.ObjectMeta.Namespace && item.DeletionTimestamp == nil {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // deployPrune deploys nfd-master with --prune option

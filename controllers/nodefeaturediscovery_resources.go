@@ -50,7 +50,7 @@ type Resources struct {
 	ClusterRoleBinding         rbacv1.ClusterRoleBinding
 	ConfigMap                  corev1.ConfigMap
 	DaemonSet                  appsv1.DaemonSet
-	Job                batchv1.Job
+	Job                        batchv1.Job
 	Deployment                 appsv1.Deployment
 	Pod                        corev1.Pod
 	Service                    corev1.Service
