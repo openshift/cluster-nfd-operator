@@ -4,7 +4,7 @@ ENV GO111MODULE=on
 ENV GOFLAGS=""
 
 RUN yum install -y which
-RUN yum install -y podman docker
+RUN yum install -y podman
 RUN curl -L "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" -o /tmp/kubectl
 RUN install -o root -g root -m 0755 /tmp/kubectl /usr/local/bin/kubectl
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.43.0
