@@ -34,6 +34,7 @@ const (
 	nfdWorkerApp          string = "nfd-worker"
 	nfdMasterApp          string = "nfd-master"
 	nfdTopologyUpdaterApp string = "nfd-topology-updater"
+	nfdPruneApp           string = "nfd-prune"
 )
 
 const (

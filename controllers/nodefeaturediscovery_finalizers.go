@@ -19,6 +19,7 @@ import (
 	"time"
 
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
@@ -26,8 +27,8 @@ import (
 )
 
 var (
-	retryInterval = time.Second * 5
-	timeout       = time.Second * 30
+	RetryInterval = time.Second * 5
+	Timeout       = time.Second * 30
 )
 
 // finalizeNFDOperand finalizes an NFD Operand instance
@@ -49,6 +50,16 @@ func (r *NodeFeatureDiscoveryReconciler) finalizeNFDOperand(ctx context.Context,
 	if r.doComponentsExist(ctx, instance, usedByAnotherInstance) {
 		klog.Info("Some components still exist. Requeueing deletion request.")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	}
+
+	if instance.Spec.PruneOnDelete {
+		klog.Info("Deleting NFD labels and NodeFeature CRs from cluster")
+		if err := deployPrune(ctx, r, instance); err != nil {
+			klog.Error(err, "Failed to delete NFD labels and NodeFeature CRs from cluster")
+			return ctrl.Result{}, err
+		}
+	} else {
+		klog.Warning("PruneOnDelete is disabled, NFD labels and NodeFeature CRs will not be deleted from cluster")
 	}
 
 	// If all components are deleted, then remove the finalizer
@@ -114,94 +125,94 @@ func (r *NodeFeatureDiscoveryReconciler) deleteComponents(ctx context.Context, i
 	// If NFD-Topology-Updater was requested
 	if instance.Spec.TopologyUpdater {
 		// Attempt to delete Topology DaemonSet
-		err := r.deleteDaemonSetWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err := r.deleteDaemonSetWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRole
-		err = r.deleteClusterRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteClusterRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRoleBinding
-		err = r.deleteClusterRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteClusterRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the Worker ServiceAccount
-		err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete SCC
-		err = r.deleteSecurityContextConstraintsWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
+		err = r.deleteSecurityContextConstraintsWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdTopologyUpdaterApp)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Attempt to delete worker DaemonSet
-	err := r.deleteDaemonSetWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err := r.deleteDaemonSetWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete master Deployment
-	err = r.deleteDeploymentWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteDeploymentWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Service
-	err = r.deleteServiceWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteServiceWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Role
-	err = r.deleteRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	if !usedByAnotherInstance {
 		// Attempt to delete the ClusterRole
-		err = r.deleteClusterRoleWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+		err = r.deleteClusterRoleWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the ClusterRoleBinding
-		err = r.deleteClusterRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+		err = r.deleteClusterRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 		if err != nil {
 			return err
 		}
 		// Attempt to delete the SecurityContextConstraints
-		err = r.deleteSecurityContextConstraintsWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+		err = r.deleteSecurityContextConstraintsWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Attempt to delete the RoleBinding
-	err = r.deleteRoleBindingWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteRoleBindingWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Worker ServiceAccount
-	err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Master ServiceAccount
-	err = r.deleteServiceAccountWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
+	err = r.deleteServiceAccountWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdMasterApp)
 	if err != nil {
 		return err
 	}
 
 	// Attempt to delete the Worker config map
-	err = r.deleteConfigMapWithRetry(ctx, retryInterval, timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
+	err = r.deleteConfigMapWithRetry(ctx, RetryInterval, Timeout, instance.ObjectMeta.Namespace, nfdWorkerApp)
 	if err != nil {
 		return err
 	}
@@ -301,4 +312,108 @@ func (r *NodeFeatureDiscoveryReconciler) isUsedByAnotherInstance(ctx context.Con
 		}
 	}
 	return false, nil
+}
+
+// deployPrune deploys nfd-master with --prune option
+// to remove labels and NodeFeature CRs
+func deployPrune(ctx context.Context, r *NodeFeatureDiscoveryReconciler, instance *nfdv1.NodeFeatureDiscovery) error {
+	res, ctrl := addResourcesControls("/opt/nfd/prune")
+	n := NFD{
+		rec: r,
+		ins: instance,
+		idx: 0,
+	}
+
+	n.controls = append(n.controls, ctrl)
+	n.resources = append(n.resources, res)
+
+	// Run through all control functions, return an error on any NotReady resource.
+	for {
+		err := n.step()
+		if err != nil {
+			return err
+		}
+		if n.last() {
+			break
+		}
+	}
+
+	// wait until job is finished and then delete it
+	err := wait.Poll(RetryInterval, time.Minute*3, func() (done bool, err error) {
+		job, err := r.getJob(ctx, instance.ObjectMeta.Namespace, nfdPruneApp)
+		if err != nil {
+			return false, err
+		}
+		if job.Status.Succeeded > 0 {
+			return true, nil
+		}
+		return false, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// delete job and RBAC objects
+	// Attempt to delete the Job
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteJob(ctx, instance.ObjectMeta.Namespace, nfdPruneApp)
+		if err != nil {
+			return false, interpretError(err, "Prune Job")
+		}
+		klog.Info("nfd-prune Job resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+	// Attempt to delete the ServiceAccount
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteServiceAccount(ctx, instance.ObjectMeta.Namespace, nfdPruneApp)
+		if err != nil {
+			return false, interpretError(err, "Prune ServiceAccount")
+		}
+		klog.Info("nfd-prune ServiceAccount resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the ClusterRole
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteClusterRole(ctx, instance.ObjectMeta.Namespace, nfdPruneApp)
+		if err != nil {
+			return false, interpretError(err, "Prune ClusterRole")
+		}
+		klog.Info("nfd-prune ClusterRole resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Attempt to delete the ClusterRoleBinding
+	err = wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		err = r.deleteClusterRoleBinding(ctx, instance.ObjectMeta.Namespace, nfdPruneApp)
+		if err != nil {
+			return false, interpretError(err, "Prune ClusterRoleBinding")
+		}
+		klog.Info("nfd-prune ClusterRoleBinding resource has been deleted.")
+		return true, nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// interpretError determines if a resource has already been
+// (successfully) deleted
+func interpretError(err error, resourceName string) error {
+	if k8serrors.IsNotFound(err) {
+		klog.Info("Resource ", resourceName, " has been deleted.")
+		return nil
+	}
+	return err
 }

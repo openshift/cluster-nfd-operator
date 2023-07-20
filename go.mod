@@ -1,6 +1,6 @@
 module github.com/openshift/cluster-nfd-operator
 
-go 1.19
+go 1.20
 
 require (
 	github.com/onsi/ginkgo/v2 v2.6.0
@@ -8,11 +8,11 @@ require (
 	github.com/openshift/api v0.0.0-20211209135129-c58d9f695577
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/prometheus/client_golang v1.14.0
-	k8s.io/api v0.26.1
-	k8s.io/apimachinery v0.26.1
-	k8s.io/client-go v0.26.1
+	k8s.io/api v0.26.2
+	k8s.io/apimachinery v0.26.2
+	k8s.io/client-go v0.26.2
 	k8s.io/klog/v2 v2.80.1
-	k8s.io/kubectl v0.26.0
+	k8s.io/kubectl v0.26.2
 	sigs.k8s.io/controller-runtime v0.14.2
 )
 
@@ -65,7 +65,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.26.1 // indirect
-	k8s.io/component-base v0.26.1 // indirect
+	k8s.io/component-base v0.26.2 // indirect
 	k8s.io/kube-openapi v0.0.0-20221012153701-172d655c2280 // indirect
 	k8s.io/utils v0.0.0-20221128185143-99ec85e7a448 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect

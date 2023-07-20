@@ -30,7 +30,7 @@ type NodeFeatureDiscoverySpec struct {
 	// NFD-Topology-Updater is a daemon responsible for examining allocated
 	// resources on a worker node to account for resources available to be
 	// allocated to new pod on a per-zone basis
-	// https://kubernetes-sigs.github.io/node-feature-discovery/v0.10/get-started/introduction.html#nfd-topology-updater
+	// https://kubernetes-sigs.github.io/node-feature-discovery/master/get-started/introduction.html#nfd-topology-updater
 	// +optional
 	TopologyUpdater bool `json:"topologyUpdater"`
 
@@ -62,13 +62,20 @@ type NodeFeatureDiscoverySpec struct {
 	// worker.
 	// +optional
 	WorkerConfig ConfigMap `json:"workerConfig"`
+
+	// PruneOnDelete defines whether the NFD-master prune should be
+	// enabled or not. If enabled, the Operator will deploy an NFD-Master prune
+	// job that will remove all NFD labels (and other NFD-managed assets such
+	// as annotations, extended resources and taints) from the cluster nodes.
+	// +optional
+	PruneOnDelete bool `json:"prunerOnDelete"`
 }
 
 // OperandSpec describes configuration options for the operand
 type OperandSpec struct {
 	// Image defines the image to pull for the
 	// NFD operand
-	// [defaults to k8s.gcr.io/nfd/node-feature-discovery]
+	// [defaults to registry.k8s.io/nfd/node-feature-discovery]
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
 	Image string `json:"image,omitempty"`
 

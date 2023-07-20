@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	"github.com/openshift/cluster-nfd-operator/controllers"
+	"github.com/openshift/cluster-nfd-operator/pkg/config"
 	"github.com/openshift/cluster-nfd-operator/pkg/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -91,10 +91,10 @@ func main() {
 	}
 
 	watchNamespace, err := config.GetWatchNamespace()
-        if err != nil {
-               klog.Info("unable to get WatchNamespace, " +
-                       "the manager will watch and manage resources in all namespaces")
-        }
+	if err != nil {
+		klog.Info("unable to get WatchNamespace, " +
+			"the manager will watch and manage resources in all namespaces")
+	}
 
 	// Create a new manager to manage the operator
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{

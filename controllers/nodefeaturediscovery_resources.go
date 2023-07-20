@@ -26,6 +26,7 @@ import (
 
 	secv1 "github.com/openshift/api/security/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,6 +50,7 @@ type Resources struct {
 	ClusterRoleBinding         rbacv1.ClusterRoleBinding
 	ConfigMap                  corev1.ConfigMap
 	DaemonSet                  appsv1.DaemonSet
+	Job                        batchv1.Job
 	Deployment                 appsv1.Deployment
 	Pod                        corev1.Pod
 	Service                    corev1.Service
@@ -147,6 +149,10 @@ func addResourcesControls(path string) (Resources, controlFunc) {
 			_, _, err := s.Decode(m, nil, &res.Deployment)
 			panicIfError(err)
 			ctrl = append(ctrl, Deployment)
+		case "Job":
+			_, _, err := s.Decode(m, nil, &res.Job)
+			panicIfError(err)
+			ctrl = append(ctrl, Job)
 		case "Service":
 			_, _, err := s.Decode(m, nil, &res.Service)
 			panicIfError(err)
@@ -190,6 +196,13 @@ func (r *NodeFeatureDiscoveryReconciler) getDeployment(ctx context.Context, name
 	d := &appsv1.Deployment{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, d)
 	return d, err
+}
+
+// getJob gets one of the NFD Operand's Job
+func (r *NodeFeatureDiscoveryReconciler) getJob(ctx context.Context, namespace string, name string) (*batchv1.Job, error) {
+	j := &batchv1.Job{}
+	err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, j)
+	return j, err
 }
 
 // getConfigMap gets one of the NFD Operand's ConfigMap
@@ -358,6 +371,22 @@ func (r *NodeFeatureDiscoveryReconciler) deleteServiceWithRetry(ctx context.Cont
 		klog.Info("service resource has been deleted: ", "namespace ", namespace, " name ", name)
 		return true, nil
 	})
+}
+
+// deleteJob deletes Operand job
+func (r *NodeFeatureDiscoveryReconciler) deleteJob(ctx context.Context, namespace string, name string) error {
+	j, err := r.getJob(ctx, namespace, name)
+
+	// Do not return an error if the object has already been deleted
+	if k8serrors.IsNotFound(err) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return r.Delete(context.TODO(), j)
 }
 
 // deleteService deletes the NFD Operand's Service
