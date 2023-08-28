@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nfd-topology-updater-conf
+data:
+  nfd-topology-updater.conf: |
+    #excludeList:
+    ##  node1: [cpu]
+    ##  node2: [memory, example/deviceA]
+    ##  *: [hugepages-2Mi]

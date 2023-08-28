@@ -344,9 +344,10 @@ func ConfigMap(n NFD) (ResourceStatus, error) {
 	// namespace to the namespace defined in the ConfigMap object
 	obj.SetNamespace(n.ins.GetNamespace())
 
-	// Update ConfigMap
-	obj.ObjectMeta.Name = "nfd-worker"
-	obj.Data["nfd-worker-conf"] = n.ins.Spec.WorkerConfig.ConfigData
+	// Update ConfigMap. In case it is nfd-worker, the config should be taken from NFD CR
+	if obj.ObjectMeta.Name == "nfd-worker" {
+		obj.Data["nfd-worker-conf"] = n.ins.Spec.WorkerConfig.ConfigData
+	}
 
 	// found states if the ConfigMap was found
 	found := &corev1.ConfigMap{}
