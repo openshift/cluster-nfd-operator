@@ -45,6 +45,8 @@ spec:
           name: kubelet-podresources-sock
         - mountPath: /host-sys
           name: host-sys
+        - mountPath: /host-var/lib/kubelet/device-plugins
+          name: kubelete-device-plugins
       dnsPolicy: ClusterFirstWithHostNet
       serviceAccount: nfd-topology-updater
       volumes:
@@ -60,3 +62,7 @@ spec:
           path: /var/lib/kubelet/pod-resources/kubelet.sock
           type: Socket
         name: kubelet-podresources-sock
+      - hostPath:
+          path: /var/lib/kubelet/device-plugins
+          type: Directory
+        name: kubelete-device-plugins
