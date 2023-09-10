@@ -757,7 +757,7 @@ spec:
                 - --secure-listen-address=0.0.0.0:8443
                 - --upstream=http://127.0.0.1:8080/
                 - --logtostderr=true
-                - --v=10
+                - --v=6
                 - --tls-cert-file=/etc/secrets/tls.crt
                 - --tls-private-key-file=/etc/secrets/tls.key
                 - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
