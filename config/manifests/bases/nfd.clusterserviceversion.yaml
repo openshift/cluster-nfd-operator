@@ -921,12 +921,12 @@ spec:
   - node-labels
   links:
   - name: Node Feature Discovery Operator
-    url: https://docs.openshift.com/container-platform/4.9/hardware_enablement/psap-node-feature-discovery-operator.html
+    url: https://docs.openshift.com/container-platform/4.15/hardware_enablement/psap-node-feature-discovery-operator.html
   - name: Node Feature Discovery Documentation
     url: https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html
   maintainers:
-  - email: openshift-psap@redhat.com
-    name: openshift-psap
+  - email: support@redhat.com
+    name: Red Hat Support
   maturity: stable
   minKubeVersion: 1.22.0
   provider:
