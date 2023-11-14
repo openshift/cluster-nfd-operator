@@ -19,3 +19,11 @@ rules:
   - use
   resourceNames:
   - nfd-worker
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeatures
+  verbs:
+  - create
+  - get
+  - update
