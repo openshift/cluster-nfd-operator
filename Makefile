@@ -3,7 +3,7 @@
 # To re-generate a bundle for another specific version without changing the standard setup, you can:
 # - use the VERSION as arg of the bundle target (e.g make bundle VERSION=0.2.1)
 # - use environment variables to overwrite this value (e.g export VERSION=0.2.1)
-VERSION := $(shell git describe --tags --dirty --always)
+VERSION ?= $(shell git describe --tags --dirty --always)
 
 # CHANNELS define the bundle channels used in the bundle.
 # Add a new line here if you would like to change its default config. (E.g CHANNELS = "preview,fast,stable")
@@ -214,3 +214,16 @@ bundle-build:
 .PHONY: bundle-push
 bundle-push:
 	$(IMAGE_PUSH_CMD) $(BUNDLE_IMG)
+
+# When using skippper to build bundle, uncomment the below line in order to get and use operator-sdk
+
+#OPERATOR_SDK = $(shell pwd)/bin/operator-sdk
+#.PHONY: operator-sdk
+#operator-sdk:
+#	@if [ ! -f ${OPERATOR_SDK} ]; then \
+#                set -e ;\
+#                echo "Downloading ${OPERATOR_SDK}"; \
+#                mkdir -p $(dir ${OPERATOR_SDK}) ;\
+#                curl -Lo ${OPERATOR_SDK} 'https://github.com/operator-framework/operator-sdk/releases/download/v1.32.0/operator-sdk_linux_amd64'; \
+#                chmod +x ${OPERATOR_SDK}; \
+#        fi
