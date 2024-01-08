@@ -1,5 +1,5 @@
 # Node Feature Discovery Operator
- The Node Feature Discovery operator is a tool for Openshift administrators that makes it easy to detect and understand the hardware features and 
+ The Node Feature Discovery operator is a tool for Openshift administrators that makes it easy to detect and understand the hardware features and
  configurations of a cluster's nodes. With this operator, administrators can easily gather information about their nodes that can be used for scheduling,
  resource management, and more by controlling the life cycle of [NFD](https://github.com/kubernetes-sigs/node-feature-discovery).
 
