@@ -134,7 +134,12 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-	return o.Image
+	if o.Image != "" {
+		return o.Image
+	}
+
+	image := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	return image
 }
 
 // ImagePolicy returns a valid corev1.PullPolicy from the string in the CR
