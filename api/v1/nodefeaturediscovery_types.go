@@ -77,6 +77,8 @@ type OperandSpec struct {
 	// NFD operand
 	// [defaults to registry.k8s.io/nfd/node-feature-discovery]
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	// +nullable
+	// +optional
 	Image string `json:"image,omitempty"`
 
 	// ImagePullPolicy defines Image pull policy for the
