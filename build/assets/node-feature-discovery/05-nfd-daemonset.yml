@@ -38,6 +38,8 @@ spec:
               mountPath: "/host-usr/src"
             - name: host-os-release
               mountPath: "/host-etc/os-release"
+            - name: host-lib
+              mountPath: "/host-lib"
             - name: nfd-hooks
               mountPath: "/etc/kubernetes/node-feature-discovery/source.d/"
           securityContext:
@@ -61,3 +63,6 @@ spec:
         - name: host-usr-src
           hostPath:
             path: "/usr/src"
+        - name: host-lib
+          hostPath:
+            path: "/lib"
