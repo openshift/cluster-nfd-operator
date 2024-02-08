@@ -57,6 +57,9 @@ spec:
             - name: host-usr-src
               mountPath: "/host-usr/src"
               readOnly: true
+            - name: host-lib
+              mountPath: "/host-lib"
+              readOnly: true
             - name: nfd-worker-config
               mountPath: "/etc/kubernetes/node-feature-discovery"
             - name: nfd-hooks
@@ -90,6 +93,9 @@ spec:
         - name: host-usr-src
           hostPath:
             path: "/usr/src"
+        - name: host-lib
+          hostPath:
+            path: "/lib"
         - name: nfd-hooks
           hostPath:
             path: "/etc/kubernetes/node-feature-discovery/source.d"
