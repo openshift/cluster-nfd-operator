@@ -64,7 +64,7 @@ LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 PACKAGE=github.com/openshift/cluster-nfd-operator
 MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
-LDFLAGS = -ldflags "-s -w -X sigs.k8s.io/node-feature-discovery-operator/pkg/version.version=$(VERSION)"
+LDFLAGS = -ldflags "-s -w -X github.com/openshift/cluster-nfd-operator/pkg/version.version=$(VERSION)"
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 

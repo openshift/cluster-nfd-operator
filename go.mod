@@ -8,6 +8,7 @@ require (
 	github.com/openshift/api v0.0.0-20211209135129-c58d9f695577
 	github.com/openshift/client-go v0.0.0-20211209144617-7385dd6338e3
 	github.com/prometheus/client_golang v1.18.0
+	go.uber.org/mock v0.4.0
 	k8s.io/api v0.29.0
 	k8s.io/apimachinery v0.29.0
 	k8s.io/client-go v0.29.0
