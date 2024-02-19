@@ -398,7 +398,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 }
 
 // +kubebuilder:rbac:groups=core,resources=nodes,verbs=update
-// +kubebuilder:rbac:groups=core,resources=nodes/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups=core,resources=nodes/status,verbs=get;patch;update;list
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
@@ -419,6 +419,7 @@ func (r *NodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificates,verbs=get;list;watch
 // +kubebuilder:rbac:groups=topology.node.k8s.io,resources=noderesourcetopologies,verbs=create;update;get
 // +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturerules,verbs=get;list;watch
+// +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeatures,verbs=get;list;watch
 // +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=nfd.openshift.io,resources=nodefeaturediscoveries/finalizers,verbs=update

@@ -112,6 +112,9 @@ spec:
       kind: NodeFeatureRule
       name: nodefeaturerules.nfd.openshift.io
       version: v1alpha1
+    - kind: NodeFeature
+      name: nodefeatures.nfd.openshift.io
+      version: v1alpha1
     - description: |
         NodeResourceTopology resource describes node resources and their topology.
       kind: NodeResourceTopology
@@ -354,10 +357,19 @@ spec:
           - get
           - patch
           - update
+          - list
         - apiGroups:
           - nfd.openshift.io
           resources:
           - nodefeaturerules
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeatures
           verbs:
           - get
           - list
