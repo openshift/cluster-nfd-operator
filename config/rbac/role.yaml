@@ -104,6 +104,7 @@ rules:
   - nodes/status
   verbs:
   - get
+  - list
   - patch
   - update
 - apiGroups:
@@ -172,6 +173,14 @@ rules:
   - nfd.openshift.io
   resources:
   - nodefeaturerules
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeatures
   verbs:
   - get
   - list
