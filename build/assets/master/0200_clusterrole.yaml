@@ -13,6 +13,7 @@ rules:
   - get
   - patch
   - update
+  - list
 - apiGroups:
   - topology.node.k8s.io
   resources:
@@ -24,6 +25,7 @@ rules:
 - apiGroups:
   - nfd.openshift.io
   resources:
+  - nodefeatures
   - nodefeaturerules
   verbs:
   - get
