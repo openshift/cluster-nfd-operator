@@ -17,6 +17,7 @@ metadata:
             },
             "operand": {
               "image": "quay.io/openshift/origin-node-feature-discovery:4.16",
+              "imagePullPolicy": "IfNotPresent",
               "servicePort": 12000
             },
             "workerConfig": {
@@ -107,7 +108,7 @@ metadata:
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
   name: nfd.v4.16.0
-  namespace: openshift-nfd
+  namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
@@ -352,46 +353,13 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
-          - policy
-          resourceNames:
-          - nfd-worker
-          resources:
-          - podsecuritypolicies
-          verbs:
-          - use
-        - apiGroups:
           - ""
           resources:
-          - nodes/status
-          verbs:
-          - get
-          - patch
-          - update
-          - list
-        - apiGroups:
-          - nfd.openshift.io
-          resources:
-          - nodefeaturerules
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - nfd.openshift.io
-          resources:
-          - nodefeatures
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - topology.node.k8s.io
-          resources:
-          - noderesourcetopologies
+          - events
           verbs:
           - create
-          - get
           - update
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -421,62 +389,17 @@ spec:
           resources:
           - certificates
           verbs:
-          - create
-          - delete
           - get
           - list
-          - patch
-          - update
           - watch
         - apiGroups:
           - cert-manager.io
           resources:
           - issuers
           verbs:
-          - create
-          - delete
           - get
           - list
-          - patch
-          - update
           - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusteroperators
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusteroperators/status
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusterversions
-          verbs:
-          - get
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - proxies
-          verbs:
-          - get
-          - list
         - apiGroups:
           - coordination.k8s.io
           resources:
@@ -503,34 +426,6 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - endpoints
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - imagestreams/layers
-          verbs:
-          - get
-        - apiGroups:
-          - ""
-          resources:
           - namespaces
           verbs:
           - create
@@ -545,8 +440,6 @@ spec:
           resources:
           - nodes
           verbs:
-          - create
-          - delete
           - get
           - list
           - patch
@@ -555,44 +448,16 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - persistentvolumeclaims
+          - nodes/status
           verbs:
           - get
           - list
+          - patch
           - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - persistentvolumes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - watch
         - apiGroups:
           - ""
           resources:
           - pods
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods/log
-          verbs:
-          - get
-        - apiGroups:
-          - ""
-          resources:
-          - secrets
           verbs:
           - create
           - delete
@@ -617,30 +482,6 @@ spec:
           - ""
           resources:
           - services
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - prometheusrules
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
           verbs:
           - create
           - delete
@@ -675,6 +516,30 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturerules
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeatures
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - policy
+          resourceNames:
+          - nfd-worker
+          resources:
+          - podsecuritypolicies
+          verbs:
+          - use
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -724,18 +589,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - route.openshift.io
-          resources:
-          - routes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
           - security.openshift.io
           resources:
           - securitycontextconstraints
@@ -748,6 +601,14 @@ spec:
           - update
           - use
           - watch
+        - apiGroups:
+          - topology.node.k8s.io
+          resources:
+          - noderesourcetopologies
+          verbs:
+          - create
+          - get
+          - update
         - apiGroups:
           - authentication.k8s.io
           resources:
@@ -783,7 +644,7 @@ spec:
                 - --tls-cert-file=/etc/secrets/tls.crt
                 - --tls-private-key-file=/etc/secrets/tls.key
                 - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy
+                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
@@ -820,7 +681,7 @@ spec:
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
                   value: quay.io/openshift/origin-node-feature-discovery:4.16
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.16
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.16.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -844,6 +705,9 @@ spec:
                     drop:
                     - ALL
                   readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
               serviceAccountName: nfd-operator
               terminationGracePeriodSeconds: 10
               volumes:
