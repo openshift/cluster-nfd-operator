@@ -177,7 +177,7 @@ site-serve:
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
 controller-gen:
-	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.8.0)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0)
 
 # Download kustomize locally if necessary
 KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
