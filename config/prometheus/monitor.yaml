@@ -4,7 +4,7 @@ kind: ServiceMonitor
 metadata:
   labels:
     control-plane: controller-manager
-  name: controller-manager-metrics-monitor
+  name: nfd-controller-manager-metrics-monitor
   namespace: openshift-nfd
 spec:
   endpoints:
@@ -18,6 +18,7 @@ spec:
         serverName: nfd-controller-manager-metrics-service.openshift-nfd.svc
   selector:
     matchLabels:
+<<<<<<< HEAD
       control-plane: controller-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -69,3 +70,7 @@ spec:
       for: 1h
       labels:
         severity: warning
+=======
+      control-plane: nfd-controller-manager
+
+>>>>>>> f5debdc3 (set permissions for the refactored controller)

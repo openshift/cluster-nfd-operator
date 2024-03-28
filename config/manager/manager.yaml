@@ -17,12 +17,12 @@ metadata:
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: nfd-controller-manager
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: nfd-controller-manager
     spec:
       serviceAccountName: nfd-operator
       containers:

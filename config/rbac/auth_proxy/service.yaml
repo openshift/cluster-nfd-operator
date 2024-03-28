@@ -4,7 +4,7 @@ metadata:
   annotations:
     service.beta.openshift.io/serving-cert-secret-name: node-feature-discovery-operator-tls
   labels:
-    control-plane: controller-manager
+    control-plane: nfd-controller-manager
   name: controller-manager-metrics-service
   namespace: openshift-nfd
 spec:
@@ -13,5 +13,4 @@ spec:
     port: 8443
     targetPort: https
   selector:
-    control-plane: controller-manager
-
+    control-plane: nfd-controller-manager

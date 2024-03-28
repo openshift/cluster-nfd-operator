@@ -2,7 +2,8 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: operator
+  creationTimestamp: null
+  name: manager-role
 rules:
 - apiGroups:
   - ""
@@ -103,9 +104,9 @@ rules:
   - nodes/status
   verbs:
   - get
-  - list
   - patch
   - update
+  - list
 - apiGroups:
   - ""
   resources:
@@ -143,47 +144,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeaturediscoveries/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - nfd.openshift.io
+  - nfd.k8s-sigs.io
   resources:
   - nodefeaturerules
   verbs:
   - get
   - list
   - watch
-- apiGroups:
-  - nfd.openshift.io
-  resources:
-  - nodefeatures
-  verbs:
-  - get
-  - list
-  - watch
+  - delete
 - apiGroups:
   - policy
   resourceNames:
@@ -241,19 +209,6 @@ rules:
   - update
   - watch
 - apiGroups:
-  - security.openshift.io
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - use
-  - watch
-- apiGroups:
   - topology.node.k8s.io
   resources:
   - noderesourcetopologies
@@ -261,3 +216,18 @@ rules:
   - create
   - get
   - update
+  - delete
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - nodes/proxy
+  verbs:
+  - get
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeatures
+  verbs:
+  - list
+  - delete
