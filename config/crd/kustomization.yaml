@@ -2,10 +2,10 @@
 # since it depends on service name and namespace that are out of this kustomize package.
 # It should be run by config/default
 resources:
-- bases/nfd.openshift.io_v1_nodefeaturediscoveries.yaml
-- bases/nfd.openshift.io_v1alpha1_nodefeaturerules.yaml
+- bases/nfd.openshift.io_nodefeaturediscoveries.yaml
+- bases/nfd.openshift.io_nodefeaturerules.yaml
 - bases/node.k8s.io_v1alpha1_noderesoursetopologies.yaml
-- bases/nfd.openshift.io_v1alpha1_nodefeatures.yaml
+- bases/nfd.openshift.io_nodefeatures.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
