@@ -10,6 +10,8 @@ spec:
   #  - "example.com"
   #resourceLabels:
   #  - "example.com/resource"
+  ## NOTE: Taints support is experimental.
+  #enableTaints: true
   operand:
     image: quay.io/openshift/origin-node-feature-discovery:4.16
     imagePullPolicy: IfNotPresent
