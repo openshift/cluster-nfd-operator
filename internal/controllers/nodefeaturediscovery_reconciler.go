@@ -41,6 +41,7 @@ import (
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 	"github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/status"
 )
 
 const finalizerLabel = "nfd-finalizer"
@@ -51,8 +52,8 @@ type nodeFeatureDiscoveryReconciler struct {
 }
 
 func NewNodeFeatureDiscoveryReconciler(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
-	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, scheme)
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
+	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, statusAPI, scheme)
 	return &nodeFeatureDiscoveryReconciler{
 		helper: helper,
 	}
@@ -179,17 +180,19 @@ type nodeFeatureDiscoveryHelper struct {
 	daemonsetAPI  daemonset.DaemonsetAPI
 	configmapAPI  configmap.ConfigMapAPI
 	jobAPI        job.JobAPI
+	statusAPI     status.StatusAPI
 	scheme        *runtime.Scheme
 }
 
 func newNodeFeatureDiscoveryHelperAPI(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
 	return &nodeFeatureDiscoveryHelper{
 		client:        client,
 		deploymentAPI: deploymentAPI,
 		daemonsetAPI:  daemonsetAPI,
 		configmapAPI:  configmapAPI,
 		jobAPI:        jobAPI,
+		statusAPI:     statusAPI,
 		scheme:        scheme,
 	}
 }
@@ -345,5 +348,11 @@ func (nfdh *nodeFeatureDiscoveryHelper) handlePrune(ctx context.Context, nfdInst
 }
 
 func (nfdh *nodeFeatureDiscoveryHelper) handleStatus(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
-	return nil
+	conditions := nfdh.statusAPI.GetConditions(ctx, nfdInstance)
+	if nfdh.statusAPI.AreConditionsEqual(nfdInstance.Status.Conditions, conditions) {
+		return nil
+	}
+	unmodifiedCR := nfdInstance.DeepCopy()
+	nfdInstance.Status.Conditions = conditions
+	return nfdh.client.Status().Patch(ctx, nfdInstance, client.MergeFrom(unmodifiedCR))
 }

@@ -40,6 +40,7 @@ import (
         "github.com/openshift/cluster-nfd-operator/internal/daemonset"
         "github.com/openshift/cluster-nfd-operator/internal/deployment"
         "github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/status"
         "github.com/openshift/cluster-nfd-operator/pkg/utils"
         "github.com/openshift/cluster-nfd-operator/pkg/version"
 	// +kubebuilder:scaffold:imports
@@ -139,12 +140,14 @@ func main() {
 	daemonsetAPI := daemonset.NewDaemonsetAPI(client, scheme)
 	configmapAPI := configmap.NewConfigMapAPI(client, scheme)
 	jobAPI := job.NewJobAPI(client, scheme)
+	statusAPI := status.NewStatusAPI(deploymentAPI, daemonsetAPI)
 
 	if err = new_controllers.NewNodeFeatureDiscoveryReconciler(client,
 		deploymentAPI,
 		daemonsetAPI,
 		configmapAPI,
 		jobAPI,
+		statusAPI,
 		scheme).SetupWithManager(mgr); err != nil {
 		setupLogger.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
 		os.Exit(1)
