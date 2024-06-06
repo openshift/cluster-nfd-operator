@@ -41,7 +41,6 @@ import (
         "github.com/openshift/cluster-nfd-operator/internal/deployment"
         "github.com/openshift/cluster-nfd-operator/internal/job"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
-        "github.com/openshift/cluster-nfd-operator/pkg/utils"
         "github.com/openshift/cluster-nfd-operator/pkg/version"
 	// +kubebuilder:scaffold:imports
 )
@@ -53,7 +52,8 @@ var (
 
 const (
 	// ProgramName is the canonical name of this program
-	ProgramName = "nfd-operator"
+	ProgramName          = "nfd-operator"
+	watchNamespaceEnvVar = "WATCH_NAMESPACE"
 )
 
 // operatorArgs holds command line arguments
@@ -103,10 +103,10 @@ func main() {
 		os.Exit(0)
 	}
 
-	watchNamespace, envSet := utils.GetWatchNamespace()
-	if !envSet {
-		setupLogger.Info("unable to get WatchNamespace, " +
-			"the manager will watch and manage resources in all namespaces")
+	watchNamespace, err := getWatchNamespace()
+	if err != nil {
+		setupLogger.Error(err, "WatchNamespaceEnvVar is not set")
+		os.Exit(1)
 	}
 
 	// Create a new manager to manage the operator
@@ -190,4 +190,13 @@ func initFlags(flagset *flag.FlagSet) *operatorArgs {
 			"Enabling this will ensure there is only one active controller manager.")
 
 	return &args
+}
+
+// getWatchNamespace returns the Namespace the operator should be watching for changes
+func getWatchNamespace() (string, error) {
+	value, present := os.LookupEnv(watchNamespaceEnvVar)
+	if !present {
+		return "", fmt.Errorf("environment variable %s is not defined", watchNamespaceEnvVar)
+	}
+	return value, nil
 }
