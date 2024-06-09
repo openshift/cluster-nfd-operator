@@ -83,6 +83,11 @@ spec:
                   node to account for resources available to be allocated to new pod
                   on a per-zone basis https://kubernetes-sigs.github.io/node-feature-discovery/v0.10/get-started/introduction.html#nfd-topology-updater
                 type: boolean
+              enableTaints:
+                description: EnableTaints enables the enable the experimental tainting feature
+                  This allows keeping nodes with specialized hardware away from running general workload
+                  and instead leave them for workloads that need the specialized hardware.
+                type: boolean
               workerConfig:
                 description: WorkerConfig describes configuration options for the
                   NFD worker.
