@@ -41,13 +41,13 @@ import (
         "github.com/openshift/cluster-nfd-operator/internal/deployment"
         "github.com/openshift/cluster-nfd-operator/internal/job"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
-        "github.com/openshift/cluster-nfd-operator/pkg/version"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
 	// scheme holds a new scheme for the operator
-	scheme = runtime.NewScheme()
+	scheme  = runtime.NewScheme()
+	version = "undefined"
 )
 
 const (
@@ -99,7 +99,7 @@ func main() {
 	}
 
 	if *printVersion {
-		fmt.Println(ProgramName, version.Get())
+		fmt.Println(ProgramName, version)
 		os.Exit(0)
 	}
 
