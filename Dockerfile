@@ -9,11 +9,9 @@ RUN make build
 # Create production image for running the operator
 FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
 
-ARG CSV=4.16
+ARG CSV=4.17
 COPY --from=builder /go/src/github.com/openshift/cluster-nfd-operator/node-feature-discovery-operator /
 
-RUN mkdir -p /opt/nfd
-COPY build/assets /opt/nfd
 COPY manifests /manifests
 
 # Run as unprivileged user
