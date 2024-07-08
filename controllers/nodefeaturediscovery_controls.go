@@ -504,10 +504,9 @@ func Deployment(n NFD) (ResourceStatus, error) {
 		args = append(args, fmt.Sprintf("--label-whitelist=%s", n.ins.Spec.LabelWhiteList))
 	}
 
-    if n.ins.Spec.EnableTaints {
-        args = append(args, "--enable-taints")
-    }
-
+	if n.ins.Spec.EnableTaints {
+		args = append(args, "--enable-taints")
+	}
 
 	obj.Spec.Template.Spec.Containers[0].Args = args
 
