@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	nfdv1 "sigs.k8s.io/node-feature-discovery-operator/api/v1"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"sigs.k8s.io/yaml"
 )
 

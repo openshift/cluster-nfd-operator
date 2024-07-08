@@ -4,7 +4,7 @@ metadata:
   name: nfd-worker
   namespace: test-namespace
   ownerReferences:
-  - apiVersion:         "nfd.kubernetes.io/v1"
+  - apiVersion:         "nfd.openshift.io/v1"
     kind:               "NodeFeatureDiscovery"
     name:               "nfd-master-server"
     controller:         true
