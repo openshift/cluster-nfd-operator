@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/api/apps/v1"
-	v10 "sigs.k8s.io/node-feature-discovery-operator/api/v1"
+	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
 // MockDeploymentAPI is a mock of DeploymentAPI interface.
