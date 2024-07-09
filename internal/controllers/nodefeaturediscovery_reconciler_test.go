@@ -38,7 +38,7 @@ import (
 	"github.com/openshift/cluster-nfd-operator/internal/configmap"
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
-	"sigs.k8s.io/node-feature-discovery-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/job"
 )
 
 var _ = Describe("Reconcile", func() {

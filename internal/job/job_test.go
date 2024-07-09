@@ -29,8 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	nfdv1 "sigs.k8s.io/node-feature-discovery-operator/api/v1"
-	"sigs.k8s.io/node-feature-discovery-operator/internal/client"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"sigs.k8s.io/yaml"
 )
 
