@@ -7,6 +7,7 @@ resources:
 - bases/nfd.openshift.io_nodefeaturerules.yaml
 - bases/node.k8s.io_v1alpha1_noderesoursetopologies.yaml
 - bases/nfd.openshift.io_nodefeatures.yaml
+- bases/nfd.k8s-sigs.io_nodefeaturegroups.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
