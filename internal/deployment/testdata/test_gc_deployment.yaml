@@ -6,7 +6,7 @@ metadata:
   name: nfd-gc
   namespace: test-namespace
   ownerReferences:
-  - apiVersion: nfd.kubernetes.io/v1
+  - apiVersion: nfd.openshift.io/v1
     kind: NodeFeatureDiscovery
     controller: true
     blockOwnerDeletion: true
