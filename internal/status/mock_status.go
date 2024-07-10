@@ -14,7 +14,7 @@ import (
 
 	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v10 "sigs.k8s.io/node-feature-discovery-operator/api/v1"
+	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
 // MockStatusAPI is a mock of StatusAPI interface.

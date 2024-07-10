@@ -27,9 +27,9 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	nfdv1 "sigs.k8s.io/node-feature-discovery-operator/api/v1"
-	"sigs.k8s.io/node-feature-discovery-operator/internal/daemonset"
-	"sigs.k8s.io/node-feature-discovery-operator/internal/deployment"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
+	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 )
 
 var _ = Describe("GetConditions", func() {

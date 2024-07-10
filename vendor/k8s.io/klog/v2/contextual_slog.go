@@ -1,5 +1,8 @@
+//go:build go1.21
+// +build go1.21
+
 /*
-Copyright 2024 The Kubernetes Authors.
+Copyright 2021 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,27 +17,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package status
+package klog
 
 import (
-	"testing"
+	"log/slog"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/runtime"
-	"github.com/openshift/cluster-nfd-operator/internal/test"
-	//+kubebuilder:scaffold:imports
+	"github.com/go-logr/logr"
 )
 
-var scheme *runtime.Scheme
-
-func TestAPIs(t *testing.T) {
-	RegisterFailHandler(Fail)
-
-	var err error
-
-	scheme, err = test.TestScheme()
-	Expect(err).NotTo(HaveOccurred())
-
-	RunSpecs(t, "Status Suite")
+// SetSlogLogger reconfigures klog to log through the slog logger. The logger must not be nil.
+func SetSlogLogger(logger *slog.Logger) {
+	SetLoggerWithOptions(logr.FromSlogHandler(logger.Handler()), ContextualLogger(true))
 }

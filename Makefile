@@ -59,12 +59,11 @@ GOOS=linux
 GO_CMD ?= go
 GO_FMT ?= gofmt
 GO=GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 GOFLAGS=-mod=vendor go
-LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 
 PACKAGE=github.com/openshift/cluster-nfd-operator
 MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
-LDFLAGS = -ldflags "-s -w -X main.version=$(VERSION)"
+LDFLAGS = -ldflags "-s -w -X main.version=$(VERSION) -X pkg.metrics.version=$(VERSION)"
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
