@@ -3,7 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: nfd-controller-manager
   name: nfd-controller-manager-metrics-monitor
   namespace: openshift-nfd
 spec:
@@ -18,8 +18,7 @@ spec:
         serverName: nfd-controller-manager-metrics-service.openshift-nfd.svc
   selector:
     matchLabels:
-<<<<<<< HEAD
-      control-plane: controller-manager
+      control-plane: nfd-controller-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -57,7 +56,7 @@ kind: PrometheusRule
 metadata:
   labels:
     role: alert-rules
-  name: controller-manager-alerts-monitor
+  name: nfd-controller-manager-alerts-monitor
 spec:
   groups:
   - name: node-feature-discovery-operator.rules
@@ -70,7 +69,3 @@ spec:
       for: 1h
       labels:
         severity: warning
-=======
-      control-plane: nfd-controller-manager
-
->>>>>>> f5debdc3 (set permissions for the refactored controller)

@@ -33,4 +33,3 @@ resources:
 - ../rbac
 - ../manager
 - ../prometheus
-- ../worker

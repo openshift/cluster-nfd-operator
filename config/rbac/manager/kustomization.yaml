@@ -3,6 +3,3 @@ kind: Kustomization
 
 resources:
 - sa.yaml
-- role.yaml
-- role_binding.yaml
-- scc.yaml

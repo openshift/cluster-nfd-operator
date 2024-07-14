@@ -23,14 +23,14 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
-	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"sigs.k8s.io/yaml"
 )
 

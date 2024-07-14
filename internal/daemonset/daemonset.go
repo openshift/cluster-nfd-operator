@@ -132,6 +132,22 @@ func getWorkerEnvs() []corev1.EnvVar {
 				},
 			},
 		},
+		{
+			Name: "POD_NAME",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.name",
+				},
+			},
+		},
+		{
+			Name: "POD_UID",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{
+					FieldPath: "metadata.uid",
+				},
+			},
+		},
 	}
 }
 
@@ -232,6 +248,7 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 				Affinity: getWorkerAffinity(),
 
 				ServiceAccountName: "nfd-worker",
+				HostNetwork:        true,
 				DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 				Containers: []corev1.Container{
 					{

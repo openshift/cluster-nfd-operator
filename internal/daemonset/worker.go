@@ -40,7 +40,7 @@ func getWorkerAffinity() *corev1.Affinity {
 					{
 						MatchExpressions: []corev1.NodeSelectorRequirement{
 							{
-								Key:      "node-role.kubernetes.io/node",
+								Key:      "node-role.kubernetes.io/worker",
 								Operator: "Exists",
 							},
 						},
@@ -109,11 +109,6 @@ func getWorkerVolumeMounts() *[]corev1.VolumeMount {
 			MountPath: "/host-usr/src",
 			ReadOnly:  true,
 		},
-		{
-			Name:      "host-proc-swaps",
-			MountPath: "/host-proc/swaps",
-			ReadOnly:  true,
-		},
 	}
 
 	return &containerVolumeMounts
@@ -179,7 +174,7 @@ func getWorkerVolumes() []corev1.Volume {
 			Name: "host-usr-lib",
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/host-usr/lib",
+					Path: "/usr/lib",
 				},
 			},
 		},
@@ -187,7 +182,7 @@ func getWorkerVolumes() []corev1.Volume {
 			Name: "host-lib",
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/host-lib",
+					Path: "/lib",
 				},
 			},
 		},
@@ -195,15 +190,7 @@ func getWorkerVolumes() []corev1.Volume {
 			Name: "host-usr-src",
 			VolumeSource: corev1.VolumeSource{
 				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/host-usr/src",
-				},
-			},
-		},
-		{
-			Name: "host-proc-swaps",
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/host-proc/swaps",
+					Path: "/usr/src",
 				},
 			},
 		},

@@ -12,8 +12,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	gomock "go.uber.org/mock/gomock"
 	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MocknodeFeatureDiscoveryHelperAPI is a mock of nodeFeatureDiscoveryHelperAPI interface.

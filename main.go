@@ -36,10 +36,10 @@ import (
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/internal/configmap"
-        "github.com/openshift/cluster-nfd-operator/internal/controllers"
-        "github.com/openshift/cluster-nfd-operator/internal/daemonset"
-        "github.com/openshift/cluster-nfd-operator/internal/deployment"
-        "github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/controllers"
+	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
+	"github.com/openshift/cluster-nfd-operator/internal/deployment"
+	"github.com/openshift/cluster-nfd-operator/internal/job"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
 	// +kubebuilder:scaffold:imports
 )
@@ -53,7 +53,7 @@ var (
 const (
 	// ProgramName is the canonical name of this program
 	ProgramName          = "nfd-operator"
-	watchNamespaceEnvVar = "WATCH_NAMESPACE"
+	watchNamespaceEnvVar = "POD_NAMESPACE"
 )
 
 // operatorArgs holds command line arguments

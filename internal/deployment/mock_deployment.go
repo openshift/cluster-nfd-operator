@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
 	v1 "k8s.io/api/apps/v1"
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
 // MockDeploymentAPI is a mock of DeploymentAPI interface.

@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	version = "undefined"
+	version      = "undefined"
 	instanceInfo = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: instanceInfoQuery,

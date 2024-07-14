@@ -23,13 +23,13 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"go.uber.org/mock/gomock"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -53,13 +53,13 @@ var _ = Describe("SetWorkerDaemonsetAsDesired", func() {
 		err = yaml.Unmarshal(discoveryJSON, &actualNfdCR)
 		Expect(err).To(BeNil())
 
-//		nfdCR := nfdv1.NodeFeatureDiscovery{
-//			Spec: nfdv1.NodeFeatureDiscoverySpec{
-//				Operand: nfdv1.OperandSpec{
-//					Image: "test-image",
-//				},
-//			},
-//		}
+		//		nfdCR := nfdv1.NodeFeatureDiscovery{
+		//			Spec: nfdv1.NodeFeatureDiscoverySpec{
+		//				Operand: nfdv1.OperandSpec{
+		//					Image: "test-image",
+		//				},
+		//			},
+		//		}
 		actualWorkerCM := corev1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "nfd-worker",

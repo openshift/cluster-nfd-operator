@@ -17,9 +17,9 @@ limitations under the License.
 package test
 
 import (
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
-	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 )
 
 func TestScheme() (*runtime.Scheme, error) {

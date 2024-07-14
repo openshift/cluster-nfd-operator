@@ -27,8 +27,9 @@ spec:
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
             - matchExpressions:
-              - key: node-role.kubernetes.io/node
+              - key: node-role.kubernetes.io/worker
                 operator: Exists
+      hostNetwork: true
       containers:
       - args: []
         command:
@@ -38,6 +39,14 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
         image: test-image
         imagePullPolicy: Always
         name: nfd-worker
@@ -75,9 +84,6 @@ spec:
         - mountPath: /host-usr/src
           name: host-usr-src
           readOnly: true
-        - mountPath: /host-proc/swaps
-          name: host-proc-swaps
-          readOnly: true
       dnsPolicy: ClusterFirstWithHostNet
       serviceAccountName: nfd-worker
       tolerations:
@@ -106,14 +112,11 @@ spec:
           name: nfd-worker
         name: nfd-worker-config
       - hostPath:
-          path: /host-usr/lib
+          path: /usr/lib
         name: host-usr-lib
       - hostPath:
-          path: /host-lib
+          path: /lib
         name: host-lib
       - hostPath:
-          path: /host-usr/src
+          path: /usr/src
         name: host-usr-src
-      - hostPath:
-          path: /host-proc/swaps
-        name: host-proc-swaps

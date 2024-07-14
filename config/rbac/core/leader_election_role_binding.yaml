@@ -8,5 +8,5 @@ roleRef:
   name: nfd-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: nfd-operator
+  name: nfd-manager
   namespace: openshift-nfd

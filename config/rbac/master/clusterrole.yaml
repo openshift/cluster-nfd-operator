@@ -14,7 +14,7 @@ rules:
   - update
   - list
 - apiGroups:
-  - nfd.k8s-sigs.io
+  - nfd.openshift.io
   resources:
   - nodefeatures
   - nodefeaturerules
@@ -24,7 +24,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - nfd.k8s-sigs.io
+  - nfd.openshift.io
   resources:
   - nodefeaturegroup/status
   verbs:

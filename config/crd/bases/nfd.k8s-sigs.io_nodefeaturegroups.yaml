@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: nodefeaturegroups.nfd.k8s-sigs.io
+  name: nodefeaturegroups.nfd.openshift.io
 spec:
-  group: nfd.k8s-sigs.io
+  group: nfd.openshift.io
   names:
     kind: NodeFeatureGroup
     listKind: NodeFeatureGroupList

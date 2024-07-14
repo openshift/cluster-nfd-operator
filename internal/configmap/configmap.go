@@ -25,8 +25,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 //go:generate mockgen -source=configmap.go -package=configmap -destination=mock_configmap.go ConfigMapAPI
