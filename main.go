@@ -21,7 +21,7 @@ import (
 	"os"
 
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/textlogger"
 
 	securityscheme "github.com/openshift/client-go/security/clientset/versioned/scheme"
 
@@ -29,23 +29,31 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
-	"github.com/openshift/cluster-nfd-operator/controllers"
-	"github.com/openshift/cluster-nfd-operator/pkg/config"
-	"github.com/openshift/cluster-nfd-operator/pkg/version"
+	"github.com/openshift/cluster-nfd-operator/internal/configmap"
+	"github.com/openshift/cluster-nfd-operator/internal/controllers"
+	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
+	"github.com/openshift/cluster-nfd-operator/internal/deployment"
+	"github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/status"
 	// +kubebuilder:scaffold:imports
 )
 
 var (
 	// scheme holds a new scheme for the operator
-	scheme = runtime.NewScheme()
+	scheme  = runtime.NewScheme()
+	version = "undefined"
 )
 
 const (
 	// ProgramName is the canonical name of this program
-	ProgramName = "nfd-operator"
+	ProgramName          = "nfd-operator"
+	watchNamespaceEnvVar = "POD_NAMESPACE"
 )
 
 // operatorArgs holds command line arguments
@@ -75,48 +83,73 @@ func main() {
 	printVersion := flags.Bool("version", false, "Print version and exit.")
 
 	args := initFlags(flags)
-	// Inject klog flags
-	klog.InitFlags(flags)
+
+	logConfig := textlogger.NewConfig()
+	logConfig.AddFlags(flag.CommandLine)
+	logger := textlogger.NewLogger(logConfig).WithName("nfd")
+
+	ctrl.SetLogger(logger)
+	setupLogger := logger.WithName("setup")
 
 	_ = flags.Parse(os.Args[1:])
 	if len(flags.Args()) > 0 {
-		fmt.Fprintf(flags.Output(), "unknown command line argument: %s\n", flags.Args()[0])
+		setupLogger.Info("unknown command line argument", flags.Args()[0])
 		flags.Usage()
 		os.Exit(2)
 	}
 
 	if *printVersion {
-		fmt.Println(ProgramName, version.Get())
+		fmt.Println(ProgramName, version)
 		os.Exit(0)
 	}
 
-	watchNamespace, err := config.GetWatchNamespace()
+	watchNamespace, err := getWatchNamespace()
 	if err != nil {
-		klog.Info("unable to get WatchNamespace, " +
-			"the manager will watch and manage resources in all namespaces")
+		setupLogger.Error(err, "WatchNamespaceEnvVar is not set")
+		os.Exit(1)
 	}
 
 	// Create a new manager to manage the operator
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     args.metricsAddr,
-		Port:                   9443,
+		Scheme: scheme,
+		Metrics: metricsserver.Options{
+			BindAddress: args.metricsAddr,
+		},
+		WebhookServer: webhook.NewServer(webhook.Options{
+			Port: 9443,
+		}),
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         args.enableLeaderElection,
 		LeaderElectionID:       "39f5e5c3.nodefeaturediscoveries.nfd.openshift.io",
-		Namespace:              watchNamespace,
+		Cache: cache.Options{
+			DefaultNamespaces: map[string]cache.Config{
+				watchNamespace: cache.Config{},
+			},
+		},
 	})
 
 	if err != nil {
-		klog.Error(err, "unable to start manager")
+		setupLogger.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	if err = (&controllers.NodeFeatureDiscoveryReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		klog.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
+	client := mgr.GetClient()
+	scheme := mgr.GetScheme()
+
+	deploymentAPI := deployment.NewDeploymentAPI(client, scheme)
+	daemonsetAPI := daemonset.NewDaemonsetAPI(client, scheme)
+	configmapAPI := configmap.NewConfigMapAPI(client, scheme)
+	jobAPI := job.NewJobAPI(client, scheme)
+	statusAPI := status.NewStatusAPI(deploymentAPI, daemonsetAPI)
+
+	if err = new_controllers.NewNodeFeatureDiscoveryReconciler(client,
+		deploymentAPI,
+		daemonsetAPI,
+		configmapAPI,
+		jobAPI,
+		statusAPI,
+		scheme).SetupWithManager(mgr); err != nil {
+		setupLogger.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
@@ -124,21 +157,21 @@ func main() {
 	// Next, add a Healthz checker to the manager. Healthz is a health and liveness package
 	// that the operator will use to periodically check the health of its pods, etc.
 	if err := mgr.AddHealthzCheck("health", healthz.Ping); err != nil {
-		klog.Error(err, "unable to set up health check")
+		setupLogger.Error(err, "unable to set up health check")
 		os.Exit(1)
 	}
 
 	// Now add a ReadyZ checker to the manager as well. It is important to ensure that the
 	// API server's readiness is checked when the operator is installed and running.
 	if err := mgr.AddReadyzCheck("check", healthz.Ping); err != nil {
-		klog.Error(err, "unable to set up ready check")
+		setupLogger.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
 
 	// Register signal handler for SIGINT and SIGTERM to terminate the manager
-	klog.Info("starting manager")
+	setupLogger.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		klog.Error(err, "problem running manager")
+		setupLogger.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 }
@@ -157,4 +190,13 @@ func initFlags(flagset *flag.FlagSet) *operatorArgs {
 			"Enabling this will ensure there is only one active controller manager.")
 
 	return &args
+}
+
+// getWatchNamespace returns the Namespace the operator should be watching for changes
+func getWatchNamespace() (string, error) {
+	value, present := os.LookupEnv(watchNamespaceEnvVar)
+	if !present {
+		return "", fmt.Errorf("environment variable %s is not defined", watchNamespaceEnvVar)
+	}
+	return value, nil
 }

@@ -16,7 +16,6 @@ limitations under the License.
 package metrics
 
 import (
-	"github.com/openshift/cluster-nfd-operator/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 )
@@ -29,6 +28,7 @@ const (
 )
 
 var (
+	version      = "undefined"
 	instanceInfo = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: instanceInfoQuery,
@@ -85,5 +85,5 @@ func init() {
 		instanceInfo,
 	)
 
-	registerVersion(version.Get())
+	registerVersion(version)
 }

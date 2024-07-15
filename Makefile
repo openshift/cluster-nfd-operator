@@ -59,20 +59,21 @@ GOOS=linux
 GO_CMD ?= go
 GO_FMT ?= gofmt
 GO=GOOS=$(GOOS) GO111MODULE=on CGO_ENABLED=0 GOFLAGS=-mod=vendor go
-LDFLAGS= -ldflags "-s -w -X $(PACKAGE)/version.Version=$(VERSION)"
 
 PACKAGE=github.com/openshift/cluster-nfd-operator
 MAIN_PACKAGE=main.go
 BIN=node-feature-discovery-operator
-LDFLAGS = -ldflags "-s -w -X sigs.k8s.io/node-feature-discovery-operator/pkg/version.version=$(VERSION)"
+LDFLAGS = -ldflags "-s -w -X main.version=$(VERSION) -X pkg.metrics.version=$(VERSION)"
 
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 
 all: build
 
-# Run tests
-test:
-	@echo "TODO UNIT TEST"
+TESTS ?= ./...
+
+.PHONY: unit-test
+unit-test: vet ## Run tests.
+	$(GO_CMD) test $(TESTS) -coverprofile cover.out
 
 ENVTEST_ASSETS_DIR=$(PROJECT_DIR)/testbin
 test-e2e: generate fmt vet manifests
@@ -150,8 +151,9 @@ clean-labels:
 	kubectl get no -o yaml | sed -e '/^\s*nfd.node.kubernetes.io/d' -e '/^\s*feature.node.kubernetes.io/d' | kubectl replace -f -
 
 # Generate code
-generate: controller-gen
+generate: controller-gen mockgen
 	$(CONTROLLER_GEN) object:headerFile="utils/boilerplate.go.txt" paths="./..."
+	$(GO_CMD) generate ./...
 
 # Build the docker image
 image:
@@ -178,6 +180,15 @@ site-serve:
 CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
 controller-gen:
 	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0)
+
+.PHONY: mockgen
+mockgen: ## Install mockgen locally.
+	$(GO_CMD) install go.uber.org/mock/mockgen@v0.3.0
+
+GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
+.PHONY: golangci-lint
+golangci-lint: ## Download golangci-lint locally if necessary.
+	@GOBIN=$(PROJECT_DIR)/bin  GO111MODULE=on $(GO_CMD) install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.57.2
 
 # Download kustomize locally if necessary
 KUSTOMIZE = $(PROJECT_DIR)/bin/kustomize
