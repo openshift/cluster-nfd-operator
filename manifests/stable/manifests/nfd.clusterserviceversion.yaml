@@ -66,7 +66,8 @@ metadata:
       ]
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
-    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.16
+    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.17
+    createdAt: "2024-07-28T08:10:39Z"
     description: |-
       The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
@@ -96,7 +97,7 @@ metadata:
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/internal-objects: '["noderesourcetopologies.topology.node.k8s.io"]'
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
@@ -107,7 +108,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: nfd.v4.16.0
+  name: nfd.v4.17.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -118,9 +119,10 @@ spec:
       kind: NodeFeatureDiscovery
       name: nodefeaturediscoveries.nfd.openshift.io
       version: v1
-    - description: |
-        NodeFeatureRule resource specifies a configuration for feature-based customization of node objects, such as node labeling.
-      kind: NodeFeatureRule
+    - kind: NodeFeatureGroup
+      name: nodefeaturegroups.nfd.openshift.io
+      version: v1alpha1
+    - kind: NodeFeatureRule
       name: nodefeaturerules.nfd.openshift.io
       version: v1alpha1
     - kind: NodeFeature
@@ -385,6 +387,18 @@ spec:
           - update
           - watch
         - apiGroups:
+          - batch
+          resources:
+          - jobs
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - cert-manager.io
           resources:
           - certificates
@@ -533,6 +547,32 @@ spec:
           - list
           - watch
         - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
           - policy
           resourceNames:
           - nfd-worker
@@ -621,19 +661,21 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: nfd-operator
+        serviceAccountName: nfd-manager
       deployments:
-      - name: nfd-controller-manager
+      - label:
+          control-plane: nfd-controller-manager
+        name: nfd-controller-manager
         spec:
           replicas: 1
           selector:
             matchLabels:
-              control-plane: controller-manager
+              control-plane: nfd-controller-manager
           strategy: {}
           template:
             metadata:
               labels:
-                control-plane: controller-manager
+                control-plane: nfd-controller-manager
             spec:
               containers:
               - args:
@@ -680,8 +722,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:4.16
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.16
+                  value: quay.io/openshift/origin-node-feature-discovery:4.17
+                image: quay.io/openshift/origin-cluster-nfd-operator:4.17
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -708,7 +750,7 @@ spec:
                   runAsNonRoot: true
                   seccompProfile:
                     type: RuntimeDefault
-              serviceAccountName: nfd-operator
+              serviceAccountName: nfd-manager
               terminationGracePeriodSeconds: 10
               volumes:
               - name: node-feature-discovery-operator-tls
@@ -790,7 +832,7 @@ spec:
           - '*'
           verbs:
           - '*'
-        serviceAccountName: nfd-operator
+        serviceAccountName: nfd-manager
     strategy: deployment
   installModes:
   - supported: true
@@ -818,4 +860,4 @@ spec:
   provider:
     name: Red Hat
     url: https://github.com/openshift/cluster-nfd-operator
-  version: 4.16.0
+  version: 4.17.0
