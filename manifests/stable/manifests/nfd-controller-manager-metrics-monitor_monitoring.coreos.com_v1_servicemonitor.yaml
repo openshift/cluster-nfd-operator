@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: nfd-controller-manager
   name: nfd-controller-manager-metrics-monitor
 spec:
   endpoints:
@@ -16,4 +16,4 @@ spec:
       serverName: nfd-controller-manager-metrics-service.openshift-nfd.svc
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: nfd-controller-manager
