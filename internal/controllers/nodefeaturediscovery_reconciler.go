@@ -36,11 +36,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	securityv1 "github.com/openshift/api/security/v1"
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"github.com/openshift/cluster-nfd-operator/internal/configmap"
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 	"github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/scc"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
 )
 
@@ -52,8 +54,8 @@ type nodeFeatureDiscoveryReconciler struct {
 }
 
 func NewNodeFeatureDiscoveryReconciler(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
-	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, statusAPI, scheme)
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
+	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, sccAPI, statusAPI, scheme)
 	return &nodeFeatureDiscoveryReconciler{
 		helper: helper,
 	}
@@ -105,6 +107,7 @@ func isControlledByNFD(obj client.Object) bool {
 // +kubebuilder:rbac:groups=nfd.kubernetes.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=nfd.kubernetes.io,resources=nodefeaturediscoveries/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=nfd.kubernetes.io,resources=nodefeaturediscoveries/finalizers,verbs=update
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile moves the current state of the cluster closer to the desired state.
 // It creates/pataches the NFD components ( master, worker, topology, prune, GC) in accordance with
@@ -136,8 +139,13 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 	}
 
 	errs := make([]error, 0, 10)
+
+	logger.Info("reconciling SCCs")
+	err := r.helper.handleSCCs(ctx, nfdInstance)
+	errs = append(errs, err)
+
 	logger.Info("reconciling master component")
-	err := r.helper.handleMaster(ctx, nfdInstance)
+	err = r.helper.handleMaster(ctx, nfdInstance)
 	errs = append(errs, err)
 
 	logger.Info("reconciling worker component")
@@ -166,6 +174,7 @@ type nodeFeatureDiscoveryHelperAPI interface {
 	hasFinalizer(nfdInstance *nfdv1.NodeFeatureDiscovery) bool
 	setFinalizer(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error
 	removeFinalizer(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error
+	handleSCCs(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 	handleMaster(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 	handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 	handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
@@ -180,18 +189,20 @@ type nodeFeatureDiscoveryHelper struct {
 	daemonsetAPI  daemonset.DaemonsetAPI
 	configmapAPI  configmap.ConfigMapAPI
 	jobAPI        job.JobAPI
+	sccAPI        scc.SccAPI
 	statusAPI     status.StatusAPI
 	scheme        *runtime.Scheme
 }
 
 func newNodeFeatureDiscoveryHelperAPI(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
 	return &nodeFeatureDiscoveryHelper{
 		client:        client,
 		deploymentAPI: deploymentAPI,
 		daemonsetAPI:  daemonsetAPI,
 		configmapAPI:  configmapAPI,
 		jobAPI:        jobAPI,
+		sccAPI:        sccAPI,
 		statusAPI:     statusAPI,
 		scheme:        scheme,
 	}
@@ -219,7 +230,17 @@ func (nfdh *nodeFeatureDiscoveryHelper) finalizeComponents(ctx context.Context, 
 		return fmt.Errorf("failed to delete master deployment: %w", err)
 	}
 
-	return nfdh.deploymentAPI.DeleteDeployment(ctx, nfdInstance.Namespace, "nfd-gc")
+	err = nfdh.deploymentAPI.DeleteDeployment(ctx, nfdInstance.Namespace, "nfd-gc")
+	if err != nil {
+		return fmt.Errorf("failed to delete nfd-gc deployment: %w", err)
+	}
+
+	err = nfdh.sccAPI.DeleteSCC(ctx, "nfd-worker")
+	if err != nil {
+		return fmt.Errorf("failed to delete nfd-worker scc: %w", err)
+	}
+
+	return nfdh.sccAPI.DeleteSCC(ctx, "nfd-topology-updater")
 }
 
 func (nfdh *nodeFeatureDiscoveryHelper) hasFinalizer(nfdInstance *nfdv1.NodeFeatureDiscovery) bool {
@@ -236,6 +257,37 @@ func (nfdh *nodeFeatureDiscoveryHelper) removeFinalizer(ctx context.Context, ins
 	if updated {
 		return nfdh.client.Update(ctx, instance)
 	}
+	return nil
+}
+
+func (nfdh *nodeFeatureDiscoveryHelper) handleSCCs(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+	logger := ctrl.LoggerFrom(ctx)
+
+	workerSCC := securityv1.SecurityContextConstraints{
+		ObjectMeta: metav1.ObjectMeta{Name: "nfd-worker"},
+	}
+
+	workerRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &workerSCC, func() error {
+		return nfdh.sccAPI.SetWorkerSCCAsDesired(ctx, nfdInstance, &workerSCC)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reconcile nfd-worker SCC: %w", err)
+	}
+	logger.Info("reconciled nfd-worker SCC", "result", workerRes)
+
+	topologySCC := securityv1.SecurityContextConstraints{
+		ObjectMeta: metav1.ObjectMeta{Name: "nfd-topology-updater"},
+	}
+
+	topologyRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &topologySCC, func() error {
+		return nfdh.sccAPI.SetTopologySCCAsDesired(ctx, nfdInstance, &topologySCC)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reconcile nfd-topology-updater SCC: %w", err)
+	}
+
+	logger.Info("reconciled nfd-topology-updater SCC", "result", topologyRes)
+
 	return nil
 }
 

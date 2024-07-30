@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
+	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
-	v1 "k8s.io/api/apps/v1"
+	v10 "k8s.io/api/apps/v1"
 )
 
 // MockDeploymentAPI is a mock of DeploymentAPI interface.
@@ -55,10 +55,10 @@ func (mr *MockDeploymentAPIMockRecorder) DeleteDeployment(ctx, namespace, name a
 }
 
 // GetDeployment mocks base method.
-func (m *MockDeploymentAPI) GetDeployment(ctx context.Context, namespace, name string) (*v1.Deployment, error) {
+func (m *MockDeploymentAPI) GetDeployment(ctx context.Context, namespace, name string) (*v10.Deployment, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDeployment", ctx, namespace, name)
-	ret0, _ := ret[0].(*v1.Deployment)
+	ret0, _ := ret[0].(*v10.Deployment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,7 +70,7 @@ func (mr *MockDeploymentAPIMockRecorder) GetDeployment(ctx, namespace, name any)
 }
 
 // SetGCDeploymentAsDesired mocks base method.
-func (m *MockDeploymentAPI) SetGCDeploymentAsDesired(nfdInstance *v10.NodeFeatureDiscovery, gcDep *v1.Deployment) error {
+func (m *MockDeploymentAPI) SetGCDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, gcDep *v10.Deployment) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetGCDeploymentAsDesired", nfdInstance, gcDep)
 	ret0, _ := ret[0].(error)
@@ -84,7 +84,7 @@ func (mr *MockDeploymentAPIMockRecorder) SetGCDeploymentAsDesired(nfdInstance, g
 }
 
 // SetMasterDeploymentAsDesired mocks base method.
-func (m *MockDeploymentAPI) SetMasterDeploymentAsDesired(nfdInstance *v10.NodeFeatureDiscovery, masterDep *v1.Deployment) error {
+func (m *MockDeploymentAPI) SetMasterDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, masterDep *v10.Deployment) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetMasterDeploymentAsDesired", nfdInstance, masterDep)
 	ret0, _ := ret[0].(error)

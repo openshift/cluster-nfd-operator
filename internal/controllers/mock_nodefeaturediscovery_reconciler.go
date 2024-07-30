@@ -96,6 +96,20 @@ func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handlePrune(ctx, nfdIns
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handlePrune", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handlePrune), ctx, nfdInstance)
 }
 
+// handleSCCs mocks base method.
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleSCCs(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "handleSCCs", ctx, nfdInstance)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// handleSCCs indicates an expected call of handleSCCs.
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleSCCs(ctx, nfdInstance any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleSCCs", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleSCCs), ctx, nfdInstance)
+}
+
 // handleStatus mocks base method.
 func (m *MocknodeFeatureDiscoveryHelperAPI) handleStatus(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) error {
 	m.ctrl.T.Helper()

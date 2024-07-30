@@ -5,4 +5,3 @@ resources:
 - sa.yaml
 - clusterrole.yaml
 - clusterrole_binding.yaml
-- scc.yaml
