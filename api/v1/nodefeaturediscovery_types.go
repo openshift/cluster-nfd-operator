@@ -83,6 +83,8 @@ type OperandSpec struct {
 	// NFD operand
 	// [defaults to registry.k8s.io/nfd/node-feature-discovery]
 	// +kubebuilder:validation:Pattern=[a-zA-Z0-9\-]+
+	// +nullable
+	// +optional
 	Image string `json:"image,omitempty"`
 
 	// ImagePullPolicy defines Image pull policy for the
@@ -140,7 +142,12 @@ func init() {
 
 // ImagePath returns a compiled full valid image string
 func (o *OperandSpec) ImagePath() string {
-	return o.Image
+	if o.Image != "" {
+		return o.Image
+	}
+
+	image := os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	return image
 }
 
 // ImagePolicy returns a valid corev1.PullPolicy from the string in the CR
