@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
+	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
-	v1 "k8s.io/api/core/v1"
+	v10 "k8s.io/api/core/v1"
 )
 
 // MockConfigMapAPI is a mock of ConfigMapAPI interface.
@@ -55,7 +55,7 @@ func (mr *MockConfigMapAPIMockRecorder) DeleteConfigMap(ctx, namespace, name any
 }
 
 // SetWorkerConfigMapAsDesired mocks base method.
-func (m *MockConfigMapAPI) SetWorkerConfigMapAsDesired(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery, workerCM *v1.ConfigMap) error {
+func (m *MockConfigMapAPI) SetWorkerConfigMapAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, workerCM *v10.ConfigMap) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetWorkerConfigMapAsDesired", ctx, nfdInstance, workerCM)
 	ret0, _ := ret[0].(error)

@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
+	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
-	v1 "k8s.io/api/apps/v1"
+	v10 "k8s.io/api/apps/v1"
 )
 
 // MockDaemonsetAPI is a mock of DaemonsetAPI interface.
@@ -55,10 +55,10 @@ func (mr *MockDaemonsetAPIMockRecorder) DeleteDaemonSet(ctx, namespace, name any
 }
 
 // GetDaemonSet mocks base method.
-func (m *MockDaemonsetAPI) GetDaemonSet(ctx context.Context, namespace, name string) (*v1.DaemonSet, error) {
+func (m *MockDaemonsetAPI) GetDaemonSet(ctx context.Context, namespace, name string) (*v10.DaemonSet, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDaemonSet", ctx, namespace, name)
-	ret0, _ := ret[0].(*v1.DaemonSet)
+	ret0, _ := ret[0].(*v10.DaemonSet)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -70,7 +70,7 @@ func (mr *MockDaemonsetAPIMockRecorder) GetDaemonSet(ctx, namespace, name any) *
 }
 
 // SetTopologyDaemonsetAsDesired mocks base method.
-func (m *MockDaemonsetAPI) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery, topologyDS *v1.DaemonSet) error {
+func (m *MockDaemonsetAPI) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, topologyDS *v10.DaemonSet) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetTopologyDaemonsetAsDesired", ctx, nfdInstance, topologyDS)
 	ret0, _ := ret[0].(error)
@@ -84,7 +84,7 @@ func (mr *MockDaemonsetAPIMockRecorder) SetTopologyDaemonsetAsDesired(ctx, nfdIn
 }
 
 // SetWorkerDaemonsetAsDesired mocks base method.
-func (m *MockDaemonsetAPI) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery, workerDS *v1.DaemonSet) error {
+func (m *MockDaemonsetAPI) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, workerDS *v10.DaemonSet) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetWorkerDaemonsetAsDesired", ctx, nfdInstance, workerDS)
 	ret0, _ := ret[0].(error)

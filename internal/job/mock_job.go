@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
+	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
-	v1 "k8s.io/api/batch/v1"
+	v10 "k8s.io/api/batch/v1"
 )
 
 // MockJobAPI is a mock of JobAPI interface.
@@ -41,7 +41,7 @@ func (m *MockJobAPI) EXPECT() *MockJobAPIMockRecorder {
 }
 
 // CreatePruneJob mocks base method.
-func (m *MockJobAPI) CreatePruneJob(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) error {
+func (m *MockJobAPI) CreatePruneJob(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreatePruneJob", ctx, nfdInstance)
 	ret0, _ := ret[0].(error)
@@ -55,10 +55,10 @@ func (mr *MockJobAPIMockRecorder) CreatePruneJob(ctx, nfdInstance any) *gomock.C
 }
 
 // GetJob mocks base method.
-func (m *MockJobAPI) GetJob(ctx context.Context, namespace, name string) (*v1.Job, error) {
+func (m *MockJobAPI) GetJob(ctx context.Context, namespace, name string) (*v10.Job, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetJob", ctx, namespace, name)
-	ret0, _ := ret[0].(*v1.Job)
+	ret0, _ := ret[0].(*v10.Job)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

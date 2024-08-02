@@ -12,9 +12,9 @@ import (
 	context "context"
 	reflect "reflect"
 
-	v10 "github.com/openshift/cluster-nfd-operator/api/v1"
+	v1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	gomock "go.uber.org/mock/gomock"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v10 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // MockStatusAPI is a mock of StatusAPI interface.
@@ -41,7 +41,7 @@ func (m *MockStatusAPI) EXPECT() *MockStatusAPIMockRecorder {
 }
 
 // AreConditionsEqual mocks base method.
-func (m *MockStatusAPI) AreConditionsEqual(prevConditions, newConditions []v1.Condition) bool {
+func (m *MockStatusAPI) AreConditionsEqual(prevConditions, newConditions []v10.Condition) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AreConditionsEqual", prevConditions, newConditions)
 	ret0, _ := ret[0].(bool)
@@ -55,10 +55,10 @@ func (mr *MockStatusAPIMockRecorder) AreConditionsEqual(prevConditions, newCondi
 }
 
 // GetConditions mocks base method.
-func (m *MockStatusAPI) GetConditions(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) []v1.Condition {
+func (m *MockStatusAPI) GetConditions(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) []v10.Condition {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetConditions", ctx, nfdInstance)
-	ret0, _ := ret[0].([]v1.Condition)
+	ret0, _ := ret[0].([]v10.Condition)
 	return ret0
 }
 
@@ -92,10 +92,10 @@ func (m *MockstatusHelperAPI) EXPECT() *MockstatusHelperAPIMockRecorder {
 }
 
 // getGCNotAvailableConditions mocks base method.
-func (m *MockstatusHelperAPI) getGCNotAvailableConditions(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) []v1.Condition {
+func (m *MockstatusHelperAPI) getGCNotAvailableConditions(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) []v10.Condition {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "getGCNotAvailableConditions", ctx, nfdInstance)
-	ret0, _ := ret[0].([]v1.Condition)
+	ret0, _ := ret[0].([]v10.Condition)
 	return ret0
 }
 
@@ -106,10 +106,10 @@ func (mr *MockstatusHelperAPIMockRecorder) getGCNotAvailableConditions(ctx, nfdI
 }
 
 // getMasterNotAvailableConditions mocks base method.
-func (m *MockstatusHelperAPI) getMasterNotAvailableConditions(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) []v1.Condition {
+func (m *MockstatusHelperAPI) getMasterNotAvailableConditions(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) []v10.Condition {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "getMasterNotAvailableConditions", ctx, nfdInstance)
-	ret0, _ := ret[0].([]v1.Condition)
+	ret0, _ := ret[0].([]v10.Condition)
 	return ret0
 }
 
@@ -120,10 +120,10 @@ func (mr *MockstatusHelperAPIMockRecorder) getMasterNotAvailableConditions(ctx, 
 }
 
 // getTopologyNotAvailableConditions mocks base method.
-func (m *MockstatusHelperAPI) getTopologyNotAvailableConditions(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) []v1.Condition {
+func (m *MockstatusHelperAPI) getTopologyNotAvailableConditions(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) []v10.Condition {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "getTopologyNotAvailableConditions", ctx, nfdInstance)
-	ret0, _ := ret[0].([]v1.Condition)
+	ret0, _ := ret[0].([]v10.Condition)
 	return ret0
 }
 
@@ -134,10 +134,10 @@ func (mr *MockstatusHelperAPIMockRecorder) getTopologyNotAvailableConditions(ctx
 }
 
 // getWorkerNotAvailableConditions mocks base method.
-func (m *MockstatusHelperAPI) getWorkerNotAvailableConditions(ctx context.Context, nfdInstance *v10.NodeFeatureDiscovery) []v1.Condition {
+func (m *MockstatusHelperAPI) getWorkerNotAvailableConditions(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) []v10.Condition {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "getWorkerNotAvailableConditions", ctx, nfdInstance)
-	ret0, _ := ret[0].([]v1.Condition)
+	ret0, _ := ret[0].([]v10.Condition)
 	return ret0
 }
 
