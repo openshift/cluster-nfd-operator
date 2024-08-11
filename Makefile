@@ -153,7 +153,7 @@ clean-labels:
 # Generate code
 generate: controller-gen mockgen
 	$(CONTROLLER_GEN) object:headerFile="utils/boilerplate.go.txt" paths="./..."
-	go generate ./...
+	$(GO_CMD) generate ./...
 
 # Build the docker image
 image:
