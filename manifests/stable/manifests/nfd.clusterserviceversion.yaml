@@ -16,7 +16,7 @@ metadata:
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
             "operand": {
-              "image": "quay.io/openshift/origin-node-feature-discovery:4.16",
+              "image": "quay.io/openshift/origin-node-feature-discovery:4.17",
               "imagePullPolicy": "IfNotPresent",
               "servicePort": 12000
             },
@@ -93,7 +93,7 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
-    olm.skipRange: '>=4.9.0 <4.16.0'
+    olm.skipRange: '>=4.9.0 <4.17.0'
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -849,7 +849,7 @@ spec:
   - node-labels
   links:
   - name: Node Feature Discovery Operator
-    url: https://docs.openshift.com/container-platform/4.16/hardware_enablement/psap-node-feature-discovery-operator.html
+    url: https://docs.openshift.com/container-platform/4.17/hardware_enablement/psap-node-feature-discovery-operator.html
   - name: Node Feature Discovery Documentation
     url: https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html
   maintainers:
