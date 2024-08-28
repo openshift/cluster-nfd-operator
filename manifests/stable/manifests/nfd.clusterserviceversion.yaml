@@ -686,7 +686,7 @@ spec:
                 - --tls-cert-file=/etc/secrets/tls.crt
                 - --tls-private-key-file=/etc/secrets/tls.key
                 - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16
                 name: kube-rbac-proxy
                 ports:
                 - containerPort: 8443
