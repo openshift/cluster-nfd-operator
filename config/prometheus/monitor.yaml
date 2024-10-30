@@ -3,7 +3,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   labels:
-    control-plane: nfd-controller-manager
+    control-plane: controller-manager
   name: nfd-controller-manager-metrics-monitor
   namespace: openshift-nfd
 spec:
@@ -18,7 +18,7 @@ spec:
         serverName: nfd-controller-manager-metrics-service.openshift-nfd.svc
   selector:
     matchLabels:
-      control-plane: nfd-controller-manager
+      control-plane: controller-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
