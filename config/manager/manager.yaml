@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: nfd-controller-manager
+    control-plane: controller-manager
     openshift.io/cluster-monitoring: "true"
     pod-security.kubernetes.io/enforce: privileged
   name: openshift-nfd
@@ -13,16 +13,16 @@ metadata:
   name: nfd-controller-manager
   namespace: openshift-nfd
   labels:
-    control-plane: nfd-controller-manager
+    control-plane: controller-manager
 spec:
   selector:
     matchLabels:
-      control-plane: nfd-controller-manager
+      control-plane: controller-manager
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: nfd-controller-manager
+        control-plane: controller-manager
     spec:
       serviceAccountName: nfd-manager
       containers:
