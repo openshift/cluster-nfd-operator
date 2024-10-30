@@ -664,18 +664,18 @@ spec:
         serviceAccountName: nfd-manager
       deployments:
       - label:
-          control-plane: nfd-controller-manager
+          control-plane: controller-manager
         name: nfd-controller-manager
         spec:
           replicas: 1
           selector:
             matchLabels:
-              control-plane: nfd-controller-manager
+              control-plane: controller-manager
           strategy: {}
           template:
             metadata:
               labels:
-                control-plane: nfd-controller-manager
+                control-plane: controller-manager
             spec:
               containers:
               - args:
