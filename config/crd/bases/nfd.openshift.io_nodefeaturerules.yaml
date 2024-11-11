@@ -14,7 +14,7 @@ spec:
     shortNames:
     - nfr
     singular: nodefeaturerule
-  scope: Cluster
+  scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
