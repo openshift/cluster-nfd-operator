@@ -62,7 +62,7 @@ var _ = Describe("SetMasterDeploymentAsDesired", func() {
 			},
 		}
 
-		err := deploymentAPI.SetMasterDeploymentAsDesired(&nfdCR, &masterDep)
+		err := deploymentAPI.SetMasterDeploymentAsDesired(&nfdCR, &masterDep, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(BeNil())
 		expectedYAMLFile, err := os.ReadFile("testdata/test_master_deployment.yaml")
@@ -104,7 +104,7 @@ var _ = Describe("SetGCDeploymentAsDesired", func() {
 			},
 		}
 
-		err := deploymentAPI.SetGCDeploymentAsDesired(&nfdCR, &masterDep)
+		err := deploymentAPI.SetGCDeploymentAsDesired(&nfdCR, &masterDep, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(BeNil())
 		expectedYAMLFile, err := os.ReadFile("testdata/test_gc_deployment.yaml")

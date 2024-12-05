@@ -39,8 +39,8 @@ const (
 //go:generate mockgen -source=deployment.go -package=deployment -destination=mock_deployment.go DeploymentAPI
 
 type DeploymentAPI interface {
-	SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, masterDep *v1.Deployment) error
-	SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, gcDep *v1.Deployment) error
+	SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, masterDep *v1.Deployment, operandImage string) error
+	SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, gcDep *v1.Deployment, operandImage string) error
 	DeleteDeployment(ctx context.Context, namespace, name string) error
 	GetDeployment(ctx context.Context, namespace, name string) (*v1.Deployment, error)
 }
@@ -57,7 +57,7 @@ func NewDeploymentAPI(client client.Client, scheme *runtime.Scheme) DeploymentAP
 	}
 }
 
-func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, masterDep *v1.Deployment) error {
+func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, masterDep *v1.Deployment, operandImage string) error {
 	standartLabels := map[string]string{"app": "nfd-master"}
 	masterDep.ObjectMeta.Labels = standartLabels
 
@@ -79,7 +79,7 @@ func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeature
 				Containers: []corev1.Container{
 					{
 						Name:            "nfd-master",
-						Image:           nfdInstance.Spec.Operand.ImagePath(),
+						Image:           operandImage,
 						ImagePullPolicy: getImagePullPolicy(nfdInstance),
 						Command: []string{
 							"nfd-master",
@@ -97,7 +97,7 @@ func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeature
 	return controllerutil.SetControllerReference(nfdInstance, masterDep, d.scheme)
 }
 
-func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, gcDep *v1.Deployment) error {
+func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDiscovery, gcDep *v1.Deployment, operandImage string) error {
 	gcDep.ObjectMeta.Labels = map[string]string{"app": "nfd"}
 	matchLabels := map[string]string{"app": "nfd-gc"}
 	gcDep.Spec = v1.DeploymentSpec{
@@ -116,7 +116,7 @@ func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDisc
 				Containers: []corev1.Container{
 					{
 						Name:            "nfd-gc",
-						Image:           nfdInstance.Spec.Operand.ImagePath(),
+						Image:           operandImage,
 						ImagePullPolicy: corev1.PullAlways,
 						Command: []string{
 							"nfd-gc",

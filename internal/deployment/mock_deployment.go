@@ -70,29 +70,29 @@ func (mr *MockDeploymentAPIMockRecorder) GetDeployment(ctx, namespace, name any)
 }
 
 // SetGCDeploymentAsDesired mocks base method.
-func (m *MockDeploymentAPI) SetGCDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, gcDep *v10.Deployment) error {
+func (m *MockDeploymentAPI) SetGCDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, gcDep *v10.Deployment, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetGCDeploymentAsDesired", nfdInstance, gcDep)
+	ret := m.ctrl.Call(m, "SetGCDeploymentAsDesired", nfdInstance, gcDep, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetGCDeploymentAsDesired indicates an expected call of SetGCDeploymentAsDesired.
-func (mr *MockDeploymentAPIMockRecorder) SetGCDeploymentAsDesired(nfdInstance, gcDep any) *gomock.Call {
+func (mr *MockDeploymentAPIMockRecorder) SetGCDeploymentAsDesired(nfdInstance, gcDep, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGCDeploymentAsDesired", reflect.TypeOf((*MockDeploymentAPI)(nil).SetGCDeploymentAsDesired), nfdInstance, gcDep)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGCDeploymentAsDesired", reflect.TypeOf((*MockDeploymentAPI)(nil).SetGCDeploymentAsDesired), nfdInstance, gcDep, operandImage)
 }
 
 // SetMasterDeploymentAsDesired mocks base method.
-func (m *MockDeploymentAPI) SetMasterDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, masterDep *v10.Deployment) error {
+func (m *MockDeploymentAPI) SetMasterDeploymentAsDesired(nfdInstance *v1.NodeFeatureDiscovery, masterDep *v10.Deployment, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetMasterDeploymentAsDesired", nfdInstance, masterDep)
+	ret := m.ctrl.Call(m, "SetMasterDeploymentAsDesired", nfdInstance, masterDep, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetMasterDeploymentAsDesired indicates an expected call of SetMasterDeploymentAsDesired.
-func (mr *MockDeploymentAPIMockRecorder) SetMasterDeploymentAsDesired(nfdInstance, masterDep any) *gomock.Call {
+func (mr *MockDeploymentAPIMockRecorder) SetMasterDeploymentAsDesired(nfdInstance, masterDep, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMasterDeploymentAsDesired", reflect.TypeOf((*MockDeploymentAPI)(nil).SetMasterDeploymentAsDesired), nfdInstance, masterDep)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMasterDeploymentAsDesired", reflect.TypeOf((*MockDeploymentAPI)(nil).SetMasterDeploymentAsDesired), nfdInstance, masterDep, operandImage)
 }
