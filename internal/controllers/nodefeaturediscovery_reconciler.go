@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"reflect"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -99,6 +100,13 @@ func isControlledByNFD(obj client.Object) bool {
 	return controller.Kind == nfdKind
 }
 
+func getOperandImage(nfdInstance *nfdv1.NodeFeatureDiscovery) string {
+	if nfdInstance.Spec.Operand.Image == "" {
+		return os.Getenv("NODE_FEATURE_DISCOVERY_IMAGE")
+	}
+	return nfdInstance.Spec.Operand.Image
+}
+
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
@@ -111,10 +119,11 @@ func isControlledByNFD(obj client.Object) bool {
 
 // Reconcile moves the current state of the cluster closer to the desired state.
 // It creates/pataches the NFD components ( master, worker, topology, prune, GC) in accordance with
-// NFD CR Spec. In addition it also updates the Status of the NFD CR
+// NFD CR Spec. In addition, it also updates the Status of the NFD CR
 func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) (ctrl.Result, error) {
 	res := ctrl.Result{}
 	logger := ctrl.LoggerFrom(ctx).WithValues("instance namespace", nfdInstance.Namespace, "instance name", nfdInstance.Name)
+	operandImage := getOperandImage(nfdInstance)
 
 	if nfdInstance.DeletionTimestamp != nil {
 		// NFD CR is being deleted
@@ -145,25 +154,24 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 	errs = append(errs, err)
 
 	logger.Info("reconciling master component")
-	err = r.helper.handleMaster(ctx, nfdInstance)
+	err = r.helper.handleMaster(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
 	logger.Info("reconciling worker component")
-	err = r.helper.handleWorker(ctx, nfdInstance)
+	err = r.helper.handleWorker(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
 	logger.Info("reconciling topology components")
-	err = r.helper.handleTopology(ctx, nfdInstance)
+	err = r.helper.handleTopology(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
 	logger.Info("reconciling garbage collector")
-	err = r.helper.handleGC(ctx, nfdInstance)
+	err = r.helper.handleGC(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
 	logger.Info("reconciling NFD status")
 	err = r.helper.handleStatus(ctx, nfdInstance)
 	errs = append(errs, err)
-
 	return res, errors.Join(errs...)
 }
 
@@ -175,10 +183,10 @@ type nodeFeatureDiscoveryHelperAPI interface {
 	setFinalizer(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error
 	removeFinalizer(ctx context.Context, instance *nfdv1.NodeFeatureDiscovery) error
 	handleSCCs(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
-	handleMaster(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
-	handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
-	handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
-	handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
+	handleMaster(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
+	handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
+	handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
+	handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 	handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) (bool, error)
 	handleStatus(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 }
@@ -291,12 +299,12 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleSCCs(ctx context.Context, nfdInsta
 	return nil
 }
 
-func (nfdh *nodeFeatureDiscoveryHelper) handleMaster(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+func (nfdh *nodeFeatureDiscoveryHelper) handleMaster(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
 	masterDep := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "nfd-master", Namespace: nfdInstance.Namespace},
 	}
 	opRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &masterDep, func() error {
-		return nfdh.deploymentAPI.SetMasterDeploymentAsDesired(nfdInstance, &masterDep)
+		return nfdh.deploymentAPI.SetMasterDeploymentAsDesired(nfdInstance, &masterDep, operandImage)
 	})
 
 	if err != nil {
@@ -306,7 +314,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleMaster(ctx context.Context, nfdIns
 	return nil
 }
 
-func (nfdh *nodeFeatureDiscoveryHelper) handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+func (nfdh *nodeFeatureDiscoveryHelper) handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
 	logger := ctrl.LoggerFrom(ctx)
 
 	workerCM := corev1.ConfigMap{
@@ -324,7 +332,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleWorker(ctx context.Context, nfdIns
 		ObjectMeta: metav1.ObjectMeta{Name: "nfd-worker", Namespace: nfdInstance.Namespace},
 	}
 	opRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &workerDS, func() error {
-		return nfdh.daemonsetAPI.SetWorkerDaemonsetAsDesired(ctx, nfdInstance, &workerDS)
+		return nfdh.daemonsetAPI.SetWorkerDaemonsetAsDesired(ctx, nfdInstance, &workerDS, operandImage)
 	})
 	if err != nil {
 		return fmt.Errorf("failed to reconcile worker DaemonSet %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
@@ -335,7 +343,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleWorker(ctx context.Context, nfdIns
 	return nil
 }
 
-func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
 	if !nfdInstance.Spec.TopologyUpdater {
 		return nil
 	}
@@ -343,7 +351,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdI
 		ObjectMeta: metav1.ObjectMeta{Name: "nfd-topology-updater", Namespace: nfdInstance.Namespace},
 	}
 	opRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &topologyDS, func() error {
-		return nfdh.daemonsetAPI.SetTopologyDaemonsetAsDesired(ctx, nfdInstance, &topologyDS)
+		return nfdh.daemonsetAPI.SetTopologyDaemonsetAsDesired(ctx, nfdInstance, &topologyDS, operandImage)
 	})
 
 	if err != nil {
@@ -353,12 +361,12 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdI
 	return nil
 }
 
-func (nfdh *nodeFeatureDiscoveryHelper) handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+func (nfdh *nodeFeatureDiscoveryHelper) handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
 	gcDep := appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{Name: "nfd-gc", Namespace: nfdInstance.Namespace},
 	}
 	opRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &gcDep, func() error {
-		return nfdh.deploymentAPI.SetGCDeploymentAsDesired(nfdInstance, &gcDep)
+		return nfdh.deploymentAPI.SetGCDeploymentAsDesired(nfdInstance, &gcDep, operandImage)
 	})
 
 	if err != nil {
