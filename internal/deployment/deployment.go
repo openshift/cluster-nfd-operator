@@ -207,12 +207,7 @@ func getImagePullPolicy(nfdInstance *nfdv1.NodeFeatureDiscovery) corev1.PullPoli
 }
 
 func getArgs(nfdInstance *nfdv1.NodeFeatureDiscovery) []string {
-	port := defaultServicePort
-	if nfdInstance.Spec.Operand.ServicePort != 0 {
-		port = nfdInstance.Spec.Operand.ServicePort
-	}
 	args := make([]string, 0, 4)
-	args = append(args, fmt.Sprintf("--port=%d", port))
 	if len(nfdInstance.Spec.ExtraLabelNs) != 0 {
 		args = append(args, fmt.Sprintf("--extra-label-ns=%s", strings.Join(nfdInstance.Spec.ExtraLabelNs, ",")))
 	}

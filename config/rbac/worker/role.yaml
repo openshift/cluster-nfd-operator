@@ -13,6 +13,15 @@ rules:
   - update
   - delete
 - apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeatures/finalizers
+  verbs:
+  - update
+  - get
+  - create
+  - delete
+- apiGroups:
   - security.openshift.io
   resources:
   - securitycontextconstraints
@@ -28,3 +37,9 @@ rules:
   - use
   resourceNames:
   - nfd-worker
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
