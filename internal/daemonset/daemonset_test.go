@@ -64,7 +64,7 @@ var _ = Describe("SetTopologyDaemonsetAsDesired", func() {
 			},
 		}
 
-		err := daemonsetAPI.SetTopologyDaemonsetAsDesired(ctx, &nfdCR, &topologyDS)
+		err := daemonsetAPI.SetTopologyDaemonsetAsDesired(ctx, &nfdCR, &topologyDS, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(BeNil())
 		expectedYAMLFile, err := os.ReadFile("testdata/test_topology_daemonset.yaml")
@@ -108,7 +108,7 @@ var _ = Describe("SetWorkerDaemonsetAsDesired", func() {
 			},
 		}
 
-		err := daemonsetAPI.SetWorkerDaemonsetAsDesired(ctx, &nfdCR, &actualWorkerDS)
+		err := daemonsetAPI.SetWorkerDaemonsetAsDesired(ctx, &nfdCR, &actualWorkerDS, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(BeNil())
 		expectedYAMLFile, err := os.ReadFile("testdata/test_worker_daemonset.yaml")
