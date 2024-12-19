@@ -67,7 +67,7 @@ metadata:
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
     containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.18
-    createdAt: "2024-07-28T08:10:39Z"
+    createdAt: "2024-12-19T11:01:35Z"
     description: |-
       The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
@@ -122,7 +122,9 @@ spec:
     - kind: NodeFeatureGroup
       name: nodefeaturegroups.nfd.openshift.io
       version: v1alpha1
-    - kind: NodeFeatureRule
+    - description: |
+        NodeFeatureRule resource specifies a configuration for feature-based customization of node objects, such as node labeling.
+      kind: NodeFeatureRule
       name: nodefeaturerules.nfd.openshift.io
       version: v1alpha1
     - kind: NodeFeature
@@ -650,6 +652,18 @@ spec:
           - get
           - update
         - apiGroups:
+          - security.openshift.io
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -678,31 +692,6 @@ spec:
                 control-plane: controller-manager
             spec:
               containers:
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=6
-                - --tls-cert-file=/etc/secrets/tls.crt
-                - --tls-private-key-file=/etc/secrets/tls.key
-                - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image:  registry.redhat.io/openshift4/ose-kube-rbac-proxy-rhel9:v4.16
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources:
-                  limits:
-                    cpu: 500m
-                    memory: 128Mi
-                  requests:
-                    cpu: 250m
-                    memory: 64Mi
-                securityContext:
-                  readOnlyRootFilesystem: true
-                volumeMounts:
-                - mountPath: /etc/secrets
-                  name: node-feature-discovery-operator-tls
               - args:
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
@@ -752,10 +741,6 @@ spec:
                     type: RuntimeDefault
               serviceAccountName: nfd-manager
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: node-feature-discovery-operator-tls
-                secret:
-                  secretName: node-feature-discovery-operator-tls
       permissions:
       - rules:
         - apiGroups:

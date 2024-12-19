@@ -38,9 +38,8 @@ spec:
           command:
             - /node-feature-discovery-operator
           args:
-            - --leader-elect
-            - "--zap-encoder=console"
-            - "--zap-log-level=debug"
+            - "--metrics-bind-address=127.0.0.1:8080"
+            - "--leader-elect"
           image: controller:latest
           env:
             - name: SSL_CERT_DIR
