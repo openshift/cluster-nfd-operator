@@ -70,29 +70,29 @@ func (mr *MockDaemonsetAPIMockRecorder) GetDaemonSet(ctx, namespace, name any) *
 }
 
 // SetTopologyDaemonsetAsDesired mocks base method.
-func (m *MockDaemonsetAPI) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, topologyDS *v10.DaemonSet) error {
+func (m *MockDaemonsetAPI) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, topologyDS *v10.DaemonSet, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetTopologyDaemonsetAsDesired", ctx, nfdInstance, topologyDS)
+	ret := m.ctrl.Call(m, "SetTopologyDaemonsetAsDesired", ctx, nfdInstance, topologyDS, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetTopologyDaemonsetAsDesired indicates an expected call of SetTopologyDaemonsetAsDesired.
-func (mr *MockDaemonsetAPIMockRecorder) SetTopologyDaemonsetAsDesired(ctx, nfdInstance, topologyDS any) *gomock.Call {
+func (mr *MockDaemonsetAPIMockRecorder) SetTopologyDaemonsetAsDesired(ctx, nfdInstance, topologyDS, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTopologyDaemonsetAsDesired", reflect.TypeOf((*MockDaemonsetAPI)(nil).SetTopologyDaemonsetAsDesired), ctx, nfdInstance, topologyDS)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTopologyDaemonsetAsDesired", reflect.TypeOf((*MockDaemonsetAPI)(nil).SetTopologyDaemonsetAsDesired), ctx, nfdInstance, topologyDS, operandImage)
 }
 
 // SetWorkerDaemonsetAsDesired mocks base method.
-func (m *MockDaemonsetAPI) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, workerDS *v10.DaemonSet) error {
+func (m *MockDaemonsetAPI) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, workerDS *v10.DaemonSet, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetWorkerDaemonsetAsDesired", ctx, nfdInstance, workerDS)
+	ret := m.ctrl.Call(m, "SetWorkerDaemonsetAsDesired", ctx, nfdInstance, workerDS, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetWorkerDaemonsetAsDesired indicates an expected call of SetWorkerDaemonsetAsDesired.
-func (mr *MockDaemonsetAPIMockRecorder) SetWorkerDaemonsetAsDesired(ctx, nfdInstance, workerDS any) *gomock.Call {
+func (mr *MockDaemonsetAPIMockRecorder) SetWorkerDaemonsetAsDesired(ctx, nfdInstance, workerDS, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWorkerDaemonsetAsDesired", reflect.TypeOf((*MockDaemonsetAPI)(nil).SetWorkerDaemonsetAsDesired), ctx, nfdInstance, workerDS)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetWorkerDaemonsetAsDesired", reflect.TypeOf((*MockDaemonsetAPI)(nil).SetWorkerDaemonsetAsDesired), ctx, nfdInstance, workerDS, operandImage)
 }
