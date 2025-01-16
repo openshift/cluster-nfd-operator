@@ -34,8 +34,8 @@ import (
 //go:generate mockgen -source=daemonset.go -package=daemonset -destination=mock_daemonset.go DaemonsetAPI
 
 type DaemonsetAPI interface {
-	SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, topologyDS *appsv1.DaemonSet) error
-	SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, workerDS *appsv1.DaemonSet) error
+	SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, topologyDS *appsv1.DaemonSet, operandImage string) error
+	SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, workerDS *appsv1.DaemonSet, operandImage string) error
 	DeleteDaemonSet(ctx context.Context, namespace, name string) error
 	GetDaemonSet(ctx context.Context, namespace, name string) (*appsv1.DaemonSet, error)
 }
@@ -52,7 +52,7 @@ func NewDaemonsetAPI(client client.Client, scheme *runtime.Scheme) DaemonsetAPI 
 	}
 }
 
-func (d *daemonset) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, topologyDS *appsv1.DaemonSet) error {
+func (d *daemonset) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, topologyDS *appsv1.DaemonSet, operandImage string) error {
 	topologyDS.ObjectMeta.Labels = map[string]string{"app": "nfd"}
 
 	podLabels := map[string]string{"app": "nfd-topology-updater"}
@@ -70,7 +70,7 @@ func (d *daemonset) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstan
 				Containers: []corev1.Container{
 					{
 						Name:            "nfd-topology-updater",
-						Image:           nfdInstance.Spec.Operand.ImagePath(),
+						Image:           operandImage,
 						ImagePullPolicy: getImagePullPolicy(nfdInstance),
 						Command: []string{
 							"nfd-topology-updater",
@@ -227,7 +227,7 @@ func getVolumes() []corev1.Volume {
 	}
 }
 
-func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, workerDS *appsv1.DaemonSet) error {
+func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, workerDS *appsv1.DaemonSet, operandImage string) error {
 	workerDS.ObjectMeta.Labels = map[string]string{"app": "nfd"}
 
 	workerDS.Spec = appsv1.DaemonSetSpec{
@@ -253,7 +253,7 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 				Containers: []corev1.Container{
 					{
 						Env:             getWorkerEnvs(),
-						Image:           nfdInstance.Spec.Operand.ImagePath(),
+						Image:           operandImage,
 						Name:            "nfd-worker",
 						Command:         []string{"nfd-worker"},
 						Args:            []string{},
