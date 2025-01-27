@@ -19,6 +19,7 @@ package new_controllers
 import (
 	"context"
 	"fmt"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -66,10 +67,10 @@ var _ = Describe("Reconcile", func() {
 
 		mockHelper.EXPECT().hasFinalizer(&nfdCR).Return(true)
 		mockHelper.EXPECT().handleSCCs(ctx, &nfdCR).Return(nil)
-		mockHelper.EXPECT().handleMaster(ctx, &nfdCR).Return(nil)
-		mockHelper.EXPECT().handleWorker(ctx, &nfdCR).Return(nil)
-		mockHelper.EXPECT().handleTopology(ctx, &nfdCR).Return(nil)
-		mockHelper.EXPECT().handleGC(ctx, &nfdCR).Return(nil)
+		mockHelper.EXPECT().handleMaster(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
+		mockHelper.EXPECT().handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
+		mockHelper.EXPECT().handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
+		mockHelper.EXPECT().handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
 		mockHelper.EXPECT().handleStatus(ctx, &nfdCR).Return(nil)
 
 		res, err := nfdr.Reconcile(ctx, &nfdCR)
@@ -147,10 +148,10 @@ var _ = Describe("Reconcile", func() {
 
 		mockHelper.EXPECT().hasFinalizer(&nfdCR).Return(true)
 		mockHelper.EXPECT().handleSCCs(ctx, &nfdCR).Return(handlerSCCError)
-		mockHelper.EXPECT().handleMaster(ctx, &nfdCR).Return(handlerMasterError)
-		mockHelper.EXPECT().handleWorker(ctx, &nfdCR).Return(handlerWorkerError)
-		mockHelper.EXPECT().handleTopology(ctx, &nfdCR).Return(handleTopologyError)
-		mockHelper.EXPECT().handleGC(ctx, &nfdCR).Return(handlerGCError)
+		mockHelper.EXPECT().handleMaster(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handlerMasterError)
+		mockHelper.EXPECT().handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handlerWorkerError)
+		mockHelper.EXPECT().handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handleTopologyError)
+		mockHelper.EXPECT().handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handlerGCError)
 		mockHelper.EXPECT().handleStatus(ctx, &nfdCR).Return(handleStatusError)
 
 		res, err := nfdr.Reconcile(ctx, &nfdCR)
@@ -194,11 +195,11 @@ var _ = Describe("handleMaster", func() {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 		)
 
-		err := nfdh.handleMaster(ctx, &nfdCR)
+		err := nfdh.handleMaster(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -220,10 +221,10 @@ var _ = Describe("handleMaster", func() {
 					return nil
 				},
 			),
-			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, &existingDeployment).Return(nil),
+			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, &existingDeployment, nfdCR.Spec.Operand.Image).Return(nil),
 		)
 
-		err := nfdh.handleMaster(ctx, &nfdCR)
+		err := nfdh.handleMaster(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -231,10 +232,10 @@ var _ = Describe("handleMaster", func() {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+			mockDeployment.EXPECT().SetMasterDeploymentAsDesired(&nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(fmt.Errorf("some error")),
 		)
 
-		err := nfdh.handleMaster(ctx, &nfdCR)
+		err := nfdh.handleMaster(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -266,11 +267,11 @@ var _ = Describe("handleWorker", func() {
 			mockCM.EXPECT().SetWorkerConfigMapAsDesired(ctx, &nfdCR, gomock.Any()).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, gomock.Any()).Return(nil),
+			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 		)
 
-		err := nfdh.handleWorker(ctx, &nfdCR)
+		err := nfdh.handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -306,10 +307,10 @@ var _ = Describe("handleWorker", func() {
 					return nil
 				},
 			),
-			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, &existingDS).Return(nil),
+			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, &existingDS, nfdCR.Spec.Operand.Image).Return(nil),
 		)
 
-		err := nfdh.handleWorker(ctx, &nfdCR)
+		err := nfdh.handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -319,7 +320,7 @@ var _ = Describe("handleWorker", func() {
 			mockCM.EXPECT().SetWorkerConfigMapAsDesired(ctx, &nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
 		)
 
-		err := nfdh.handleWorker(ctx, &nfdCR)
+		err := nfdh.handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(HaveOccurred())
 	})
 
@@ -329,10 +330,10 @@ var _ = Describe("handleWorker", func() {
 			mockCM.EXPECT().SetWorkerConfigMapAsDesired(ctx, &nfdCR, gomock.Any()).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+			mockDS.EXPECT().SetWorkerDaemonsetAsDesired(ctx, &nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(fmt.Errorf("some error")),
 		)
 
-		err := nfdh.handleWorker(ctx, &nfdCR)
+		err := nfdh.handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -363,11 +364,11 @@ var _ = Describe("handleTopology", func() {
 		}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, gomock.Any()).Return(nil),
+			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 		)
 
-		err := nfdh.handleTopology(ctx, &nfdCR)
+		err := nfdh.handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -392,10 +393,10 @@ var _ = Describe("handleTopology", func() {
 					return nil
 				},
 			),
-			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, &existingDS).Return(nil),
+			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, &existingDS, nfdCR.Spec.Operand.Image).Return(nil),
 		)
 
-		err := nfdh.handleTopology(ctx, &nfdCR)
+		err := nfdh.handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -407,17 +408,17 @@ var _ = Describe("handleTopology", func() {
 		}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+			mockDS.EXPECT().SetTopologyDaemonsetAsDesired(ctx, &nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(fmt.Errorf("some error")),
 		)
 
-		err := nfdh.handleTopology(ctx, &nfdCR)
+		err := nfdh.handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(HaveOccurred())
 	})
 
 	It("if TopologyUpdate not set - nothing to do", func() {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
 
-		err := nfdh.handleTopology(ctx, &nfdCR)
+		err := nfdh.handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 })
@@ -444,11 +445,11 @@ var _ = Describe("handleGC", func() {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(nil),
 			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
 		)
 
-		err := nfdh.handleGC(ctx, &nfdCR)
+		err := nfdh.handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -470,10 +471,10 @@ var _ = Describe("handleGC", func() {
 					return nil
 				},
 			),
-			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, &existingDeployment).Return(nil),
+			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, &existingDeployment, nfdCR.Spec.Operand.Image).Return(nil),
 		)
 
-		err := nfdh.handleGC(ctx, &nfdCR)
+		err := nfdh.handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 	})
 
@@ -481,10 +482,10 @@ var _ = Describe("handleGC", func() {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
 		gomock.InOrder(
 			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+			mockDeployment.EXPECT().SetGCDeploymentAsDesired(&nfdCR, gomock.Any(), nfdCR.Spec.Operand.Image).Return(fmt.Errorf("some error")),
 		)
 
-		err := nfdh.handleGC(ctx, &nfdCR)
+		err := nfdh.handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(HaveOccurred())
 	})
 })
@@ -878,5 +879,33 @@ var _ = Describe("handleStatus", func() {
 
 		err := nfdh.handleStatus(ctx, &nfdCR)
 		Expect(err).To(HaveOccurred())
+	})
+})
+
+var _ = Describe("getOperandImage", Ordered, func() {
+	var nfdCR nfdv1.NodeFeatureDiscovery
+	const (
+		testImage      = "TestRegistry/TestNamespace/TestImage:latest"
+		otherTestImage = "TestRegistry/TestNamespace/SomeOtherTestImage:latest"
+	)
+	BeforeEach(func() {
+		nfdCR = nfdv1.NodeFeatureDiscovery{}
+	})
+	BeforeAll(func() {
+		err := os.Setenv("NODE_FEATURE_DISCOVERY_IMAGE", testImage)
+		Expect(err).ToNot(HaveOccurred())
+	})
+	AfterAll(func() {
+		err := os.Unsetenv("NODE_FEATURE_DISCOVERY_IMAGE")
+		Expect(err).ToNot(HaveOccurred())
+	})
+	It("Should get the operand image from the env variable", func() {
+		operandImage := getOperandImage(&nfdCR)
+		Expect(operandImage).To(Equal(testImage))
+	})
+	It("Should get the operand image from the cr", func() {
+		nfdCR.Spec.Operand.Image = otherTestImage
+		operandImage := getOperandImage(&nfdCR)
+		Expect(operandImage).To(Equal(otherTestImage))
 	})
 })
