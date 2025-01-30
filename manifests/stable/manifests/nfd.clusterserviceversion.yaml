@@ -16,7 +16,6 @@ metadata:
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
             "operand": {
-              "image": "quay.io/openshift/origin-node-feature-discovery:4.18",
               "imagePullPolicy": "IfNotPresent",
               "servicePort": 12000
             },
