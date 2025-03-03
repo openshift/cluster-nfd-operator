@@ -238,13 +238,8 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 				Labels: getWorkerLabelsAForApp("nfd-worker"),
 			},
 			Spec: corev1.PodSpec{
-				Tolerations: []corev1.Toleration{
-					{
-						Operator: "Exists",
-						Effect:   "NoSchedule",
-					},
-				},
-				Affinity: getWorkerAffinity(),
+				Tolerations: getWorkerTolerations(nfdInstance),
+				Affinity:    getWorkerAffinity(),
 
 				ServiceAccountName: "nfd-worker",
 				HostNetwork:        true,
