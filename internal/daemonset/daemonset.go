@@ -66,7 +66,6 @@ func (d *daemonset) SetTopologyDaemonsetAsDesired(ctx context.Context, nfdInstan
 			},
 			Spec: corev1.PodSpec{
 				ServiceAccountName: "nfd-topology-updater",
-				DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 				Containers: []corev1.Container{
 					{
 						Name:            "nfd-topology-updater",
@@ -249,7 +248,6 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 
 				ServiceAccountName: "nfd-worker",
 				HostNetwork:        true,
-				DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 				Containers: []corev1.Container{
 					{
 						Env:             getWorkerEnvs(),

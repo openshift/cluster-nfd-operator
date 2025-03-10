@@ -72,7 +72,6 @@ func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeature
 			},
 			Spec: corev1.PodSpec{
 				ServiceAccountName: "nfd-master",
-				DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 				RestartPolicy:      corev1.RestartPolicyAlways,
 				Tolerations:        getPodsTolerations(),
 				Affinity:           getPodsAffinity(),
@@ -111,7 +110,6 @@ func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDisc
 			},
 			Spec: corev1.PodSpec{
 				ServiceAccountName: "nfd-gc",
-				DNSPolicy:          corev1.DNSClusterFirstWithHostNet,
 				RestartPolicy:      corev1.RestartPolicyAlways,
 				Containers: []corev1.Container{
 					{
