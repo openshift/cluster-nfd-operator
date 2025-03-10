@@ -21,7 +21,6 @@ spec:
         app: nfd-topology-updater
     spec:
       serviceAccountName: nfd-topology-updater
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: nfd-topology-updater
           env:

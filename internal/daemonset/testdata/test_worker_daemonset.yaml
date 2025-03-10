@@ -84,7 +84,6 @@ spec:
         - mountPath: /host-usr/src
           name: host-usr-src
           readOnly: true
-      dnsPolicy: ClusterFirstWithHostNet
       serviceAccountName: nfd-worker
       tolerations:
       - effect: NoSchedule

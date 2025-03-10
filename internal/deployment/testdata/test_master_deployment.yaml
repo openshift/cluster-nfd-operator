@@ -21,7 +21,6 @@ spec:
         app: nfd-master
     spec:
       serviceAccountName: nfd-master
-      dnsPolicy: ClusterFirstWithHostNet
       restartPolicy: Always
       tolerations:
       - effect: NoSchedule
@@ -58,8 +57,7 @@ spec:
           imagePullPolicy: Always
           command:
             - "nfd-master"
-          args:
-            - "--port=12000"
+          args: []
           securityContext:
             runAsNonRoot: true
             seccompProfile:

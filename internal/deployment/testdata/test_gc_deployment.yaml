@@ -21,7 +21,6 @@ spec:
         app: nfd-gc
     spec:
       serviceAccountName: nfd-gc
-      dnsPolicy: ClusterFirstWithHostNet
       restartPolicy: Always
       containers:
         - name: nfd-gc
