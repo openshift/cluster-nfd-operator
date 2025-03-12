@@ -84,7 +84,7 @@ func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeature
 							"nfd-master",
 						},
 						Args:            getArgs(nfdInstance),
-						Env:             getEnvs(),
+						Env:             getMasterEnvs(nfdInstance),
 						SecurityContext: getMasterSecurityContext(),
 						LivenessProbe:   getLivenessProbe(),
 						ReadinessProbe:  getReadinessProbe(),
@@ -237,6 +237,10 @@ func getEnvs() []corev1.EnvVar {
 			},
 		},
 	}
+}
+
+func getMasterEnvs(nfdInstance *nfdv1.NodeFeatureDiscovery) []corev1.EnvVar {
+	return append(getEnvs(), nfdInstance.Spec.Operand.MasterEnvs...)
 }
 
 func getMasterSecurityContext() *corev1.SecurityContext {
