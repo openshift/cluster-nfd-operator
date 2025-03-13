@@ -179,11 +179,11 @@ site-serve:
 # Download controller-gen locally if necessary
 CONTROLLER_GEN = $(PROJECT_DIR)/bin/controller-gen
 controller-gen:
-	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.14.0)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.16.1)
 
 .PHONY: mockgen
 mockgen: ## Install mockgen locally.
-	$(GO_CMD) install go.uber.org/mock/mockgen@v0.3.0
+	$(GO_CMD) install go.uber.org/mock/mockgen@v0.5.0
 
 GOLANGCI_LINT = $(shell pwd)/bin/golangci-lint
 .PHONY: golangci-lint
