@@ -5,6 +5,7 @@
 //
 //	mockgen -source=nodefeaturediscovery_reconciler.go -package=new_controllers -destination=mock_nodefeaturediscovery_reconciler.go nodeFeatureDiscoveryHelperAPI
 //
+
 // Package new_controllers is a generated GoMock package.
 package new_controllers
 
@@ -20,6 +21,7 @@ import (
 type MocknodeFeatureDiscoveryHelperAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MocknodeFeatureDiscoveryHelperAPIMockRecorder
+	isgomock struct{}
 }
 
 // MocknodeFeatureDiscoveryHelperAPIMockRecorder is the mock recorder for MocknodeFeatureDiscoveryHelperAPI.
@@ -54,31 +56,31 @@ func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) finalizeComponents(ctx,
 }
 
 // handleGC mocks base method.
-func (m *MocknodeFeatureDiscoveryHelperAPI) handleGC(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operatorImage string) error {
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleGC(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "handleGC", ctx, nfdInstance, operatorImage)
+	ret := m.ctrl.Call(m, "handleGC", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // handleGC indicates an expected call of handleGC.
-func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleGC(ctx, nfdInstance, operatorImage any) *gomock.Call {
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleGC(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleGC", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleGC), ctx, nfdInstance, operatorImage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleGC", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleGC), ctx, nfdInstance, operandImage)
 }
 
 // handleMaster mocks base method.
-func (m *MocknodeFeatureDiscoveryHelperAPI) handleMaster(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operatorImage string) error {
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleMaster(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "handleMaster", ctx, nfdInstance, operatorImage)
+	ret := m.ctrl.Call(m, "handleMaster", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // handleMaster indicates an expected call of handleMaster.
-func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleMaster(ctx, nfdInstance, operatorImage any) *gomock.Call {
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleMaster(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleMaster", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleMaster), ctx, nfdInstance, operatorImage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleMaster", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleMaster), ctx, nfdInstance, operandImage)
 }
 
 // handlePrune mocks base method.
@@ -125,31 +127,31 @@ func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleStatus(ctx, nfdIn
 }
 
 // handleTopology mocks base method.
-func (m *MocknodeFeatureDiscoveryHelperAPI) handleTopology(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operatorImage string) error {
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleTopology(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "handleTopology", ctx, nfdInstance, operatorImage)
+	ret := m.ctrl.Call(m, "handleTopology", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // handleTopology indicates an expected call of handleTopology.
-func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleTopology(ctx, nfdInstance, operatorImage any) *gomock.Call {
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleTopology(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleTopology", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleTopology), ctx, nfdInstance, operatorImage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleTopology", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleTopology), ctx, nfdInstance, operandImage)
 }
 
 // handleWorker mocks base method.
-func (m *MocknodeFeatureDiscoveryHelperAPI) handleWorker(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operatorImage string) error {
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleWorker(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "handleWorker", ctx, nfdInstance, operatorImage)
+	ret := m.ctrl.Call(m, "handleWorker", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // handleWorker indicates an expected call of handleWorker.
-func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleWorker(ctx, nfdInstance, operatorImage any) *gomock.Call {
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleWorker(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleWorker", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleWorker), ctx, nfdInstance, operatorImage)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleWorker", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleWorker), ctx, nfdInstance, operandImage)
 }
 
 // hasFinalizer mocks base method.

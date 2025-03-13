@@ -269,6 +269,7 @@ go.opentelemetry.io/proto/otlp/trace/v1
 # go.uber.org/mock v0.4.0
 ## explicit; go 1.20
 go.uber.org/mock/gomock
+go.uber.org/mock/mockgen/model
 # golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 ## explicit; go 1.18
 golang.org/x/exp/constraints

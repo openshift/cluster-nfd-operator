@@ -5,6 +5,7 @@
 //
 //	mockgen -source=scc.go -package=scc -destination=mock_scc.go SccAPI
 //
+
 // Package scc is a generated GoMock package.
 package scc
 
@@ -21,6 +22,7 @@ import (
 type MockSccAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockSccAPIMockRecorder
+	isgomock struct{}
 }
 
 // MockSccAPIMockRecorder is the mock recorder for MockSccAPI.
