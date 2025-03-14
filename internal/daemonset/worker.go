@@ -19,6 +19,7 @@ package daemonset
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -198,4 +199,15 @@ func getWorkerVolumes() []corev1.Volume {
 
 func getWorkerLabelsAForApp(name string) map[string]string {
 	return map[string]string{"app": name}
+}
+
+func getWorkerTolerations(nfdInstance *nfdv1.NodeFeatureDiscovery) []corev1.Toleration {
+	basicTolerations := []corev1.Toleration{
+		{
+			Operator: "Exists",
+			Effect:   "NoSchedule",
+		},
+	}
+
+	return append(basicTolerations, nfdInstance.Spec.Operand.WorkerTolerations...)
 }
