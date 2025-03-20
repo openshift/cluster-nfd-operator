@@ -18,6 +18,7 @@ package test
 
 import (
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdv1alpha1 "github.com/openshift/cluster-nfd-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 )
@@ -28,6 +29,7 @@ func TestScheme() (*runtime.Scheme, error) {
 	funcs := []func(s *runtime.Scheme) error{
 		scheme.AddToScheme,
 		nfdv1.AddToScheme,
+		nfdv1alpha1.AddToScheme,
 	}
 
 	for _, f := range funcs {
