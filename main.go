@@ -16,12 +16,14 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
-	"os"
-
+	"github.com/go-logr/logr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/klog/v2/textlogger"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 
 	securityscheme "github.com/openshift/client-go/security/clientset/versioned/scheme"
 
@@ -29,15 +31,16 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	nfdopenshiftv1 "github.com/openshift/cluster-nfd-operator/api/v1"
+	nfdopenshiftiov1alpha1 "github.com/openshift/cluster-nfd-operator/api/v1alpha1"
+	nfdk8ssigsioalpha1 "github.com/openshift/cluster-nfd-operator/api/v1temp1"
 	"github.com/openshift/cluster-nfd-operator/internal/configmap"
-	"github.com/openshift/cluster-nfd-operator/internal/controllers"
+	new_controllers "github.com/openshift/cluster-nfd-operator/internal/controllers"
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 	"github.com/openshift/cluster-nfd-operator/internal/job"
@@ -60,9 +63,10 @@ const (
 
 // operatorArgs holds command line arguments
 type operatorArgs struct {
-	metricsAddr          string
-	enableLeaderElection bool
-	probeAddr            string
+	metricsAddr                string
+	enableLeaderElection       bool
+	conversionManagerProbeAddr string
+	probeAddr                  string
 }
 
 func init() {
@@ -70,6 +74,8 @@ func init() {
 	utilruntime.Must(securityscheme.AddToScheme(scheme))
 
 	utilruntime.Must(nfdopenshiftv1.AddToScheme(scheme))
+	utilruntime.Must(nfdopenshiftiov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(nfdk8ssigsioalpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -104,7 +110,6 @@ func main() {
 		fmt.Println(ProgramName, version)
 		os.Exit(0)
 	}
-
 	watchNamespace, err := getWatchNamespace()
 	if err != nil {
 		setupLogger.Error(err, "WatchNamespaceEnvVar is not set")
@@ -160,6 +165,8 @@ func main() {
 		setupLogger.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
 		os.Exit(1)
 	}
+	stopCh := ctrl.SetupSignalHandler()
+	conversionInitialization(args.conversionManagerProbeAddr, setupLogger, stopCh)
 	// +kubebuilder:scaffold:builder
 
 	// Next, add a Healthz checker to the manager. Healthz is a health and liveness package
@@ -178,7 +185,7 @@ func main() {
 
 	// Register signal handler for SIGINT and SIGTERM to terminate the manager
 	setupLogger.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(stopCh); err != nil {
 		setupLogger.Error(err, "problem running manager")
 		os.Exit(1)
 	}
@@ -193,6 +200,8 @@ func initFlags(flagset *flag.FlagSet) *operatorArgs {
 	flagset.StringVar(&args.probeAddr, "health-probe-bind-address", ":8081", "The address the probe "+
 		"endpoint binds to for determining liveness, readiness, and configuration of"+
 		"operator pods.")
+	flagset.StringVar(&args.conversionManagerProbeAddr, "conversion-manager-health-probe-bind-address", ":8082",
+		"The address the probe endpoint binds to for determining liveness/readiness of the global controller.")
 	flagset.BoolVar(&args.enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
@@ -207,4 +216,29 @@ func getWatchNamespace() (string, error) {
 		return "", fmt.Errorf("environment variable %s is not defined", watchNamespaceEnvVar)
 	}
 	return value, nil
+}
+
+func conversionInitialization(conversionManagerProbeAddr string, setupLogger logr.Logger, stopCh context.Context) {
+	conversionMgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		HealthProbeBindAddress: conversionManagerProbeAddr,
+		Metrics:                metricsserver.Options{BindAddress: "0"},
+		LeaderElection:         false,
+	})
+	if err != nil {
+		setupLogger.Error(err, "unable to start manager for NodeFeatureRule controller")
+		os.Exit(1)
+	}
+
+	if err = new_controllers.NewNodeFeatureRuleReconciler(conversionMgr.GetClient(), conversionMgr.GetScheme()).
+		SetupWithManager(conversionMgr); err != nil {
+		setupLogger.Error(err, "unable to create NodeFeatureRule controller")
+		os.Exit(1)
+	}
+	go func() {
+		if err := conversionMgr.Start(stopCh); err != nil {
+			setupLogger.Error(err, "problem running manager for NodeFeatureRule controller")
+			os.Exit(1)
+		}
+	}()
 }

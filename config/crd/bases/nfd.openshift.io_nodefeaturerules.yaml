@@ -41,7 +41,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: NodeFeatureRuleSpec describes a NodeFeatureRule.
+            description: NodeFeatureRuleSpec defines the desired state of NodeFeatureRule
             properties:
               rules:
                 description: Rules is a list of node customization rules.
@@ -311,8 +311,11 @@ spec:
             required:
             - rules
             type: object
-        required:
-        - spec
+          status:
+            description: NodeFeatureRuleStatus defines the observed state of NodeFeatureRule
+            type: object
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
