@@ -26,9 +26,17 @@ spec:
             - matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: DoesNotExist
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - "linux"
             - matchExpressions:
               - key: node-role.kubernetes.io/worker
                 operator: Exists
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - "linux"
       hostNetwork: true
       containers:
       - args: []
