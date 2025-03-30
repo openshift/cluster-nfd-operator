@@ -7,4 +7,5 @@ reviewers:
   - chr15p
   - ybettan
   - qbarrand
+  - TomerNewman
 component: "Node Feature Discovery Operator"
