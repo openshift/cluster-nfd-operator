@@ -45,3 +45,20 @@ rules:
   verbs:
   - get
   - update
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeatures
+  - nodefeaturerules
+  - nodefeaturegroups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeaturegroup/status
+  verbs:
+  - patch
+  - update

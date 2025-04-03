@@ -2,4 +2,5 @@
 resources:
 - nfd.openshift.io_v1_nodefeaturediscovery.yaml
 - nfd.openshift.io_v1alpha1_nodefeaturerules.yaml
+- nfd.openshift.io_v1alpha1_nodefeaturerule.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
