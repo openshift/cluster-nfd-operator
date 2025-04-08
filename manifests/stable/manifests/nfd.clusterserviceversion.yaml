@@ -66,7 +66,7 @@ metadata:
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
     containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.19
-    createdAt: "2024-12-19T11:01:35Z"
+    createdAt: "2025-04-08T11:06:30Z"
     description: |-
       The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
@@ -129,14 +129,6 @@ spec:
     - kind: NodeFeature
       name: nodefeatures.nfd.openshift.io
       version: v1alpha1
-    - description: |
-        NodeResourceTopology resource describes node resources and their topology.
-      kind: NodeResourceTopology
-      name: noderesourcetopologies.topology.node.k8s.io
-      version: v1alpha1
-    - kind: NodeResourceTopology
-      name: noderesourcetopologies.topology.node.k8s.io
-      version: v1alpha2
   description: |-
     The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
