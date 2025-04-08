@@ -16,6 +16,7 @@ metadata:
               "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
             },
             "operand": {
+              "imagePullPolicy": "IfNotPresent",
               "servicePort": 12000
             },
             "workerConfig": {
@@ -65,6 +66,7 @@ metadata:
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
     containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.19
+    createdAt: "2025-04-08T11:06:30Z"
     description: |-
       The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
@@ -94,7 +96,7 @@ metadata:
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
-    operators.operatorframework.io/builder: operator-sdk-v1.16.0+git
+    operators.operatorframework.io/builder: operator-sdk-v1.32.0
     operators.operatorframework.io/internal-objects: '["noderesourcetopologies.topology.node.k8s.io"]'
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v3
     provider: Red Hat
@@ -116,19 +118,17 @@ spec:
       kind: NodeFeatureDiscovery
       name: nodefeaturediscoveries.nfd.openshift.io
       version: v1
+    - kind: NodeFeatureGroup
+      name: nodefeaturegroups.nfd.openshift.io
+      version: v1alpha1
     - description: |
         NodeFeatureRule resource specifies a configuration for feature-based customization of node objects, such as node labeling.
       kind: NodeFeatureRule
       name: nodefeaturerules.nfd.openshift.io
       version: v1alpha1
-    - description: |
-        NodeResourceTopology resource describes node resources and their topology.
-      kind: NodeResourceTopology
-      name: noderesourcetopologies.topology.node.k8s.io
+    - kind: NodeFeature
+      name: nodefeatures.nfd.openshift.io
       version: v1alpha1
-    - kind: NodeResourceTopology
-      name: noderesourcetopologies.topology.node.k8s.io
-      version: v1alpha2
   description: |-
     The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
 
@@ -348,37 +348,13 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
-          - policy
-          resourceNames:
-          - nfd-worker
-          resources:
-          - podsecuritypolicies
-          verbs:
-          - use
-        - apiGroups:
           - ""
           resources:
-          - nodes/status
-          verbs:
-          - get
-          - patch
-          - update
-        - apiGroups:
-          - nfd.openshift.io
-          resources:
-          - nodefeaturerules
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - topology.node.k8s.io
-          resources:
-          - noderesourcetopologies
+          - events
           verbs:
           - create
-          - get
           - update
+          - watch
         - apiGroups:
           - apps
           resources:
@@ -404,9 +380,9 @@ spec:
           - update
           - watch
         - apiGroups:
-          - cert-manager.io
+          - batch
           resources:
-          - certificates
+          - jobs
           verbs:
           - create
           - delete
@@ -414,56 +390,23 @@ spec:
           - list
           - patch
           - update
+          - watch
+        - apiGroups:
+          - cert-manager.io
+          resources:
+          - certificates
+          verbs:
+          - get
+          - list
           - watch
         - apiGroups:
           - cert-manager.io
           resources:
           - issuers
           verbs:
-          - create
-          - delete
           - get
           - list
-          - patch
-          - update
           - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusteroperators
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusteroperators/status
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - clusterversions
-          verbs:
-          - get
-        - apiGroups:
-          - config.openshift.io
-          resources:
-          - proxies
-          verbs:
-          - get
-          - list
         - apiGroups:
           - coordination.k8s.io
           resources:
@@ -490,34 +433,6 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - endpoints
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - events
-          verbs:
-          - create
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - imagestreams/layers
-          verbs:
-          - get
-        - apiGroups:
-          - ""
-          resources:
           - namespaces
           verbs:
           - create
@@ -532,8 +447,6 @@ spec:
           resources:
           - nodes
           verbs:
-          - create
-          - delete
           - get
           - list
           - patch
@@ -542,44 +455,16 @@ spec:
         - apiGroups:
           - ""
           resources:
-          - persistentvolumeclaims
+          - nodes/status
           verbs:
           - get
           - list
+          - patch
           - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - persistentvolumes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - watch
         - apiGroups:
           - ""
           resources:
           - pods
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - ""
-          resources:
-          - pods/log
-          verbs:
-          - get
-        - apiGroups:
-          - ""
-          resources:
-          - secrets
           verbs:
           - create
           - delete
@@ -604,30 +489,6 @@ spec:
           - ""
           resources:
           - services
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - prometheusrules
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
           verbs:
           - create
           - delete
@@ -662,6 +523,56 @@ spec:
           - get
           - patch
           - update
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturerules
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeatures
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - nfd.openshift.io
+          resources:
+          - nodefeaturediscoveries/status
+          verbs:
+          - get
+          - patch
+          - update
+        - apiGroups:
+          - policy
+          resourceNames:
+          - nfd-worker
+          resources:
+          - podsecuritypolicies
+          verbs:
+          - use
         - apiGroups:
           - rbac.authorization.k8s.io
           resources:
@@ -711,18 +622,6 @@ spec:
           - update
           - watch
         - apiGroups:
-          - route.openshift.io
-          resources:
-          - routes
-          verbs:
-          - create
-          - delete
-          - get
-          - list
-          - patch
-          - update
-          - watch
-        - apiGroups:
           - security.openshift.io
           resources:
           - securitycontextconstraints
@@ -736,6 +635,26 @@ spec:
           - use
           - watch
         - apiGroups:
+          - topology.node.k8s.io
+          resources:
+          - noderesourcetopologies
+          verbs:
+          - create
+          - get
+          - update
+        - apiGroups:
+          - security.openshift.io
+          resources:
+          - securitycontextconstraints
+          verbs:
+          - create
+          - delete
+          - get
+          - list
+          - patch
+          - update
+          - watch
+        - apiGroups:
           - authentication.k8s.io
           resources:
           - tokenreviews
@@ -747,9 +666,11 @@ spec:
           - subjectaccessreviews
           verbs:
           - create
-        serviceAccountName: nfd-operator
+        serviceAccountName: nfd-manager
       deployments:
-      - name: nfd-controller-manager
+      - label:
+          control-plane: controller-manager
+        name: nfd-controller-manager
         spec:
           replicas: 1
           selector:
@@ -762,31 +683,6 @@ spec:
                 control-plane: controller-manager
             spec:
               containers:
-              - args:
-                - --secure-listen-address=0.0.0.0:8443
-                - --upstream=http://127.0.0.1:8080/
-                - --logtostderr=true
-                - --v=6
-                - --tls-cert-file=/etc/secrets/tls.crt
-                - --tls-private-key-file=/etc/secrets/tls.key
-                - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_RSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
-                image: registry.redhat.io/openshift4/ose-kube-rbac-proxy
-                name: kube-rbac-proxy
-                ports:
-                - containerPort: 8443
-                  name: https
-                resources:
-                  limits:
-                    cpu: 500m
-                    memory: 128Mi
-                  requests:
-                    cpu: 250m
-                    memory: 64Mi
-                securityContext:
-                  readOnlyRootFilesystem: true
-                volumeMounts:
-                - mountPath: /etc/secrets
-                  name: node-feature-discovery-operator-tls
               - args:
                 - --metrics-bind-address=127.0.0.1:8080
                 - --leader-elect
@@ -831,12 +727,11 @@ spec:
                     drop:
                     - ALL
                   readOnlyRootFilesystem: true
-              serviceAccountName: nfd-operator
+                  runAsNonRoot: true
+                  seccompProfile:
+                    type: RuntimeDefault
+              serviceAccountName: nfd-manager
               terminationGracePeriodSeconds: 10
-              volumes:
-              - name: node-feature-discovery-operator-tls
-                secret:
-                  secretName: node-feature-discovery-operator-tls
       permissions:
       - rules:
         - apiGroups:
@@ -913,7 +808,7 @@ spec:
           - '*'
           verbs:
           - '*'
-        serviceAccountName: nfd-operator
+        serviceAccountName: nfd-manager
     strategy: deployment
   installModes:
   - supported: true

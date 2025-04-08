@@ -161,10 +161,8 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 	err = r.helper.handleWorker(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
-	logger.Info("reconciling topology components")
-	err = r.helper.handleTopology(ctx, nfdInstance, operandImage)
-	errs = append(errs, err)
-
+	// Topology is not handled, since we do not deploy the NRT CRD. Topology operations are handled
+	// by NUMA operator
 	logger.Info("reconciling garbage collector")
 	err = r.helper.handleGC(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
@@ -344,6 +342,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleWorker(ctx context.Context, nfdIns
 }
 
 func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
+
 	if !nfdInstance.Spec.TopologyUpdater {
 		return nil
 	}
