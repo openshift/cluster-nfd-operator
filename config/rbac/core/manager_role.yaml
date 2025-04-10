@@ -311,3 +311,21 @@ rules:
   - patch
   - update
   - watch
+- apiGroups:
+  - nfd.k8s-sigs.io
+  resources:
+  - nodefeaturerules
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - delete
+  - update
+  - patch
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeaturerules/finalizers
+  verbs:
+  - update
