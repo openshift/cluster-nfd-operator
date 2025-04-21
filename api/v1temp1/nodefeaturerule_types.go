@@ -30,10 +30,9 @@ import (
 // NodeFeatureRule resource specifies a configuration for feature-based
 // customization of node objects, such as node labeling.
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:shortName=nfr,scope=Cluster
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // +genclient
-// +kubebuilder:resource:scope=Namespaced
+// +kubebuilder:resource:shortName=nfr,scope=Namespaced
 type NodeFeatureRule struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

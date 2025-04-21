@@ -118,6 +118,9 @@ undeploy: kustomize
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=operator webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	# temp fix, remove once we stop using the downstream NodeFeatureRule, and move the upstream under api/v1alpha1
+	@sed -i 's|name: v1temp1|name: v1alpha1|g' config/crd/bases/nfd.k8s-sigs.io_nodefeaturerules.yaml
+
 
 # Run go fmt against code
 fmt:
