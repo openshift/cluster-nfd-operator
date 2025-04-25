@@ -142,6 +142,10 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 		return res, r.helper.removeFinalizer(ctx, nfdInstance)
 	}
 
+	// setting the topology flag to false, in order to skip the generation of Topology deployment
+	// this code can be removed once it is decided that NFD should be responsible for topology deployment
+	nfdInstance.Spec.TopologyUpdater = false
+
 	// If the finalizer doesn't exist, add it.
 	if !r.helper.hasFinalizer(nfdInstance) {
 		return res, r.helper.setFinalizer(ctx, nfdInstance)
