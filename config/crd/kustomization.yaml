@@ -4,7 +4,6 @@
 resources:
 - bases/nfd.openshift.io_nodefeaturediscoveries.yaml
 - bases/nfd.openshift.io_nodefeaturerules.yaml
-- bases/node.k8s.io_v1alpha1_noderesoursetopologies.yaml
 - bases/nfd.openshift.io_nodefeatures.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
