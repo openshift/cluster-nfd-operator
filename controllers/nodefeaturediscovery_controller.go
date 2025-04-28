@@ -450,6 +450,10 @@ func (r *NodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	// setting the topology flag to false, in order to skip the generation of Topology deployment
+ 	// this code can be removed once it is decided that NFD should be responsible for topology deployment
+ 	instance.Spec.TopologyUpdater = false
+
 	// If the resources are to be deleted, first check to see if the
 	// deletion timestamp pointer is not nil. A non-nil value indicates
 	// someone or something has triggered the deletion.
