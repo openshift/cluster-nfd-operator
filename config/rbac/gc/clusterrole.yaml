@@ -24,7 +24,7 @@ rules:
   - delete
   - list
 - apiGroups:
-  - nfd.k8s-sigs.io
+  - nfd.openshift.io
   resources:
   - nodefeatures
   verbs:
