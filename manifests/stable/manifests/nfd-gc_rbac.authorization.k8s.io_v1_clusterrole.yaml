@@ -31,3 +31,10 @@ rules:
   verbs:
   - delete
   - list
+- apiGroups:
+  - nfd.openshift.io
+  resources:
+  - nodefeatures
+  verbs:
+  - delete
+  - list
