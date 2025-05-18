@@ -10,4 +10,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: nfd-topology-updater
-  namespace: node-feature-discovery
+  namespace: openshift-nfd
