@@ -5,11 +5,11 @@ spec:
   - name: node-feature-discovery
     from:
       kind: DockerImage
-      name: quay.io/openshift/origin-node-feature-discovery:4.19
+      name: quay.io/openshift/origin-node-feature-discovery:4.20
   - name: cluster-nfd-operator
     from:
       kind: DockerImage
-      name: quay.io/openshift/origin-cluster-nfd-operator:4.19
+      name: quay.io/openshift/origin-cluster-nfd-operator:4.20
   - name: kube-rbac-proxy
     from:
       kind: DockerImage

@@ -55,7 +55,7 @@ spec:
             - name: OPERATOR_NAME
               value: "cluster-nfd-operator"
             - name: NODE_FEATURE_DISCOVERY_IMAGE
-              value: "quay.io/openshift/origin-node-feature-discovery:4.19"
+              value: "quay.io/openshift/origin-node-feature-discovery:4.20"
           ports:
             - name: metrics
               containerPort: 8080
