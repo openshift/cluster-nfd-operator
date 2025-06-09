@@ -1,6 +1,6 @@
 module github.com/openshift/cluster-nfd-operator
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.14.0
