@@ -1,0 +1,19 @@
+FROM quay.io/openshift/origin-cli:4.20 as builder
+
+FROM registry.access.redhat.com/ubi9/ubi-minimal:9.4
+
+RUN microdnf update -y \
+    && microdnf install -y tar rsync findutils gzip iproute util-linux shadow-utils \
+    && microdnf clean all
+
+LABEL org.opencontainers.image.title=nfd-operator-must-gather
+LABEL org.opencontainers.image.description="Must-gather image for the Node Feature Discovery Operator"
+LABEL org.opencontainers.image.url=https://github.com/openshift/cluster-nfd-operator
+LABEL org.opencontainers.image.source=https://github.com/openshift/cluster-nfd-operator
+LABEL org.opencontainers.image.version=main
+
+COPY --from=builder /usr/bin/oc /usr/bin/oc
+
+COPY must-gather/* /usr/bin/
+
+CMD ["/usr/bin/gather"]
