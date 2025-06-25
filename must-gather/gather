@@ -1,0 +1,157 @@
+#!/bin/bash
+
+set -euo pipefail
+
+DEFAULT_NAMESPACE="openshift-nfd"
+NFD_NAMESPACE="${NFD_NAMESPACE:-$DEFAULT_NAMESPACE}"
+TIMESTAMP=$(date +"%Y%m%d-%H%M%S")
+OUTPUT_DIR="${OUTPUT_DIR:-must-gather}"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+log_info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+create_output_dir() {
+    local output_dir="$1"
+    log_info "Creating output directory: ${output_dir}"
+    mkdir -p "${output_dir}"/{cluster,nodes,nfd-operator,nfd-resources,logs,events}
+}
+
+check_prerequisites() {
+    log_info "Checking prerequisites"
+    if ! command -v oc &> /dev/null; then
+        log_error "oc command not found. Please ensure OpenShift CLI is installed."
+        exit 1
+    fi
+    if ! oc whoami &> /dev/null; then
+        log_error "Not logged into OpenShift cluster. Please login first."
+        exit 1
+    fi
+    log_info "Prerequisites check passed"
+}
+
+collect_cluster_info() {
+    local output_dir="$1"
+    log_info "Collecting cluster information"
+    oc get clusterversion -o yaml > "${output_dir}/cluster/clusterversion.yaml" 2>/dev/null || log_warn "Failed to get cluster version"
+    oc get clusteroperators -o yaml > "${output_dir}/cluster/clusteroperators.yaml" 2>/dev/null || log_warn "Failed to get cluster operators"
+    oc get nodes -o wide > "${output_dir}/nodes/nodes-wide.txt" 2>/dev/null || log_warn "Failed to get nodes wide output"
+    oc get nodes -o yaml > "${output_dir}/nodes/nodes.yaml" 2>/dev/null || log_warn "Failed to get nodes yaml"
+}
+
+collect_nfd_operator() {
+    local ns="$1"
+    local output_dir="$2"
+    log_info "Collecting NFD operator resources from namespace: ${ns}"
+    mkdir -p "${output_dir}/nfd-operator/${ns}"
+
+    oc get deployment -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/deployments.yaml" 2>/dev/null || log_warn "Failed to get deployments in $ns"
+    oc get pods -n "$ns" -o wide > "${output_dir}/nfd-operator/${ns}/pods-wide.txt" 2>/dev/null || log_warn "Failed to get pods wide output in $ns"
+    oc get pods -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/pods.yaml" 2>/dev/null || log_warn "Failed to get pods yaml in $ns"
+    oc get replicasets -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/replicasets.yaml" 2>/dev/null || log_warn "Failed to get replicasets in $ns"
+    oc get daemonsets -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/daemonsets.yaml" 2>/dev/null || log_warn "Failed to get daemonsets in $ns"
+    oc get services -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/services.yaml" 2>/dev/null || log_warn "Failed to get services in $ns"
+    oc get configmaps -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/configmaps.yaml" 2>/dev/null || log_warn "Failed to get configmaps in $ns"
+    oc get secrets -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/secrets.yaml" 2>/dev/null || log_warn "Failed to get secrets in $ns"
+    oc get serviceaccounts -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/serviceaccounts.yaml" 2>/dev/null || log_warn "Failed to get service accounts in $ns"
+    oc get rolebindings -n "$ns" -o yaml > "${output_dir}/nfd-operator/${ns}/rolebindings.yaml" 2>/dev/null || log_warn "Failed to get role bindings in $ns"
+
+    oc get clusterrolebindings -o yaml | grep -A 10 -B 10 nfd > "${output_dir}/nfd-operator/clusterrolebindings.yaml" 2>/dev/null || log_warn "Failed to get NFD cluster role bindings"
+    oc get clusterroles -o yaml | grep -A 20 -B 5 nfd > "${output_dir}/nfd-operator/clusterroles.yaml" 2>/dev/null || log_warn "Failed to get NFD cluster roles"
+}
+
+collect_nfd_resources() {
+    local ns="$1"
+    local output_dir="$2"
+    log_info "Collecting NFD custom resources"
+
+    oc get crd | grep nfd > "${output_dir}/nfd-resources/nfd-crds.txt" 2>/dev/null || log_warn "No NFD CRDs found"
+    for crd in $(oc get crd -o name | grep nfd 2>/dev/null); do
+        crd_name=$(basename "$crd")
+        oc get "$crd" -o yaml > "${output_dir}/nfd-resources/crd-${crd_name}.yaml" 2>/dev/null || log_warn "Failed to get CRD: $crd_name"
+    done
+
+    oc get nodefeaturerules --all-namespaces -o yaml > "${output_dir}/nfd-resources/nodefeaturerules-all-namespaces.yaml" 2>/dev/null || log_warn "Failed to get NodeFeatureRules"
+    oc get nodefeaturerules --all-namespaces -o wide > "${output_dir}/nfd-resources/nodefeaturerules-all-namespaces-wide.txt" 2>/dev/null || log_warn "Failed to get NodeFeatureRules wide"
+
+    oc get nodefeatures -n "$ns" -o yaml > "${output_dir}/nfd-resources/nodefeatures.yaml" 2>/dev/null || log_warn "Failed to get NodeFeatures"
+    oc get nodefeatures -n "$ns" -o wide > "${output_dir}/nfd-resources/nodefeatures-wide.txt" 2>/dev/null || log_warn "Failed to get NodeFeatures wide"
+
+    oc get nodefeaturediscovery -n "$ns" -o yaml > "${output_dir}/nfd-resources/nodefeaturediscovery.yaml" 2>/dev/null || log_warn "Failed to get NodeFeatureDiscovery"
+    oc get nodefeaturediscovery -n "$ns" -o wide > "${output_dir}/nfd-resources/nodefeaturediscovery-wide.txt" 2>/dev/null || log_warn "Failed to get NodeFeatureDiscovery wide"
+}
+
+collect_events() {
+    local ns="$1"
+    local output_dir="$2"
+    log_info "Collecting events from namespace: $ns"
+    oc get events -n "$ns" --sort-by='.lastTimestamp' > "${output_dir}/events/events-${ns}.txt" 2>/dev/null || log_warn "Failed to get events in $ns"
+    oc get events --all-namespaces --sort-by='.lastTimestamp' | grep -i nfd > "${output_dir}/events/cluster-nfd-events.txt" 2>/dev/null || log_warn "No NFD-related cluster events"
+    oc get events --all-namespaces --field-selector involvedObject.kind=Node --sort-by='.lastTimestamp' > "${output_dir}/events/node-events.txt" 2>/dev/null || log_warn "Failed to get node events"
+    oc get events --all-namespaces --sort-by='.lastTimestamp' | grep -E "(NodeFeature|NodeFeatureRule|NodeFeatureDiscovery)" > "${output_dir}/events/nfd-resource-events.txt" 2>/dev/null || log_warn "No NFD custom resource events"
+}
+
+collect_logs() {
+    local ns="$1"
+    local output_dir="$2"
+    log_info "Collecting logs for namespace: $ns"
+    mkdir -p "${output_dir}/logs/${ns}"
+    local pods
+    pods=$(oc get pods -n "$ns" -o name 2>/dev/null) || { log_warn "Failed to get pods in $ns"; return; }
+    while IFS= read -r pod; do
+        pod_name=$(basename "$pod")
+        oc logs -n "$ns" "$pod" > "${output_dir}/logs/${ns}/${pod_name}.log" 2>/dev/null || log_warn "Failed to get logs for $pod_name"
+        local containers
+        containers=$(oc get "$pod" -n "$ns" -o jsonpath='{.spec.containers[*].name}' 2>/dev/null)
+        for container in $containers; do
+            oc logs -n "$ns" "$pod" -c "$container" > "${output_dir}/logs/${ns}/${pod_name}-${container}.log" 2>/dev/null || log_warn "Failed logs for $pod_name/$container"
+        done
+    done <<< "$pods"
+}
+
+collect_node_features() {
+    local output_dir="$1"
+    log_info "Collecting node feature information"
+    oc get nodes --show-labels > "${output_dir}/nodes/node-labels.txt" 2>/dev/null || log_warn "Failed to get node labels"
+    local nodes
+    nodes=$(oc get nodes -o name 2>/dev/null) || return
+    while IFS= read -r node; do
+        node_name=$(basename "$node")
+        oc describe "$node" > "${output_dir}/nodes/describe-${node_name}.txt" 2>/dev/null || log_warn "Failed to describe $node_name"
+    done <<< "$nodes"
+}
+
+create_archive() {
+    local output_dir="$1"
+    local timestamp="$2"
+    log_info "Creating archive"
+    cd "${OUTPUT_DIR}"
+    tar -czf "nfd-must-gather-${TIMESTAMP}.tar.gz" *
+}
+
+main() {
+    local ns="$NFD_NAMESPACE"
+    local output_dir="$OUTPUT_DIR"
+    local timestamp="$TIMESTAMP"
+    log_info "Starting NFD Operator Must Gather collection"
+    check_prerequisites
+    create_output_dir "$output_dir"
+    collect_cluster_info "$output_dir"
+    collect_nfd_operator "$ns" "$output_dir"
+    collect_nfd_resources "$ns" "$output_dir"
+    collect_logs "$ns" "$output_dir"
+    collect_events "$ns" "$output_dir"
+    collect_node_features "$output_dir"
+    create_archive "$output_dir" "$timestamp"
+    log_info "Must-gather completed. Output: ${output_dir}"
+}
+
+trap 'log_error "Script interrupted"; exit 1' INT TERM
+
+main
