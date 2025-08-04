@@ -262,6 +262,7 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 					},
 				},
 				Volumes: getWorkerVolumes(),
+				NodeSelector: nfdInstance.Spec.Operand.WorkerNodeSelector,
 			},
 		},
 	}

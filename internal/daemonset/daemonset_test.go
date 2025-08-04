@@ -95,6 +95,7 @@ var _ = Describe("SetWorkerDaemonsetAsDesired", func() {
 			Spec: nfdv1.NodeFeatureDiscoverySpec{
 				Operand: nfdv1.OperandSpec{
 					Image: "test-image",
+					WorkerNodeSelector: map[string]string{"worker-pod": "true"},
 				},
 			},
 		}
