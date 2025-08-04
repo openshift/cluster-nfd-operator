@@ -19,6 +19,8 @@ spec:
       labels:
         app: nfd-worker
     spec:
+      nodeSelector:
+        worker-pod: "true"
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

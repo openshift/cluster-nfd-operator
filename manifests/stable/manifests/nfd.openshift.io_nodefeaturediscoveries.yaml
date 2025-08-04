@@ -352,6 +352,12 @@ spec:
                       - name
                       type: object
                     type: array
+                  workerNodeSelector:
+                    additionalProperties:
+                      type: string
+                    description: WorkerNodeSelector describes on which nodes the worker
+                      pod should be deployed.
+                    type: object
                   workerTolerations:
                     description: WorkerTolerations defines tolerations to be applied
                       to the worker Daemonset
