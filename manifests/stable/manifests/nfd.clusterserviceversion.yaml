@@ -50,9 +50,6 @@ metadata:
             "namespace": "openshift-nfd"
           },
           "spec": {
-            "customConfig": {
-              "configData": "#    - name: \"more.kernel.features\"\n#      matchOn:\n#      - loadedKMod: [\"example_kmod3\"]\n#    - name: \"more.features.by.nodename\"\n#      value: customValue\n#      matchOn:\n#      - nodename: [\"special-.*-node-.*\"]\n"
-            },
             "operand": {
               "imagePullPolicy": "IfNotPresent",
               "servicePort": 12000
