@@ -43,17 +43,17 @@ func (m *MockJobAPI) EXPECT() *MockJobAPIMockRecorder {
 }
 
 // CreatePruneJob mocks base method.
-func (m *MockJobAPI) CreatePruneJob(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) error {
+func (m *MockJobAPI) CreatePruneJob(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePruneJob", ctx, nfdInstance)
+	ret := m.ctrl.Call(m, "CreatePruneJob", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreatePruneJob indicates an expected call of CreatePruneJob.
-func (mr *MockJobAPIMockRecorder) CreatePruneJob(ctx, nfdInstance any) *gomock.Call {
+func (mr *MockJobAPIMockRecorder) CreatePruneJob(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePruneJob", reflect.TypeOf((*MockJobAPI)(nil).CreatePruneJob), ctx, nfdInstance)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePruneJob", reflect.TypeOf((*MockJobAPI)(nil).CreatePruneJob), ctx, nfdInstance, operandImage)
 }
 
 // GetJob mocks base method.
