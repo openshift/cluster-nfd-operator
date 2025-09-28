@@ -131,7 +131,7 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 		if err != nil {
 			return res, fmt.Errorf("failed to finalize components for %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
 		}
-		done, err := r.helper.handlePrune(ctx, nfdInstance)
+		done, err := r.helper.handlePrune(ctx, nfdInstance, operandImage)
 		if err != nil {
 			return res, fmt.Errorf("failed to handle pruning for %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
 		}
@@ -191,7 +191,7 @@ type nodeFeatureDiscoveryHelperAPI interface {
 	handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 	handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 	handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
-	handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) (bool, error)
+	handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) (bool, error)
 	handleStatus(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 }
 
@@ -381,7 +381,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleGC(ctx context.Context, nfdInstanc
 	return nil
 }
 
-func (nfdh *nodeFeatureDiscoveryHelper) handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) (bool, error) {
+func (nfdh *nodeFeatureDiscoveryHelper) handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) (bool, error) {
 	if !nfdInstance.Spec.PruneOnDelete {
 		return true, nil
 	}
@@ -389,7 +389,7 @@ func (nfdh *nodeFeatureDiscoveryHelper) handlePrune(ctx context.Context, nfdInst
 	pruneJob, err := nfdh.jobAPI.GetJob(ctx, nfdInstance.Namespace, "nfd-prune")
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
-			err = nfdh.jobAPI.CreatePruneJob(ctx, nfdInstance)
+			err = nfdh.jobAPI.CreatePruneJob(ctx, nfdInstance, operandImage)
 			if err != nil {
 				return false, fmt.Errorf("failed to create nfd-prune job: %w", err)
 			}
