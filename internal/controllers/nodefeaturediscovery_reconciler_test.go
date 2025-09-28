@@ -89,14 +89,14 @@ var _ = Describe("Reconcile", func() {
 		}
 		mockHelper.EXPECT().finalizeComponents(ctx, &nfdCR).Return(nil)
 		if handlePruneError {
-			mockHelper.EXPECT().handlePrune(ctx, &nfdCR).Return(false, fmt.Errorf("some error"))
+			mockHelper.EXPECT().handlePrune(ctx, &nfdCR, gomock.Any()).Return(false, fmt.Errorf("some error"))
 			goto executeTestFunction
 		}
 		if !pruneDone {
-			mockHelper.EXPECT().handlePrune(ctx, &nfdCR).Return(false, nil)
+			mockHelper.EXPECT().handlePrune(ctx, &nfdCR, gomock.Any()).Return(false, nil)
 			goto executeTestFunction
 		}
-		mockHelper.EXPECT().handlePrune(ctx, &nfdCR).Return(true, nil)
+		mockHelper.EXPECT().handlePrune(ctx, &nfdCR, gomock.Any()).Return(true, nil)
 		if removeFinalizerError {
 			mockHelper.EXPECT().removeFinalizer(ctx, &nfdCR).Return(fmt.Errorf("some error"))
 			goto executeTestFunction
@@ -740,7 +740,7 @@ var _ = Describe("handlePrune", func() {
 	}
 
 	It("prune not defined in the CR", func() {
-		done, err := nfdh.handlePrune(ctx, &nfdCR)
+		done, err := nfdh.handlePrune(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 		Expect(err).To(BeNil())
 		Expect(done).To(BeTrue())
 	})
@@ -749,7 +749,7 @@ var _ = Describe("handlePrune", func() {
 		nfdCR.Spec.PruneOnDelete = true
 		mockJob.EXPECT().GetJob(ctx, namespace, "nfd-prune").Return(nil, fmt.Errorf("some error"))
 
-		done, err := nfdh.handlePrune(ctx, &nfdCR)
+		done, err := nfdh.handlePrune(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(HaveOccurred())
 		Expect(done).To(BeFalse())
@@ -759,10 +759,10 @@ var _ = Describe("handlePrune", func() {
 		nfdCR.Spec.PruneOnDelete = true
 		gomock.InOrder(
 			mockJob.EXPECT().GetJob(ctx, namespace, "nfd-prune").Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockJob.EXPECT().CreatePruneJob(ctx, &nfdCR).Return(fmt.Errorf("some error")),
+			mockJob.EXPECT().CreatePruneJob(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(fmt.Errorf("some error")),
 		)
 
-		done, err := nfdh.handlePrune(ctx, &nfdCR)
+		done, err := nfdh.handlePrune(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(HaveOccurred())
 		Expect(done).To(BeFalse())
@@ -772,10 +772,10 @@ var _ = Describe("handlePrune", func() {
 		nfdCR.Spec.PruneOnDelete = true
 		gomock.InOrder(
 			mockJob.EXPECT().GetJob(ctx, namespace, "nfd-prune").Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
-			mockJob.EXPECT().CreatePruneJob(ctx, &nfdCR).Return(nil),
+			mockJob.EXPECT().CreatePruneJob(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil),
 		)
 
-		done, err := nfdh.handlePrune(ctx, &nfdCR)
+		done, err := nfdh.handlePrune(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 
 		Expect(err).To(BeNil())
 		Expect(done).To(BeFalse())
@@ -792,7 +792,7 @@ var _ = Describe("handlePrune", func() {
 		}
 		mockJob.EXPECT().GetJob(ctx, namespace, "nfd-prune").Return(&foundJob, nil)
 
-		done, err := nfdh.handlePrune(ctx, &nfdCR)
+		done, err := nfdh.handlePrune(ctx, &nfdCR, nfdCR.Spec.Operand.Image)
 
 		switch {
 		case !podFailed && !podSucceeded:

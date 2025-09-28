@@ -84,18 +84,18 @@ func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleMaster(ctx, nfdIn
 }
 
 // handlePrune mocks base method.
-func (m *MocknodeFeatureDiscoveryHelperAPI) handlePrune(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) (bool, error) {
+func (m *MocknodeFeatureDiscoveryHelperAPI) handlePrune(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "handlePrune", ctx, nfdInstance)
+	ret := m.ctrl.Call(m, "handlePrune", ctx, nfdInstance, operandImage)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // handlePrune indicates an expected call of handlePrune.
-func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handlePrune(ctx, nfdInstance any) *gomock.Call {
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handlePrune(ctx, nfdInstance, operandImage any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handlePrune", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handlePrune), ctx, nfdInstance)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handlePrune", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handlePrune), ctx, nfdInstance, operandImage)
 }
 
 // handleSCCs mocks base method.
