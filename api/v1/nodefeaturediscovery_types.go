@@ -107,9 +107,9 @@ type OperandSpec struct {
 
 	// MasterEnv defines environment variables to be added to the master deployment
 	MasterEnvs []corev1.EnvVar `json:"masterEnvs,omitempty"`
-	
+
 	// WorkerNodeSelector describes on which nodes the worker pod should be deployed.
-        WorkerNodeSelector map[string]string `json:"workerNodeSelector,omitempty"`
+	WorkerNodeSelector map[string]string `json:"workerNodeSelector,omitempty"`
 }
 
 // ConfigMap describes configuration options for the NFD worker

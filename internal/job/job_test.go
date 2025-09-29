@@ -101,7 +101,7 @@ var _ = Describe("CreatePruneJob", func() {
 
 		clnt.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&testPruneJob))
 
-		err = jobAPI.CreatePruneJob(ctx, &nfdCR)
+		err = jobAPI.CreatePruneJob(ctx, &nfdCR, "test-image")
 		Expect(err).To(BeNil())
 	})
 })
