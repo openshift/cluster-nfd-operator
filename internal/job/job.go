@@ -36,7 +36,7 @@ import (
 
 type JobAPI interface {
 	GetJob(ctx context.Context, namespace, name string) (*batchv1.Job, error)
-	CreatePruneJob(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
+	CreatePruneJob(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 }
 
 type job struct {
@@ -61,7 +61,7 @@ func (j *job) GetJob(ctx context.Context, namespace, name string) (*batchv1.Job,
 	return pruneJob, nil
 }
 
-func (j *job) CreatePruneJob(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+func (j *job) CreatePruneJob(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error {
 	pruneJob := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "nfd-prune",
@@ -82,7 +82,7 @@ func (j *job) CreatePruneJob(ctx context.Context, nfdInstance *nfdv1.NodeFeature
 					Containers: []corev1.Container{
 						{
 							Name:            "nfd-prune",
-							Image:           nfdInstance.Spec.Operand.ImagePath(),
+							Image:           operandImage,
 							ImagePullPolicy: corev1.PullAlways,
 							Command: []string{
 								"nfd-master",
