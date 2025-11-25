@@ -289,7 +289,7 @@ var _ = Describe("getMasterEnvs", func() {
 		}
 
 		res := getMasterEnvs(&nfdCR)
-		Expect(res).To(Equal(getEnvs()))
+		Expect(res).To(Equal(append(getEnvs(), getMemLimitEnv())))
 	})
 
 	It("master envs is an empty slice", func() {
@@ -302,7 +302,7 @@ var _ = Describe("getMasterEnvs", func() {
 		}
 
 		res := getMasterEnvs(&nfdCR)
-		Expect(res).To(Equal(getEnvs()))
+		Expect(res).To(Equal(append(getEnvs(), getMemLimitEnv())))
 	})
 
 	It("master envs contains value", func() {
@@ -322,7 +322,7 @@ var _ = Describe("getMasterEnvs", func() {
 				},
 			},
 		}
-		expectedRes := append(getEnvs(), nfdCR.Spec.Operand.MasterEnvs[0], nfdCR.Spec.Operand.MasterEnvs[1])
+		expectedRes := append(append(getEnvs(), getMemLimitEnv()), nfdCR.Spec.Operand.MasterEnvs[0], nfdCR.Spec.Operand.MasterEnvs[1])
 
 		res := getMasterEnvs(&nfdCR)
 		Expect(res).To(Equal(expectedRes))

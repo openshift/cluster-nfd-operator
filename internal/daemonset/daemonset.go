@@ -22,6 +22,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
@@ -122,8 +123,18 @@ func getArgs(nfdInstance *nfdv1.NodeFeatureDiscovery) []string {
 }
 
 func getWorkerEnvs(nfdInstance *nfdv1.NodeFeatureDiscovery) []corev1.EnvVar {
-	basicEnvVars := getBasicEnvs()
-	return append(basicEnvVars, nfdInstance.Spec.Operand.WorkerEnvs...)
+	return append(append(getBasicEnvs(), getMemLimitEnv()), nfdInstance.Spec.Operand.WorkerEnvs...)
+}
+
+func getMemLimitEnv() corev1.EnvVar {
+	return corev1.EnvVar{
+		Name: "GOMEMLIMIT",
+		ValueFrom: &corev1.EnvVarSource{
+			ResourceFieldRef: &corev1.ResourceFieldSelector{
+				Resource: "limits.memory",
+			},
+		},
+	}
 }
 
 func getBasicEnvs() []corev1.EnvVar {
@@ -232,6 +243,20 @@ func getVolumes() []corev1.Volume {
 	}
 }
 
+func getLimits() corev1.ResourceList {
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("200m"),
+		corev1.ResourceMemory: resource.MustParse("512Mi"),
+	}
+}
+
+func getRequests() corev1.ResourceList {
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("5m"),
+		corev1.ResourceMemory: resource.MustParse("64Mi"),
+	}
+}
+
 func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, workerDS *appsv1.DaemonSet, operandImage string) error {
 	workerDS.ObjectMeta.Labels = map[string]string{"app": "nfd"}
 
@@ -259,6 +284,10 @@ func (d *daemonset) SetWorkerDaemonsetAsDesired(ctx context.Context, nfdInstance
 						VolumeMounts:    *getWorkerVolumeMounts(),
 						ImagePullPolicy: getImagePullPolicy(nfdInstance),
 						SecurityContext: getWorkerSecurityContext(),
+						Resources: corev1.ResourceRequirements{
+							Requests: getRequests(),
+							Limits:   getLimits(),
+						},
 					},
 				},
 				Volumes:      getWorkerVolumes(),

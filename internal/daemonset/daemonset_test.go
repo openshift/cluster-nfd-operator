@@ -222,7 +222,7 @@ var _ = Describe("getWorkerEnvs", func() {
 		}
 
 		res := getWorkerEnvs(&nfdCR)
-		Expect(res).To(Equal(getBasicEnvs()))
+		Expect(res).To(Equal(append(getBasicEnvs(), getMemLimitEnv())))
 	})
 
 	It("worker envs is an empty slice", func() {
@@ -235,7 +235,7 @@ var _ = Describe("getWorkerEnvs", func() {
 		}
 
 		res := getWorkerEnvs(&nfdCR)
-		Expect(res).To(Equal(getBasicEnvs()))
+		Expect(res).To(Equal(append(getBasicEnvs(), getMemLimitEnv())))
 	})
 
 	It("worker envs contains value", func() {
@@ -255,7 +255,7 @@ var _ = Describe("getWorkerEnvs", func() {
 				},
 			},
 		}
-		expectedRes := append(getBasicEnvs(), nfdCR.Spec.Operand.WorkerEnvs[0], nfdCR.Spec.Operand.WorkerEnvs[1])
+		expectedRes := append(append(getBasicEnvs(), getMemLimitEnv()), nfdCR.Spec.Operand.WorkerEnvs[0], nfdCR.Spec.Operand.WorkerEnvs[1])
 
 		res := getWorkerEnvs(&nfdCR)
 		Expect(res).To(Equal(expectedRes))
