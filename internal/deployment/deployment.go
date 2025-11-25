@@ -23,6 +23,7 @@ import (
 
 	"k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -87,10 +88,14 @@ func (d *deployment) SetMasterDeploymentAsDesired(nfdInstance *nfdv1.NodeFeature
 						Args:            getArgs(nfdInstance),
 						Env:             getMasterEnvs(nfdInstance),
 						SecurityContext: getMasterSecurityContext(),
-						LivenessProbe:   getLivenessProbe(),
-						ReadinessProbe:  getReadinessProbe(),
-						StartupProbe:    getStartupProbe(),
-						Ports:           getPorts(),
+						Resources: corev1.ResourceRequirements{
+							Requests: getRequests(),
+							Limits:   getLimits(),
+						},
+						LivenessProbe:  getLivenessProbe(),
+						ReadinessProbe: getReadinessProbe(),
+						StartupProbe:   getStartupProbe(),
+						Ports:          getPorts(),
 					},
 				},
 			},
@@ -245,8 +250,19 @@ func getEnvs() []corev1.EnvVar {
 	}
 }
 
+func getMemLimitEnv() corev1.EnvVar {
+	return corev1.EnvVar{
+		Name: "GOMEMLIMIT",
+		ValueFrom: &corev1.EnvVarSource{
+			ResourceFieldRef: &corev1.ResourceFieldSelector{
+				Resource: "limits.memory",
+			},
+		},
+	}
+}
+
 func getMasterEnvs(nfdInstance *nfdv1.NodeFeatureDiscovery) []corev1.EnvVar {
-	return append(getEnvs(), nfdInstance.Spec.Operand.MasterEnvs...)
+	return append(append(getEnvs(), getMemLimitEnv()), nfdInstance.Spec.Operand.MasterEnvs...)
 }
 
 func getMasterSecurityContext() *corev1.SecurityContext {
@@ -326,5 +342,19 @@ func getPorts() []corev1.ContainerPort {
 			ContainerPort: 8080,
 			Name:          "http",
 		},
+	}
+}
+
+func getLimits() corev1.ResourceList {
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("300m"),
+		corev1.ResourceMemory: resource.MustParse("4Gi"),
+	}
+}
+
+func getRequests() corev1.ResourceList {
+	return corev1.ResourceList{
+		corev1.ResourceCPU:    resource.MustParse("100m"),
+		corev1.ResourceMemory: resource.MustParse("128Mi"),
 	}
 }

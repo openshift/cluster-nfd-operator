@@ -52,7 +52,11 @@ spec:
           - name: NODE_NAME
             valueFrom:
               fieldRef:
-                fieldPath: spec.nodeName      
+                fieldPath: spec.nodeName
+          - name: GOMEMLIMIT
+            valueFrom:
+              resourceFieldRef:
+                resource: limits.memory      
           image: test-image
           imagePullPolicy: Always
           command:
@@ -67,6 +71,13 @@ spec:
               drop:
               - ALL
             readOnlyRootFilesystem: true
+          resources:
+            limits:
+              cpu: 300m
+              memory: 4Gi
+            requests:
+              cpu: 100m
+              memory: 128Mi
           livenessProbe:
             httpGet:
               path: /healthz
