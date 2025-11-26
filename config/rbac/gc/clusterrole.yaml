@@ -37,3 +37,12 @@ rules:
   verbs:
   - delete
   - list
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  verbs:
+  - delete
+  - get
+  - list
+  - watch
