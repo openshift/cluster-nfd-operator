@@ -110,6 +110,9 @@ type OperandSpec struct {
 
 	// WorkerNodeSelector describes on which nodes the worker pod should be deployed.
 	WorkerNodeSelector map[string]string `json:"workerNodeSelector,omitempty"`
+
+	// WorkerPriorityClassName allows setting a specific priority class for the worker pods
+	WorkerPriorityClassName string `json:"workerPriorityClassName,omitempty"`
 }
 
 // ConfigMap describes configuration options for the NFD worker
