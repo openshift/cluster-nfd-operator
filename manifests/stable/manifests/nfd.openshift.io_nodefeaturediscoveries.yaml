@@ -358,6 +358,10 @@ spec:
                     description: WorkerNodeSelector describes on which nodes the worker
                       pod should be deployed.
                     type: object
+                  workerPriorityClassName:
+                    description: WorkerPriorityClassName allows setting a specific
+                      priority class for the worker pods
+                    type: string
                   workerTolerations:
                     description: WorkerTolerations defines tolerations to be applied
                       to the worker Daemonset
