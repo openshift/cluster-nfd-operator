@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/openshift/cluster-nfd-operator
-  newTag: "4.21"
+  newTag: 4.22
