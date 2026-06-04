@@ -134,6 +134,8 @@ func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDisc
 						Ports:           getPorts(),
 					},
 				},
+				NodeSelector: nfdInstance.Spec.Operand.GCNodeSelector,
+				Tolerations:  nfdInstance.Spec.Operand.GCTolerations,
 			},
 		},
 	}
