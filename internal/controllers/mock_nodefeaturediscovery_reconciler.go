@@ -69,6 +69,20 @@ func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleGC(ctx, nfdInstan
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleGC", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleGC), ctx, nfdInstance, operandImage)
 }
 
+// handleNetworkPolicies mocks base method.
+func (m *MocknodeFeatureDiscoveryHelperAPI) handleNetworkPolicies(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "handleNetworkPolicies", ctx, nfdInstance)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// handleNetworkPolicies indicates an expected call of handleNetworkPolicies.
+func (mr *MocknodeFeatureDiscoveryHelperAPIMockRecorder) handleNetworkPolicies(ctx, nfdInstance any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "handleNetworkPolicies", reflect.TypeOf((*MocknodeFeatureDiscoveryHelperAPI)(nil).handleNetworkPolicies), ctx, nfdInstance)
+}
+
 // handleMaster mocks base method.
 func (m *MocknodeFeatureDiscoveryHelperAPI) handleMaster(ctx context.Context, nfdInstance *v1.NodeFeatureDiscovery, operandImage string) error {
 	m.ctrl.T.Helper()

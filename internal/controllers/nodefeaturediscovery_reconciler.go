@@ -26,6 +26,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -43,6 +44,7 @@ import (
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 	"github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/networkpolicy"
 	"github.com/openshift/cluster-nfd-operator/internal/scc"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
 )
@@ -55,8 +57,9 @@ type nodeFeatureDiscoveryReconciler struct {
 }
 
 func NewNodeFeatureDiscoveryReconciler(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
-	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, sccAPI, statusAPI, scheme)
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, networkPolicyAPI networkpolicy.NetworkPolicyAPI,
+	statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
+	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, sccAPI, networkPolicyAPI, statusAPI, scheme)
 	return &nodeFeatureDiscoveryReconciler{
 		helper: helper,
 	}
@@ -75,6 +78,7 @@ func (r *nodeFeatureDiscoveryReconciler) SetupWithManager(mgr ctrl.Manager) erro
 		Owns(&appsv1.DaemonSet{}, builder.WithPredicates(p)).
 		Owns(&corev1.ConfigMap{}, builder.WithPredicates(p)).
 		Owns(&batchv1.Job{}, builder.WithPredicates(p)).
+		Owns(&networkingv1.NetworkPolicy{}, builder.WithPredicates(p)).
 		Complete(reconcile.AsReconciler[*nfdv1.NodeFeatureDiscovery](mgr.GetClient(), r))
 }
 
@@ -111,6 +115,7 @@ func getOperandImage(nfdInstance *nfdv1.NodeFeatureDiscovery) string {
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=nfd.k8s-sigs.io,resources=nodefeaturerules,verbs=get;list;watch
 // +kubebuilder:rbac:groups=nfd.kubernetes.io,resources=nodefeaturediscoveries,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=nfd.kubernetes.io,resources=nodefeaturediscoveries/status,verbs=get;update;patch
@@ -173,6 +178,10 @@ func (r *nodeFeatureDiscoveryReconciler) Reconcile(ctx context.Context, nfdInsta
 	err = r.helper.handleGC(ctx, nfdInstance, operandImage)
 	errs = append(errs, err)
 
+	logger.Info("reconciling network policies")
+	err = r.helper.handleNetworkPolicies(ctx, nfdInstance)
+	errs = append(errs, err)
+
 	logger.Info("reconciling NFD status")
 	err = r.helper.handleStatus(ctx, nfdInstance)
 	errs = append(errs, err)
@@ -191,32 +200,36 @@ type nodeFeatureDiscoveryHelperAPI interface {
 	handleWorker(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 	handleTopology(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
 	handleGC(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) error
+	handleNetworkPolicies(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 	handlePrune(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery, operandImage string) (bool, error)
 	handleStatus(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error
 }
 
 type nodeFeatureDiscoveryHelper struct {
-	client        client.Client
-	deploymentAPI deployment.DeploymentAPI
-	daemonsetAPI  daemonset.DaemonsetAPI
-	configmapAPI  configmap.ConfigMapAPI
-	jobAPI        job.JobAPI
-	sccAPI        scc.SccAPI
-	statusAPI     status.StatusAPI
-	scheme        *runtime.Scheme
+	client           client.Client
+	deploymentAPI    deployment.DeploymentAPI
+	daemonsetAPI     daemonset.DaemonsetAPI
+	configmapAPI     configmap.ConfigMapAPI
+	jobAPI           job.JobAPI
+	sccAPI           scc.SccAPI
+	networkPolicyAPI networkpolicy.NetworkPolicyAPI
+	statusAPI        status.StatusAPI
+	scheme           *runtime.Scheme
 }
 
 func newNodeFeatureDiscoveryHelperAPI(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
-	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
+	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, networkPolicyAPI networkpolicy.NetworkPolicyAPI,
+	statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
 	return &nodeFeatureDiscoveryHelper{
-		client:        client,
-		deploymentAPI: deploymentAPI,
-		daemonsetAPI:  daemonsetAPI,
-		configmapAPI:  configmapAPI,
-		jobAPI:        jobAPI,
-		sccAPI:        sccAPI,
-		statusAPI:     statusAPI,
-		scheme:        scheme,
+		client:           client,
+		deploymentAPI:    deploymentAPI,
+		daemonsetAPI:     daemonsetAPI,
+		configmapAPI:     configmapAPI,
+		jobAPI:           jobAPI,
+		sccAPI:           sccAPI,
+		networkPolicyAPI: networkPolicyAPI,
+		statusAPI:        statusAPI,
+		scheme:           scheme,
 	}
 }
 
@@ -245,6 +258,13 @@ func (nfdh *nodeFeatureDiscoveryHelper) finalizeComponents(ctx context.Context, 
 	err = nfdh.deploymentAPI.DeleteDeployment(ctx, nfdInstance.Namespace, "nfd-gc")
 	if err != nil {
 		return fmt.Errorf("failed to delete nfd-gc deployment: %w", err)
+	}
+
+	for _, name := range []string{"nfd-master", "nfd-worker", "nfd-gc"} {
+		err = nfdh.networkPolicyAPI.DeleteNetworkPolicy(ctx, nfdInstance.Namespace, name)
+		if err != nil {
+			return fmt.Errorf("failed to delete %s NetworkPolicy: %w", name, err)
+		}
 	}
 
 	err = nfdh.sccAPI.DeleteSCC(ctx, "nfd-worker")
@@ -363,6 +383,45 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleTopology(ctx context.Context, nfdI
 		return fmt.Errorf("failed to reconcile topology daemonset %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
 	}
 	ctrl.LoggerFrom(ctx).Info("reconciled topoplogy daemonset", "namespace", nfdInstance.Namespace, "name", nfdInstance.Name, "result", opRes)
+	return nil
+}
+
+func (nfdh *nodeFeatureDiscoveryHelper) handleNetworkPolicies(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) error {
+	logger := ctrl.LoggerFrom(ctx)
+
+	masterNP := networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "nfd-master", Namespace: nfdInstance.Namespace},
+	}
+	masterRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &masterNP, func() error {
+		return nfdh.networkPolicyAPI.SetMasterNetworkPolicyAsDesired(nfdInstance, &masterNP)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reconcile nfd-master NetworkPolicy %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
+	}
+	logger.Info("reconciled nfd-master NetworkPolicy", "namespace", nfdInstance.Namespace, "result", masterRes)
+
+	workerNP := networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "nfd-worker", Namespace: nfdInstance.Namespace},
+	}
+	workerRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &workerNP, func() error {
+		return nfdh.networkPolicyAPI.SetWorkerNetworkPolicyAsDesired(nfdInstance, &workerNP)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reconcile nfd-worker NetworkPolicy %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
+	}
+	logger.Info("reconciled nfd-worker NetworkPolicy", "namespace", nfdInstance.Namespace, "result", workerRes)
+
+	gcNP := networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{Name: "nfd-gc", Namespace: nfdInstance.Namespace},
+	}
+	gcRes, err := controllerutil.CreateOrPatch(ctx, nfdh.client, &gcNP, func() error {
+		return nfdh.networkPolicyAPI.SetGCNetworkPolicyAsDesired(nfdInstance, &gcNP)
+	})
+	if err != nil {
+		return fmt.Errorf("failed to reconcile nfd-gc NetworkPolicy %s/%s: %w", nfdInstance.Namespace, nfdInstance.Name, err)
+	}
+	logger.Info("reconciled nfd-gc NetworkPolicy", "namespace", nfdInstance.Namespace, "result", gcRes)
+
 	return nil
 }
 

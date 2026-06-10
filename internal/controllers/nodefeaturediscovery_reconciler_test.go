@@ -40,6 +40,7 @@ import (
 	"github.com/openshift/cluster-nfd-operator/internal/daemonset"
 	"github.com/openshift/cluster-nfd-operator/internal/deployment"
 	"github.com/openshift/cluster-nfd-operator/internal/job"
+	"github.com/openshift/cluster-nfd-operator/internal/networkpolicy"
 	"github.com/openshift/cluster-nfd-operator/internal/scc"
 	"github.com/openshift/cluster-nfd-operator/internal/status"
 )
@@ -71,6 +72,7 @@ var _ = Describe("Reconcile", func() {
 		mockHelper.EXPECT().handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
 		mockHelper.EXPECT().handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
 		mockHelper.EXPECT().handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(nil)
+		mockHelper.EXPECT().handleNetworkPolicies(ctx, &nfdCR).Return(nil)
 		mockHelper.EXPECT().handleStatus(ctx, &nfdCR).Return(nil)
 
 		res, err := nfdr.Reconcile(ctx, &nfdCR)
@@ -142,6 +144,7 @@ var _ = Describe("Reconcile", func() {
 		handlerWorkerError,
 		handleTopologyError,
 		handlerGCError,
+		handleNetworkPoliciesError,
 		handlePruneError,
 		handleStatusError error) {
 		nfdCR := nfdv1.NodeFeatureDiscovery{}
@@ -152,24 +155,26 @@ var _ = Describe("Reconcile", func() {
 		mockHelper.EXPECT().handleWorker(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handlerWorkerError)
 		mockHelper.EXPECT().handleTopology(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handleTopologyError)
 		mockHelper.EXPECT().handleGC(ctx, &nfdCR, nfdCR.Spec.Operand.Image).Return(handlerGCError)
+		mockHelper.EXPECT().handleNetworkPolicies(ctx, &nfdCR).Return(handleNetworkPoliciesError)
 		mockHelper.EXPECT().handleStatus(ctx, &nfdCR).Return(handleStatusError)
 
 		res, err := nfdr.Reconcile(ctx, &nfdCR)
 		Expect(res).To(Equal(reconcile.Result{}))
 		if handlerSCCError != nil || handlerMasterError != nil || handlerWorkerError != nil || handleTopologyError != nil ||
-			handlerGCError != nil || handlePruneError != nil || handleStatusError != nil {
+			handlerGCError != nil || handleNetworkPoliciesError != nil || handlePruneError != nil || handleStatusError != nil {
 			Expect(err).To(HaveOccurred())
 		} else {
 			Expect(err).To(BeNil())
 		}
 	},
-		Entry("handleSCCs failed", fmt.Errorf("scc error"), nil, nil, nil, nil, nil, nil),
-		Entry("handleMaster failed", nil, fmt.Errorf("master error"), nil, nil, nil, nil, nil),
-		Entry("handleWorker failed", nil, nil, fmt.Errorf("worker error"), nil, nil, nil, nil),
-		Entry("handleTopology failed", nil, nil, nil, fmt.Errorf("topology error"), nil, nil, nil),
-		Entry("handleGC failed", nil, nil, nil, nil, fmt.Errorf("gc error"), nil, nil),
-		Entry("handleStatus failed", nil, nil, nil, nil, nil, nil, fmt.Errorf("status error")),
-		Entry("all components succeeded", nil, nil, nil, nil, nil, nil, nil),
+		Entry("handleSCCs failed", fmt.Errorf("scc error"), nil, nil, nil, nil, nil, nil, nil),
+		Entry("handleMaster failed", nil, fmt.Errorf("master error"), nil, nil, nil, nil, nil, nil),
+		Entry("handleWorker failed", nil, nil, fmt.Errorf("worker error"), nil, nil, nil, nil, nil),
+		Entry("handleTopology failed", nil, nil, nil, fmt.Errorf("topology error"), nil, nil, nil, nil),
+		Entry("handleGC failed", nil, nil, nil, nil, fmt.Errorf("gc error"), nil, nil, nil),
+		Entry("handleNetworkPolicies failed", nil, nil, nil, nil, nil, fmt.Errorf("networkpolicy error"), nil, nil),
+		Entry("handleStatus failed", nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("status error")),
+		Entry("all components succeeded", nil, nil, nil, nil, nil, nil, nil, nil),
 	)
 })
 
@@ -186,7 +191,7 @@ var _ = Describe("handleMaster", func() {
 		clnt = client.NewMockClient(ctrl)
 		mockDeployment = deployment.NewMockDeploymentAPI(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, nil, nil, nil, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, nil, nil, nil, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -255,7 +260,7 @@ var _ = Describe("handleWorker", func() {
 		mockDS = daemonset.NewMockDaemonsetAPI(ctrl)
 		mockCM = configmap.NewMockConfigMapAPI(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, mockDS, mockCM, nil, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, mockDS, mockCM, nil, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -351,7 +356,7 @@ var _ = Describe("handleTopology", func() {
 		clnt = client.NewMockClient(ctrl)
 		mockDS = daemonset.NewMockDaemonsetAPI(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, mockDS, nil, nil, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, mockDS, nil, nil, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -436,7 +441,7 @@ var _ = Describe("handleGC", func() {
 		clnt = client.NewMockClient(ctrl)
 		mockDeployment = deployment.NewMockDeploymentAPI(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, nil, nil, nil, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, nil, nil, nil, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -490,9 +495,88 @@ var _ = Describe("handleGC", func() {
 	})
 })
 
+var _ = Describe("handleNetworkPolicies", func() {
+	var (
+		ctrl   *gomock.Controller
+		clnt   *client.MockClient
+		mockNP *networkpolicy.MockNetworkPolicyAPI
+		nfdh   nodeFeatureDiscoveryHelperAPI
+	)
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		clnt = client.NewMockClient(ctrl)
+		mockNP = networkpolicy.NewMockNetworkPolicyAPI(ctrl)
+
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, mockNP, nil, scheme)
+	})
+
+	ctx := context.Background()
+
+	It("should create all three network policies if they do not exist", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{}
+		gomock.InOrder(
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetMasterNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetWorkerNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetGCNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+		)
+
+		err := nfdh.handleNetworkPolicies(ctx, &nfdCR)
+		Expect(err).To(BeNil())
+	})
+
+	It("error flow, failed to populate master network policy", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{}
+		gomock.InOrder(
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetMasterNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+		)
+
+		err := nfdh.handleNetworkPolicies(ctx, &nfdCR)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("error flow, failed to populate worker network policy", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{}
+		gomock.InOrder(
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetMasterNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetWorkerNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+		)
+
+		err := nfdh.handleNetworkPolicies(ctx, &nfdCR)
+		Expect(err).To(HaveOccurred())
+	})
+
+	It("error flow, failed to populate gc network policy", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{}
+		gomock.InOrder(
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetMasterNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetWorkerNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(nil),
+			clnt.EXPECT().Create(ctx, gomock.Any()).Return(nil),
+			clnt.EXPECT().Get(ctx, gomock.Any(), gomock.Any()).Return(apierrors.NewNotFound(schema.GroupResource{}, "whatever")),
+			mockNP.EXPECT().SetGCNetworkPolicyAsDesired(&nfdCR, gomock.Any()).Return(fmt.Errorf("some error")),
+		)
+
+		err := nfdh.handleNetworkPolicies(ctx, &nfdCR)
+		Expect(err).To(HaveOccurred())
+	})
+})
+
 var _ = Describe("hasFinalizer", func() {
 	It("checking return status whether finalizer set or not", func() {
-		nfdh := newNodeFeatureDiscoveryHelperAPI(nil, nil, nil, nil, nil, nil, nil, nil)
+		nfdh := newNodeFeatureDiscoveryHelperAPI(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 		By("finalizers was empty")
 		nfdCR := nfdv1.NodeFeatureDiscovery{
@@ -536,7 +620,7 @@ var _ = Describe("setFinalizer", func() {
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
 		clnt = client.NewMockClient(ctrl)
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, nil, nil)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, nil, nil, nil)
 	})
 
 	It("checking the return status of setFinalizer function", func() {
@@ -586,6 +670,7 @@ var _ = Describe("finalizeComponents", func() {
 		mockDS         *daemonset.MockDaemonsetAPI
 		mockCM         *configmap.MockConfigMapAPI
 		mockSCC        *scc.MockSccAPI
+		mockNP         *networkpolicy.MockNetworkPolicyAPI
 		nfdh           nodeFeatureDiscoveryHelperAPI
 	)
 
@@ -596,8 +681,9 @@ var _ = Describe("finalizeComponents", func() {
 		mockDS = daemonset.NewMockDaemonsetAPI(ctrl)
 		mockCM = configmap.NewMockConfigMapAPI(ctrl)
 		mockSCC = scc.NewMockSccAPI(ctrl)
+		mockNP = networkpolicy.NewMockNetworkPolicyAPI(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, mockDS, mockCM, nil, mockSCC, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, mockDeployment, mockDS, mockCM, nil, mockSCC, mockNP, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -614,6 +700,7 @@ var _ = Describe("finalizeComponents", func() {
 		deleteTopologyDSError,
 		deleteMasterDeploymentError,
 		deleteGCDeploymentError,
+		deleteNetworkPolicyError,
 		deleteWorkerSCCError,
 		deleteTopologySCCError bool) {
 
@@ -642,6 +729,13 @@ var _ = Describe("finalizeComponents", func() {
 			goto executeTestFunction
 		}
 		mockDeployment.EXPECT().DeleteDeployment(ctx, namespace, "nfd-gc").Return(nil)
+		if deleteNetworkPolicyError {
+			mockNP.EXPECT().DeleteNetworkPolicy(ctx, namespace, "nfd-master").Return(fmt.Errorf("some error"))
+			goto executeTestFunction
+		}
+		mockNP.EXPECT().DeleteNetworkPolicy(ctx, namespace, "nfd-master").Return(nil)
+		mockNP.EXPECT().DeleteNetworkPolicy(ctx, namespace, "nfd-worker").Return(nil)
+		mockNP.EXPECT().DeleteNetworkPolicy(ctx, namespace, "nfd-gc").Return(nil)
 		if deleteWorkerSCCError {
 			mockSCC.EXPECT().DeleteSCC(ctx, "nfd-worker").Return(fmt.Errorf("some error"))
 			goto executeTestFunction
@@ -658,20 +752,22 @@ var _ = Describe("finalizeComponents", func() {
 		err := nfdh.finalizeComponents(ctx, &nfdCR)
 
 		if deleteGCDeploymentError || deleteWorkerDSError || deleteWorkerCMError ||
-			deleteTopologyDSError || deleteMasterDeploymentError || deleteWorkerSCCError || deleteTopologySCCError {
+			deleteTopologyDSError || deleteMasterDeploymentError || deleteNetworkPolicyError ||
+			deleteWorkerSCCError || deleteTopologySCCError {
 			Expect(err).To(HaveOccurred())
 		} else {
 			Expect(err).To(BeNil())
 		}
 	},
-		Entry("delete worker daemonset failed", true, false, false, false, false, false, false),
-		Entry("delete worker configmap failed", false, true, false, false, false, false, false),
-		Entry("delete topology daemonset failed", false, false, true, false, false, false, false),
-		Entry("delete master deployment failed", false, false, false, true, false, false, false),
-		Entry("delete gc deployment failed", false, false, false, false, true, false, false),
-		Entry("delete worker scc  failed", false, false, false, false, false, true, false),
-		Entry("delete topology scc  failed", false, false, false, false, false, false, true),
-		Entry("finalization flow was succesful", false, false, false, false, false, false, false),
+		Entry("delete worker daemonset failed", true, false, false, false, false, false, false, false),
+		Entry("delete worker configmap failed", false, true, false, false, false, false, false, false),
+		Entry("delete topology daemonset failed", false, false, true, false, false, false, false, false),
+		Entry("delete master deployment failed", false, false, false, true, false, false, false, false),
+		Entry("delete gc deployment failed", false, false, false, false, true, false, false, false),
+		Entry("delete network policy failed", false, false, false, false, false, true, false, false),
+		Entry("delete worker scc  failed", false, false, false, false, false, false, true, false),
+		Entry("delete topology scc  failed", false, false, false, false, false, false, false, true),
+		Entry("finalization flow was succesful", false, false, false, false, false, false, false, false),
 	)
 })
 
@@ -686,7 +782,7 @@ var _ = Describe("removeFinalizer", func() {
 		ctrl = gomock.NewController(GinkgoT())
 		clnt = client.NewMockClient(ctrl)
 
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -730,7 +826,7 @@ var _ = Describe("handlePrune", func() {
 	BeforeEach(func() {
 		ctrl = gomock.NewController(GinkgoT())
 		mockJob = job.NewMockJobAPI(ctrl)
-		nfdh = newNodeFeatureDiscoveryHelperAPI(nil, nil, nil, nil, mockJob, nil, nil, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(nil, nil, nil, nil, mockJob, nil, nil, nil, scheme)
 	})
 
 	ctx := context.Background()
@@ -824,7 +920,7 @@ var _ = Describe("handleStatus", func() {
 		ctrl = gomock.NewController(GinkgoT())
 		clnt = client.NewMockClient(ctrl)
 		mockStatus = status.NewMockStatusAPI(ctrl)
-		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, mockStatus, scheme)
+		nfdh = newNodeFeatureDiscoveryHelperAPI(clnt, nil, nil, nil, nil, nil, nil, mockStatus, scheme)
 	})
 
 	ctx := context.Background()
