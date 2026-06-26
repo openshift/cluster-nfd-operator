@@ -121,6 +121,7 @@ func main() {
 		BindAddress:    args.metricsAddr,
 		SecureServing:  true,
 		FilterProvider: filters.WithAuthenticationAndAuthorization,
+		CertDir:        "/etc/metrics-certs",
 	}
 
 	// Create a new manager to manage the operator
@@ -198,7 +199,7 @@ func initFlags(flagset *flag.FlagSet) *operatorArgs {
 	args := operatorArgs{}
 
 	// Setup CLI arguments
-	flagset.StringVar(&args.metricsAddr, "metrics-bind-address", ":8080", "The address the Prometheus "+
+	flagset.StringVar(&args.metricsAddr, "metrics-bind-address", ":8443", "The address the Prometheus "+
 		"metric endpoint binds to for scraping NFD resource usage data.")
 	flagset.StringVar(&args.probeAddr, "health-probe-bind-address", ":8081", "The address the probe "+
 		"endpoint binds to for determining liveness, readiness, and configuration of"+
