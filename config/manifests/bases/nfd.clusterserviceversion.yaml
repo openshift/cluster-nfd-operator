@@ -684,7 +684,7 @@ spec:
             spec:
               containers:
               - args:
-                - --metrics-bind-address=127.0.0.1:8080
+                - --metrics-bind-address=:8443
                 - --leader-elect
                 command:
                 - /node-feature-discovery-operator
@@ -712,8 +712,8 @@ spec:
                   periodSeconds: 20
                 name: manager
                 ports:
-                - containerPort: 8080
-                  name: metrics
+                - containerPort: 8443
+                  name: https
                 readinessProbe:
                   httpGet:
                     path: /readyz
@@ -730,8 +730,16 @@ spec:
                   runAsNonRoot: true
                   seccompProfile:
                     type: RuntimeDefault
+                volumeMounts:
+                - mountPath: /etc/metrics-certs
+                  name: metrics-certs
+                  readOnly: true
               serviceAccountName: nfd-manager
               terminationGracePeriodSeconds: 10
+              volumes:
+              - name: metrics-certs
+                secret:
+                  secretName: node-feature-discovery-operator-tls
       permissions:
       - rules:
         - apiGroups:
