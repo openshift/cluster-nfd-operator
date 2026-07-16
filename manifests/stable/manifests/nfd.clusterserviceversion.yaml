@@ -62,7 +62,7 @@ metadata:
       ]
     capabilities: Deep Insights
     categories: Integration & Delivery,OpenShift Optional
-    containerImage: quay.io/openshift/origin-cluster-nfd-operator:4.22
+    containerImage: quay.io/openshift/origin-cluster-nfd-operator:5.0
     createdAt: "2026-03-15T14:13:57Z"
     description: |-
       The Node Feature Discovery Operator manages the detection of hardware features and configuration in a Kubernetes cluster by labeling the nodes with hardware-specific information. The Node Feature Discovery (NFD) will label the host with node-specific attributes, like PCI cards, kernel, or OS version, and many more.
@@ -89,7 +89,7 @@ metadata:
     features.operators.openshift.io/token-auth-aws: "false"
     features.operators.openshift.io/token-auth-azure: "false"
     features.operators.openshift.io/token-auth-gcp: "false"
-    olm.skipRange: '>=4.9.0 <4.22.0'
+    olm.skipRange: '>=4.9.0 <5.0.0'
     operatorframework.io/cluster-monitoring: "true"
     operatorframework.io/suggested-namespace: openshift-nfd
     operators.openshift.io/infrastructure-features: '["disconnected"]'
@@ -104,7 +104,7 @@ metadata:
     operatorframework.io/arch.arm64: supported
     operatorframework.io/arch.ppc64le: supported
     operatorframework.io/arch.s390x: supported
-  name: nfd.v4.22.0
+  name: nfd.v5.0.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -735,8 +735,8 @@ spec:
                 - name: OPERATOR_NAME
                   value: cluster-nfd-operator
                 - name: NODE_FEATURE_DISCOVERY_IMAGE
-                  value: quay.io/openshift/origin-node-feature-discovery:4.22
-                image: quay.io/openshift/origin-cluster-nfd-operator:4.22
+                  value: quay.io/openshift/origin-node-feature-discovery:5.0
+                image: quay.io/openshift/origin-cluster-nfd-operator:5.0
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -866,7 +866,7 @@ spec:
   - node-labels
   links:
   - name: Node Feature Discovery Operator
-    url: https://docs.openshift.com/container-platform/4.22/hardware_enablement/psap-node-feature-discovery-operator.html
+    url: https://docs.openshift.com/container-platform/5.0/hardware_enablement/psap-node-feature-discovery-operator.html
   - name: Node Feature Discovery Documentation
     url: https://kubernetes-sigs.github.io/node-feature-discovery/stable/get-started/index.html
   maintainers:
@@ -877,4 +877,4 @@ spec:
   provider:
     name: Red Hat
     url: https://github.com/openshift/cluster-nfd-operator
-  version: 4.22.0
+  version: 5.0.0
