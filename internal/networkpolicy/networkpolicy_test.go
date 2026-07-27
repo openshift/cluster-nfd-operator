@@ -53,7 +53,7 @@ var _ = Describe("SetMasterNetworkPolicyAsDesired", func() {
 		Expect(err).To(BeNil())
 
 		Expect(np.Spec.PodSelector.MatchLabels).To(Equal(map[string]string{"app": "nfd-master"}))
-		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress}))
+		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}))
 		Expect(np.Spec.Ingress).To(HaveLen(1))
 
 		httpPort := intstr.FromInt32(8080)
@@ -61,6 +61,8 @@ var _ = Describe("SetMasterNetworkPolicyAsDesired", func() {
 		Expect(np.Spec.Ingress[0].Ports).To(Equal([]networkingv1.NetworkPolicyPort{
 			{Protocol: &tcp, Port: &httpPort},
 		}))
+
+		assertRequiredEgressRules(np.Spec.Egress)
 	})
 })
 
@@ -84,8 +86,10 @@ var _ = Describe("SetWorkerNetworkPolicyAsDesired", func() {
 		Expect(err).To(BeNil())
 
 		Expect(np.Spec.PodSelector.MatchLabels).To(Equal(map[string]string{"app": "nfd-worker"}))
-		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress}))
+		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}))
 		Expect(np.Spec.Ingress).To(BeEmpty())
+
+		assertRequiredEgressRules(np.Spec.Egress)
 	})
 })
 
@@ -109,7 +113,7 @@ var _ = Describe("SetGCNetworkPolicyAsDesired", func() {
 		Expect(err).To(BeNil())
 
 		Expect(np.Spec.PodSelector.MatchLabels).To(Equal(map[string]string{"app": "nfd-gc"}))
-		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress}))
+		Expect(np.Spec.PolicyTypes).To(Equal([]networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress}))
 		Expect(np.Spec.Ingress).To(HaveLen(1))
 
 		httpPort := intstr.FromInt32(8080)
@@ -117,6 +121,8 @@ var _ = Describe("SetGCNetworkPolicyAsDesired", func() {
 		Expect(np.Spec.Ingress[0].Ports).To(Equal([]networkingv1.NetworkPolicyPort{
 			{Protocol: &tcp, Port: &httpPort},
 		}))
+
+		assertRequiredEgressRules(np.Spec.Egress)
 	})
 })
 
@@ -164,3 +170,23 @@ var _ = Describe("DeleteNetworkPolicy", func() {
 		Expect(err).To(BeNil())
 	})
 })
+
+func assertRequiredEgressRules(egress []networkingv1.NetworkPolicyEgressRule) {
+	tcp := corev1.ProtocolTCP
+	udp := corev1.ProtocolUDP
+	httpsPort := intstr.FromInt32(443)
+	apiServerPort := intstr.FromInt32(6443)
+	dnsPort := intstr.FromInt32(53)
+	dnsTargetPort := intstr.FromInt32(5353)
+
+	Expect(egress).To(HaveLen(1))
+	Expect(egress[0].To).To(BeNil())
+	Expect(egress[0].Ports).To(Equal([]networkingv1.NetworkPolicyPort{
+		{Protocol: &tcp, Port: &httpsPort},
+		{Protocol: &tcp, Port: &apiServerPort},
+		{Protocol: &tcp, Port: &dnsPort},
+		{Protocol: &udp, Port: &dnsPort},
+		{Protocol: &tcp, Port: &dnsTargetPort},
+		{Protocol: &udp, Port: &dnsTargetPort},
+	}))
+}
