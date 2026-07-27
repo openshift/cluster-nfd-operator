@@ -58,8 +58,9 @@ func (n *networkPolicy) SetMasterNetworkPolicyAsDesired(nfdInstance *nfdv1.NodeF
 	}
 	np.Spec = networkingv1.NetworkPolicySpec{
 		PodSelector: podSelector,
-		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		Ingress:     healthProbeIngressRules(),
+		Egress:      requiredEgressRules(),
 	}
 	return controllerutil.SetControllerReference(nfdInstance, np, n.scheme)
 }
@@ -70,8 +71,9 @@ func (n *networkPolicy) SetWorkerNetworkPolicyAsDesired(nfdInstance *nfdv1.NodeF
 	}
 	np.Spec = networkingv1.NetworkPolicySpec{
 		PodSelector: podSelector,
-		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		Ingress:     []networkingv1.NetworkPolicyIngressRule{},
+		Egress:      requiredEgressRules(),
 	}
 	return controllerutil.SetControllerReference(nfdInstance, np, n.scheme)
 }
@@ -82,8 +84,9 @@ func (n *networkPolicy) SetGCNetworkPolicyAsDesired(nfdInstance *nfdv1.NodeFeatu
 	}
 	np.Spec = networkingv1.NetworkPolicySpec{
 		PodSelector: podSelector,
-		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+		PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress, networkingv1.PolicyTypeEgress},
 		Ingress:     healthProbeIngressRules(),
+		Egress:      requiredEgressRules(),
 	}
 	return controllerutil.SetControllerReference(nfdInstance, np, n.scheme)
 }
@@ -112,6 +115,39 @@ func healthProbeIngressRules() []networkingv1.NetworkPolicyIngressRule {
 					Protocol: &tcp,
 					Port:     &httpPort,
 				},
+			},
+		},
+	}
+}
+
+// requiredEgressRules returns the minimal egress ports needed by every NFD
+// component: DNS resolution and kube-apiserver communication. Rules are
+// port-only (no destination/peer restriction) because both the apiserver and
+// CoreDNS on OpenShift are host-networked pods, whose matching behaviour in
+// namespace/pod selectors is implementation-defined and unreliable for egress
+// targeting on OVN-Kubernetes. Port-only rules are the pattern used by
+// upstream node-feature-discovery's Helm chart.
+func requiredEgressRules() []networkingv1.NetworkPolicyEgressRule {
+	tcp := corev1.ProtocolTCP
+	udp := corev1.ProtocolUDP
+	httpsPort := intstr.FromInt32(443)
+	apiServerPort := intstr.FromInt32(6443)
+	dnsPort := intstr.FromInt32(53)
+	// OVN-Kubernetes evaluates egress rules after Service DNAT, so the
+	// destination port is the pod's targetPort (5353), not the Service
+	// port (53). Both are needed: 53 for compatibility with other CNIs,
+	// 5353 for OVN-Kubernetes on OpenShift.
+	dnsTargetPort := intstr.FromInt32(5353)
+
+	return []networkingv1.NetworkPolicyEgressRule{
+		{
+			Ports: []networkingv1.NetworkPolicyPort{
+				{Protocol: &tcp, Port: &httpsPort},
+				{Protocol: &tcp, Port: &apiServerPort},
+				{Protocol: &tcp, Port: &dnsPort},
+				{Protocol: &udp, Port: &dnsPort},
+				{Protocol: &tcp, Port: &dnsTargetPort},
+				{Protocol: &udp, Port: &dnsTargetPort},
 			},
 		},
 	}
