@@ -123,7 +123,7 @@ func (d *deployment) SetGCDeploymentAsDesired(nfdInstance *nfdv1.NodeFeatureDisc
 					{
 						Name:            "nfd-gc",
 						Image:           operandImage,
-						ImagePullPolicy: corev1.PullAlways,
+						ImagePullPolicy: getImagePullPolicy(nfdInstance),
 						Command: []string{
 							"nfd-gc",
 						},
