@@ -18,6 +18,7 @@ package status
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -70,6 +71,16 @@ const (
 	// message field should contain a human readable description of what the administrator should do to
 	// allow the operator to successfully update the resources maintained by the operator.
 	conditionUpgradeable string = "Upgradeable"
+
+	// ConditionOperandImagePinned indicates whether spec.operand.image is explicitly set on the CR.
+	// It is reported independently of Available/Degraded/Progressing/Upgradeable so that it stays
+	// visible even when the operator is otherwise degraded (e.g. because the pinned image is stale).
+	// Exported so callers (e.g. the reconciler, when deciding whether to emit an Event) can look this
+	// condition up without duplicating the string literal.
+	ConditionOperandImagePinned string = "OperandImagePinned"
+
+	reasonOperandImagePinned    = "OperandImageSetExplicitly"
+	reasonOperandImageNotPinned = "OperandImageManagedByOperator"
 )
 
 //go:generate mockgen -source=status.go -package=status -destination=mock_status.go StatusAPI
@@ -91,6 +102,14 @@ func NewStatusAPI(deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset
 }
 
 func (s *status) GetConditions(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) []metav1.Condition {
+	conditions := s.getComponentConditions(ctx, nfdInstance)
+	// OperandImagePinned is computed independently of the other conditions above (rather than folded
+	// into e.g. Upgradeable) so that it stays visible even when the CR is already Degraded/Progressing
+	// for an unrelated reason - which is exactly the case we most want to catch.
+	return append(conditions, getOperandImagePinnedCondition(nfdInstance))
+}
+
+func (s *status) getComponentConditions(ctx context.Context, nfdInstance *nfdv1.NodeFeatureDiscovery) []metav1.Condition {
 	// get worker daemonset conditions
 	nonAvailableConditions := s.helper.getWorkerNotAvailableConditions(ctx, nfdInstance)
 	if nonAvailableConditions != nil {
@@ -115,6 +134,35 @@ func (s *status) GetConditions(ctx context.Context, nfdInstance *nfdv1.NodeFeatu
 	}
 
 	return getAvailableConditions()
+}
+
+// getOperandImagePinnedCondition reports whether spec.operand.image is explicitly set. Setting it
+// pins the operand to that image forever: unlike the default (empty) case, the operand will not be
+// updated when the operator itself is upgraded, which can leave the cluster running a stale/incompatible
+// operand (see OCPBUGS-85506).
+func getOperandImagePinnedCondition(nfdInstance *nfdv1.NodeFeatureDiscovery) metav1.Condition {
+	image := nfdInstance.Spec.Operand.Image
+	now := metav1.Time{Time: time.Now()}
+	if image == "" {
+		return metav1.Condition{
+			Type:               ConditionOperandImagePinned,
+			Status:             metav1.ConditionFalse,
+			Reason:             reasonOperandImageNotPinned,
+			LastTransitionTime: now,
+		}
+	}
+	return metav1.Condition{
+		Type:   ConditionOperandImagePinned,
+		Status: metav1.ConditionTrue,
+		Reason: reasonOperandImagePinned,
+		Message: fmt.Sprintf(
+			"spec.operand.image is pinned to %q and will not be updated when the operator is upgraded, "+
+				"which can leave the operand stale or incompatible (e.g. port conflicts). "+
+				"Clear this field to let the operator manage the operand image automatically.",
+			image,
+		),
+		LastTransitionTime: now,
+	}
 }
 
 func (s *status) AreConditionsEqual(prevConditions, newConditions []metav1.Condition) bool {
