@@ -28,8 +28,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,8 +60,8 @@ type nodeFeatureDiscoveryReconciler struct {
 
 func NewNodeFeatureDiscoveryReconciler(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
 	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, networkPolicyAPI networkpolicy.NetworkPolicyAPI,
-	statusAPI status.StatusAPI, scheme *runtime.Scheme) *nodeFeatureDiscoveryReconciler {
-	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, sccAPI, networkPolicyAPI, statusAPI, scheme)
+	statusAPI status.StatusAPI, scheme *runtime.Scheme, recorder record.EventRecorder) *nodeFeatureDiscoveryReconciler {
+	helper := newNodeFeatureDiscoveryHelperAPI(client, deploymentAPI, daemonsetAPI, configmapAPI, jobAPI, sccAPI, networkPolicyAPI, statusAPI, scheme, recorder)
 	return &nodeFeatureDiscoveryReconciler{
 		helper: helper,
 	}
@@ -114,6 +116,7 @@ func getOperandImage(nfdInstance *nfdv1.NodeFeatureDiscovery) string {
 // +kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=networking.k8s.io,resources=networkpolicies,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=nfd.k8s-sigs.io,resources=nodefeaturerules,verbs=get;list;watch
@@ -215,11 +218,12 @@ type nodeFeatureDiscoveryHelper struct {
 	networkPolicyAPI networkpolicy.NetworkPolicyAPI
 	statusAPI        status.StatusAPI
 	scheme           *runtime.Scheme
+	recorder         record.EventRecorder
 }
 
 func newNodeFeatureDiscoveryHelperAPI(client client.Client, deploymentAPI deployment.DeploymentAPI, daemonsetAPI daemonset.DaemonsetAPI,
 	configmapAPI configmap.ConfigMapAPI, jobAPI job.JobAPI, sccAPI scc.SccAPI, networkPolicyAPI networkpolicy.NetworkPolicyAPI,
-	statusAPI status.StatusAPI, scheme *runtime.Scheme) nodeFeatureDiscoveryHelperAPI {
+	statusAPI status.StatusAPI, scheme *runtime.Scheme, recorder record.EventRecorder) nodeFeatureDiscoveryHelperAPI {
 	return &nodeFeatureDiscoveryHelper{
 		client:           client,
 		deploymentAPI:    deploymentAPI,
@@ -230,6 +234,7 @@ func newNodeFeatureDiscoveryHelperAPI(client client.Client, deploymentAPI deploy
 		networkPolicyAPI: networkPolicyAPI,
 		statusAPI:        statusAPI,
 		scheme:           scheme,
+		recorder:         recorder,
 	}
 }
 
@@ -476,7 +481,31 @@ func (nfdh *nodeFeatureDiscoveryHelper) handleStatus(ctx context.Context, nfdIns
 	if nfdh.statusAPI.AreConditionsEqual(nfdInstance.Status.Conditions, conditions) {
 		return nil
 	}
+	oldConditions := nfdInstance.Status.Conditions
 	unmodifiedCR := nfdInstance.DeepCopy()
 	nfdInstance.Status.Conditions = conditions
-	return nfdh.client.Status().Patch(ctx, nfdInstance, client.MergeFrom(unmodifiedCR))
+	if err := nfdh.client.Status().Patch(ctx, nfdInstance, client.MergeFrom(unmodifiedCR)); err != nil {
+		return err
+	}
+	// Only emit the event once the new conditions have actually persisted, so a failed/retried
+	// patch can't cause the event to fire without a corresponding status update (or fire twice).
+	nfdh.recordOperandImagePinnedEvent(nfdInstance, oldConditions, conditions)
+	return nil
+}
+
+// recordOperandImagePinnedEvent emits a Warning event the first time spec.operand.image becomes
+// pinned, so it shows up in `oc get events -n <namespace>` without needing to inspect
+// status.conditions directly. It only fires on the False->True transition (not every reconcile).
+func (nfdh *nodeFeatureDiscoveryHelper) recordOperandImagePinnedEvent(nfdInstance *nfdv1.NodeFeatureDiscovery, oldConditions, newConditions []metav1.Condition) {
+	if nfdh.recorder == nil {
+		return
+	}
+	newCond := meta.FindStatusCondition(newConditions, status.ConditionOperandImagePinned)
+	if newCond == nil || newCond.Status != metav1.ConditionTrue {
+		return
+	}
+	if oldCond := meta.FindStatusCondition(oldConditions, status.ConditionOperandImagePinned); oldCond != nil && oldCond.Status == metav1.ConditionTrue {
+		return
+	}
+	nfdh.recorder.Event(nfdInstance, corev1.EventTypeWarning, newCond.Reason, newCond.Message)
 }
