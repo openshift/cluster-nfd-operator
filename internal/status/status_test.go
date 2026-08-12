@@ -25,6 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
 	appsv1 "k8s.io/api/apps/v1"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	nfdv1 "github.com/openshift/cluster-nfd-operator/api/v1"
@@ -86,7 +87,7 @@ var _ = Describe("GetConditions", func() {
 
 	executeTestFunction:
 		conds := st.GetConditions(ctx, &nfdCR)
-		compareConditions(conds, expectConds)
+		compareConditions(conds, append(append([]metav1.Condition{}, expectConds...), getOperandImagePinnedCondition(&nfdCR)))
 	},
 		Entry("worker is not available yet", false, false, false, false),
 		Entry("worker available, master is not yet", true, false, false, false),
@@ -94,6 +95,80 @@ var _ = Describe("GetConditions", func() {
 		Entry("worker,master and gc available, topology is not yet", true, true, true, false),
 		Entry("all components are available", true, true, true, true),
 	)
+})
+
+var _ = Describe("GetConditions - OperandImagePinned", func() {
+	var (
+		ctrl       *gomock.Controller
+		mockHelper *MockstatusHelperAPI
+		st         *status
+	)
+
+	BeforeEach(func() {
+		ctrl = gomock.NewController(GinkgoT())
+		mockHelper = NewMockstatusHelperAPI(ctrl)
+		st = &status{
+			helper: mockHelper,
+		}
+	})
+
+	ctx := context.Background()
+
+	expectAllComponentsAvailable := func() {
+		mockHelper.EXPECT().getWorkerNotAvailableConditions(ctx, gomock.Any()).Return(nil)
+		mockHelper.EXPECT().getMasterNotAvailableConditions(ctx, gomock.Any()).Return(nil)
+		mockHelper.EXPECT().getGCNotAvailableConditions(ctx, gomock.Any()).Return(nil)
+	}
+
+	It("reports OperandImagePinned=False when spec.operand.image is empty and everything is healthy", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{}
+		expectAllComponentsAvailable()
+
+		conds := st.GetConditions(ctx, &nfdCR)
+
+		cond := meta.FindStatusCondition(conds, ConditionOperandImagePinned)
+		Expect(cond).ToNot(BeNil())
+		Expect(cond.Status).To(Equal(metav1.ConditionFalse))
+		Expect(cond.Reason).To(Equal(reasonOperandImageNotPinned))
+	})
+
+	It("reports OperandImagePinned=True with the image in the message when spec.operand.image is set and everything is healthy", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{
+			Spec: nfdv1.NodeFeatureDiscoverySpec{
+				Operand: nfdv1.OperandSpec{Image: "registry.k8s.io/nfd/node-feature-discovery:v0.15.5"},
+			},
+		}
+		expectAllComponentsAvailable()
+
+		conds := st.GetConditions(ctx, &nfdCR)
+
+		cond := meta.FindStatusCondition(conds, ConditionOperandImagePinned)
+		Expect(cond).ToNot(BeNil())
+		Expect(cond.Status).To(Equal(metav1.ConditionTrue))
+		Expect(cond.Reason).To(Equal(reasonOperandImagePinned))
+		Expect(cond.Message).To(ContainSubstring("registry.k8s.io/nfd/node-feature-discovery:v0.15.5"))
+	})
+
+	It("still reports OperandImagePinned=True even when the CR is otherwise Degraded", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{
+			Spec: nfdv1.NodeFeatureDiscoverySpec{
+				Operand: nfdv1.OperandSpec{Image: "registry.k8s.io/nfd/node-feature-discovery:v0.15.5"},
+			},
+		}
+		mockHelper.EXPECT().getWorkerNotAvailableConditions(ctx, gomock.Any()).
+			Return(getDegradedConditions("NFDWorkerDaemonSetDegraded", "0 nodes have pods scheduled"))
+
+		conds := st.GetConditions(ctx, &nfdCR)
+
+		degraded := meta.FindStatusCondition(conds, conditionDegraded)
+		Expect(degraded).ToNot(BeNil())
+		Expect(degraded.Status).To(Equal(metav1.ConditionTrue))
+
+		pinned := meta.FindStatusCondition(conds, ConditionOperandImagePinned)
+		Expect(pinned).ToNot(BeNil())
+		Expect(pinned.Status).To(Equal(metav1.ConditionTrue))
+		Expect(pinned.Reason).To(Equal(reasonOperandImagePinned))
+	})
 })
 
 var _ = Describe("AreConditionsEqual", func() {
