@@ -27,8 +27,10 @@ import (
 	"github.com/openshift/cluster-nfd-operator/internal/client"
 	"go.uber.org/mock/gomock"
 	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 )
 
@@ -103,5 +105,31 @@ var _ = Describe("CreatePruneJob", func() {
 
 		err = jobAPI.CreatePruneJob(ctx, &nfdCR, "test-image")
 		Expect(err).To(BeNil())
+	})
+
+	It("honors ImagePullPolicy from the NodeFeatureDiscovery CR", func() {
+		nfdCR := nfdv1.NodeFeatureDiscovery{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "nfd",
+			},
+			Spec: nfdv1.NodeFeatureDiscoverySpec{
+				Operand: nfdv1.OperandSpec{
+					Image:           "test-image",
+					ImagePullPolicy: "IfNotPresent",
+				},
+			},
+		}
+
+		var createdJob *batchv1.Job
+		clnt.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&batchv1.Job{})).DoAndReturn(
+			func(_ context.Context, obj ctrlclient.Object, _ ...ctrlclient.CreateOption) error {
+				createdJob = obj.(*batchv1.Job)
+				return nil
+			})
+
+		err := jobAPI.CreatePruneJob(ctx, &nfdCR, "test-image")
+		Expect(err).To(BeNil())
+		Expect(createdJob.Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullPolicy("IfNotPresent")))
 	})
 })
