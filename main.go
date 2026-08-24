@@ -155,8 +155,6 @@ func main() {
 	sccAPI := scc.NewSccAPI(client, scheme)
 	statusAPI := status.NewStatusAPI(deploymentAPI, daemonsetAPI)
 
-	recorder := mgr.GetEventRecorderFor("nodefeaturediscovery-controller")
-
 	if err = new_controllers.NewNodeFeatureDiscoveryReconciler(client,
 		deploymentAPI,
 		daemonsetAPI,
@@ -164,8 +162,7 @@ func main() {
 		jobAPI,
 		sccAPI,
 		statusAPI,
-		scheme,
-		recorder).SetupWithManager(mgr); err != nil {
+		scheme).SetupWithManager(mgr); err != nil {
 		setupLogger.Error(err, "unable to create controller", "controller", "NodeFeatureDiscovery")
 		os.Exit(1)
 	}
